@@ -1,0 +1,319 @@
+// ============================================================
+// MF_PUMPS.hpprgm
+// FLUIDOS PRIME v1.0 - Bombas y Cavitacion
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_PUMPS()        - Menu principal (EXPORT)
+//   MF_PUMPS_POT()    - Potencia de bomba (hidraulica y en eje)
+//   MF_PUMPS_ETA()    - Eficiencia de bomba
+//   MF_PUMPS_NPSHA()  - NPSHa disponible
+//   MF_PUMPS_CAVI()   - Comparacion NPSHa vs NPSHr (cavitacion)
+//   MF_PUMPS_OP()     - Punto de operacion bomba-sistema
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// ---- Potencia hidraulica y en eje ----
+MF_PUMPS_POT()
+BEGIN
+  LOCAL rho, g, Q, H, eta, Ph, Peje, res;
+
+  IF NOT INPUT({rho, g, Q, H, eta},
+      "Potencia de Bomba",
+      {"rho (kg/m3)=", "g (m/s2)=", "Q (m3/s)=", "H (m)=", "eta (0-1)="},
+      {"Densidad del fluido", "Aceleracion gravitacional", "Caudal de operacion", "Altura manometrica total (TDH)", "Eficiencia total de la bomba (ej. 0.75)"},
+      {1000.0, 9.81, 0.01, 25.0, 0.75}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF H <= 0 THEN MSGBOX("Error: H debe ser positivo."); RETURN; END;
+  IF eta <= 0 OR eta > 1 THEN MSGBOX("Error: eta debe estar entre 0 (exclusivo) y 1."); RETURN; END;
+
+  Ph := rho * g * Q * H;
+  Peje := Ph / eta;
+
+  LOCAL res;
+  res := "=== POTENCIA DE BOMBA ===" + CHAR(10);
+  res := res + "P_hidraulica = rho*g*Q*H" + CHAR(10);
+  res := res + "P_h   = " + fmt_(Ph) + " W" + CHAR(10);
+  res := res + "P_h   = " + fmt_(Ph / 1000) + " kW" + CHAR(10);
+  res := res + "P_eje = P_h / eta" + CHAR(10);
+  res := res + "P_eje = " + fmt_(Peje) + " W" + CHAR(10);
+  res := res + "P_eje = " + fmt_(Peje / 1000) + " kW" + CHAR(10);
+  res := res + "Q     = " + fmt_(Q * 1000) + " L/s  (" + fmt_(Q * 60000) + " L/min)" + CHAR(10);
+  res := res + "H     = " + fmt_(H) + " m" + CHAR(10);
+  res := res + "eta   = " + fmt_(eta * 100) + " %";
+
+  MSGBOX(res);
+END;
+
+// ---- Eficiencia de bomba ----
+MF_PUMPS_ETA()
+BEGIN
+  LOCAL Ph, Peje, eta_hid, rho, g, Q, H, modo, res;
+  LOCAL c;
+
+  CHOOSE(c, "Eficiencia de Bomba",
+    "Dado Ph y Peje",
+    "Calcular Ph desde rho, g, Q, H",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  IF c == 1 THEN
+    IF NOT INPUT({Ph, Peje},
+        "Eficiencia: eta = Ph/Peje",
+        {"P_h (W)=", "P_eje (W)="},
+        {"Potencia hidraulica util", "Potencia consumida en el eje"},
+        {7500.0, 10000.0}) THEN RETURN; END;
+
+    IF Ph <= 0 THEN MSGBOX("Error: P_h debe ser positiva."); RETURN; END;
+    IF Peje <= 0 THEN MSGBOX("Error: P_eje debe ser positiva."); RETURN; END;
+    IF Ph > Peje THEN MSGBOX("Error: P_h no puede ser mayor que P_eje (eta > 1 no es fisico)."); RETURN; END;
+
+    eta_hid := Ph / Peje;
+    LOCAL res;
+    res := "=== EFICIENCIA DE BOMBA ===" + CHAR(10);
+    res := res + "eta = P_h / P_eje" + CHAR(10);
+    res := res + "eta = " + fmt_(eta_hid) + CHAR(10);
+    res := res + "eta = " + fmt_(eta_hid * 100) + " %" + CHAR(10);
+    res := res + "P_h  = " + fmt_(Ph / 1000) + " kW" + CHAR(10);
+    res := res + "P_eje= " + fmt_(Peje / 1000) + " kW";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    IF NOT INPUT({rho, g, Q, H, Peje},
+        "Eficiencia desde datos",
+        {"rho (kg/m3)=", "g (m/s2)=", "Q (m3/s)=", "H (m)=", "P_eje (W)="},
+        {"Densidad del fluido", "Aceleracion gravitacional", "Caudal", "Altura manometrica", "Potencia en el eje"},
+        {1000.0, 9.81, 0.01, 25.0, 10000.0}) THEN RETURN; END;
+
+    IF rho <= 0 OR g <= 0 OR Q <= 0 OR H <= 0 OR Peje <= 0 THEN
+      MSGBOX("Error: Todos los valores deben ser positivos."); RETURN;
+    END;
+
+    Ph := rho * g * Q * H;
+    IF Ph > Peje THEN
+      MSGBOX("ATENCION: P_h calculada (" + fmt_(Ph) + " W) > P_eje." + CHAR(10) + "Verifique los datos.");
+      RETURN;
+    END;
+    eta_hid := Ph / Peje;
+
+    LOCAL res2;
+    res2 := "=== EFICIENCIA DE BOMBA ===" + CHAR(10);
+    res2 := res2 + "P_h  = rho*g*Q*H = " + fmt_(Ph / 1000) + " kW" + CHAR(10);
+    res2 := res2 + "P_eje= " + fmt_(Peje / 1000) + " kW" + CHAR(10);
+    res2 := res2 + "eta  = " + fmt_(eta_hid * 100) + " %";
+    MSGBOX(res2);
+  END;
+END;
+
+// ---- NPSHa disponible ----
+// NPSHa = Patm/(rho*g) - Pv/(rho*g) + z_res - hL_succ
+// O bien: NPSHa = Ps/(rho*g) + Vs^2/(2g) - Pv/(rho*g)
+MF_PUMPS_NPSHA()
+BEGIN
+  LOCAL c;
+  CHOOSE(c, "NPSHa Disponible",
+    "Desde datos de succion (Ps, Vs)",
+    "Desde deposito a bomba",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  IF c == 1 THEN
+    LOCAL Ps, Vs, Pv, rho, g, NPSHa, res;
+    IF NOT INPUT({Ps, Vs, Pv, rho, g},
+        "NPSHa desde Ps y Vs",
+        {"Ps (Pa abs.)=", "Vs (m/s)=", "Pv (Pa abs.)=", "rho (kg/m3)=", "g (m/s2)="},
+        {"Presion absoluta en la brida de succion", "Velocidad en la brida de succion", "Presion de vapor del liquido (tabla)", "Densidad del fluido", "Aceleracion gravitacional"},
+        {90000.0, 1.0, 2340.0, 1000.0, 9.81}) THEN RETURN; END;
+
+    IF Ps <= 0 THEN MSGBOX("Error: Ps debe ser positiva (absoluta)."); RETURN; END;
+    IF Pv <= 0 THEN MSGBOX("Error: Pv debe ser positiva."); RETURN; END;
+    IF rho <= 0 OR g <= 0 THEN MSGBOX("Error: rho y g deben ser positivos."); RETURN; END;
+    IF Ps < Pv THEN MSGBOX("ATENCION: Ps < Pv - el fluido ya esta por debajo de la presion de vapor."); RETURN; END;
+
+    NPSHa := Ps / (rho * g) + Vs ^ 2 / (2 * g) - Pv / (rho * g);
+
+    LOCAL res1;
+    res1 := "=== NPSHa (desde brida) ===" + CHAR(10);
+    res1 := res1 + "NPSHa = Ps/rg + Vs^2/2g - Pv/rg" + CHAR(10);
+    res1 := res1 + "NPSHa = " + fmt_(NPSHa) + " m" + CHAR(10);
+    res1 := res1 + "Ps/rg = " + fmt_(Ps/(rho*g)) + " m" + CHAR(10);
+    res1 := res1 + "Vs^2/2g= " + fmt_(Vs^2/(2*g)) + " m" + CHAR(10);
+    res1 := res1 + "Pv/rg = " + fmt_(Pv/(rho*g)) + " m" + CHAR(10);
+    IF NPSHa < 0 THEN
+      res1 := res1 + CHAR(10) + "RIESGO DE CAVITACION: NPSHa < 0";
+    END;
+    MSGBOX(res1);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    LOCAL Patm, Pv2, zres, hLs, rho2, g2, NPSHa2, res2;
+    IF NOT INPUT({Patm, Pv2, zres, hLs, rho2, g2},
+        "NPSHa desde deposito",
+        {"Patm (Pa abs.)=", "Pv (Pa abs.)=", "z_res (m)=", "hL_succ (m)=", "rho (kg/m3)=", "g (m/s2)="},
+        {"Presion atmosferica (101325 Pa std.)", "Presion de vapor del liquido", "Cota del nivel del deposito respecto a la bomba (positivo si el deposito esta mas alto)", "Perdidas en la linea de succion", "Densidad del fluido", "Aceleracion gravitacional"},
+        {101325.0, 2340.0, -2.0, 1.5, 1000.0, 9.81}) THEN RETURN; END;
+
+    IF Patm <= 0 THEN MSGBOX("Error: Patm debe ser positiva."); RETURN; END;
+    IF Pv2 <= 0 THEN MSGBOX("Error: Pv debe ser positiva."); RETURN; END;
+    IF rho2 <= 0 OR g2 <= 0 THEN MSGBOX("Error: rho y g deben ser positivos."); RETURN; END;
+    IF hLs < 0 THEN MSGBOX("Error: hL_succ debe ser no negativa."); RETURN; END;
+
+    NPSHa2 := Patm / (rho2 * g2) - Pv2 / (rho2 * g2) + zres - hLs;
+
+    res2 := "=== NPSHa (desde deposito) ===" + CHAR(10);
+    res2 := res2 + "NPSHa = Patm/rg - Pv/rg + z_res - hL_s" + CHAR(10);
+    res2 := res2 + "NPSHa   = " + fmt_(NPSHa2) + " m" + CHAR(10);
+    res2 := res2 + "Patm/rg = " + fmt_(Patm/(rho2*g2)) + " m" + CHAR(10);
+    res2 := res2 + "Pv/rg   = " + fmt_(Pv2/(rho2*g2)) + " m" + CHAR(10);
+    res2 := res2 + "z_res   = " + fmt_(zres) + " m" + CHAR(10);
+    res2 := res2 + "hL_succ = " + fmt_(hLs) + " m";
+    IF NPSHa2 < 0 THEN
+      res2 := res2 + CHAR(10) + "RIESGO DE CAVITACION: NPSHa < 0";
+    END;
+    MSGBOX(res2);
+  END;
+END;
+
+// ---- Comparacion NPSHa vs NPSHr ----
+MF_PUMPS_CAVI()
+BEGIN
+  LOCAL NPSHa, NPSHr, margen, res;
+
+  IF NOT INPUT({NPSHa, NPSHr},
+      "Evaluacion de Cavitacion",
+      {"NPSHa (m)=", "NPSHr (m)="},
+      {"NPSHa: disponible (calculado o medido)", "NPSHr: requerido (dato del fabricante de la bomba)"},
+      {8.0, 3.5}) THEN RETURN; END;
+
+  IF NPSHr <= 0 THEN MSGBOX("Error: NPSHr debe ser positivo."); RETURN; END;
+
+  margen := NPSHa - NPSHr;
+
+  LOCAL res2, estado;
+  IF margen > 0 THEN
+    estado := "SIN RIESGO DE CAVITACION (NPSHa > NPSHr)";
+  ELSE
+    estado := "RIESGO DE CAVITACION! (NPSHa <= NPSHr)";
+  END;
+
+  res2 := "=== EVALUACION DE CAVITACION ===" + CHAR(10);
+  res2 := res2 + "NPSHa  = " + fmt_(NPSHa) + " m" + CHAR(10);
+  res2 := res2 + "NPSHr  = " + fmt_(NPSHr) + " m" + CHAR(10);
+  res2 := res2 + "Margen = " + fmt_(margen) + " m" + CHAR(10);
+  res2 := res2 + CHAR(10) + estado;
+  IF margen > 0 AND margen < 1 THEN
+    res2 := res2 + CHAR(10) + "ATENCION: Margen muy pequeno (< 1 m). Revisar condiciones.";
+  END;
+
+  MSGBOX(res2);
+END;
+
+// ---- Punto de operacion bomba-sistema (aproximado) ----
+// Curva bomba: H_b = a*Q^2 + b*Q + c  (creciente o decreciente)
+// Curva sistema: H_s = H_est + R*Q^2
+// Interseccion: resolucion numerica simple por biseccion
+MF_PUMPS_OP()
+BEGIN
+  LOCAL a, b, cc, Hest, R, Q_op, H_op;
+  LOCAL Qlo, Qhi, Qmid, Flo, Fmid, i, res;
+
+  // Datos de la curva de la bomba y el sistema
+  IF NOT INPUT({a, b, cc, Hest, R},
+      "Punto de Operacion",
+      {"a (m*s2/m6)=", "b (m*s/m3)=", "c (m)=", "H_est (m)=", "R (m*s2/m6)="},
+      {"Coeficiente cuadratico curva bomba (a<=0 tipico)", "Coeficiente lineal curva bomba", "Altura de cierre (Q=0)", "Altura estatica del sistema", "Resistencia del sistema (R>=0)"},
+      {-5000.0, 0.0, 30.0, 10.0, 3000.0}) THEN RETURN; END;
+
+  IF cc <= 0 THEN MSGBOX("Error: c (altura cierre) debe ser positiva."); RETURN; END;
+  IF Hest < 0 THEN MSGBOX("Error: H_est no puede ser negativa."); RETURN; END;
+  IF R < 0 THEN MSGBOX("Error: R debe ser no negativo."); RETURN; END;
+
+  // F(Q) = H_bomba(Q) - H_sistema(Q) = (a*Q^2 + b*Q + cc) - (Hest + R*Q^2)
+  // = (a-R)*Q^2 + b*Q + (cc - Hest)
+  // Busqueda por biseccion en [0, Qmax]
+  Qlo := 0;
+  Qhi := 1.0;  // Limite superior inicial (aumentar si no converge)
+  // Buscar un Qhi donde F < 0
+  LOCAL ok_range;
+  ok_range := 0;
+  FOR i FROM 1 TO 20 DO
+    Flo := (a * Qhi ^ 2 + b * Qhi + cc) - (Hest + R * Qhi ^ 2);
+    IF Flo < 0 THEN
+      ok_range := 1;
+      BREAK;
+    END;
+    Qhi := Qhi * 2;
+  END;
+
+  IF ok_range == 0 THEN
+    MSGBOX("No se encontro punto de interseccion en Q razonable." + CHAR(10) + "Verifique los coeficientes de las curvas.");
+    RETURN;
+  END;
+
+  // Biseccion
+  FOR i FROM 1 TO 60 DO
+    Qmid := (Qlo + Qhi) / 2;
+    Fmid := (a * Qmid ^ 2 + b * Qmid + cc) - (Hest + R * Qmid ^ 2);
+    Flo := (a * Qlo ^ 2 + b * Qlo + cc) - (Hest + R * Qlo ^ 2);
+    IF Fmid * Flo < 0 THEN
+      Qhi := Qmid;
+    ELSE
+      Qlo := Qmid;
+    END;
+    IF ABS(Qhi - Qlo) < 1E-8 THEN BREAK; END;
+  END;
+
+  Q_op := (Qlo + Qhi) / 2;
+  H_op := a * Q_op ^ 2 + b * Q_op + cc;
+
+  IF Q_op < 0 THEN
+    MSGBOX("El punto de operacion resulta con Q negativo." + CHAR(10) + "Verifique las curvas de bomba y sistema.");
+    RETURN;
+  END;
+
+  LOCAL res2;
+  res2 := "=== PUNTO DE OPERACION ===" + CHAR(10);
+  res2 := res2 + "Q_op = " + fmt_(Q_op) + " m3/s" + CHAR(10);
+  res2 := res2 + "Q_op = " + fmt_(Q_op * 60000) + " L/min" + CHAR(10);
+  res2 := res2 + "H_op = " + fmt_(H_op) + " m" + CHAR(10);
+  res2 := res2 + "H_sis= " + fmt_(Hest + R * Q_op ^ 2) + " m  (verificacion)";
+
+  MSGBOX(res2);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_PUMPS()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "BOMBAS Y CAVITACION",
+      "1. Potencia de Bomba",
+      "2. Eficiencia de Bomba",
+      "3. NPSHa Disponible",
+      "4. Evaluacion de Cavitacion (NPSHa vs NPSHr)",
+      "5. Punto de Operacion Bomba-Sistema",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 6 THEN RETURN; END;
+    IF c == 1 THEN MF_PUMPS_POT(); END;
+    IF c == 2 THEN MF_PUMPS_ETA(); END;
+    IF c == 3 THEN MF_PUMPS_NPSHA(); END;
+    IF c == 4 THEN MF_PUMPS_CAVI(); END;
+    IF c == 5 THEN MF_PUMPS_OP(); END;
+  END;
+END;

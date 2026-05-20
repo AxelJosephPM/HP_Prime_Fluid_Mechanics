@@ -1,0 +1,288 @@
+// ============================================================
+// MF_PROPS.hpprgm
+// FLUIDOS PRIME v1.0 - Propiedades de Fluidos y Numeros Adimensionales
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_PROPS()    - Menu principal del modulo (EXPORT)
+//   MF_RE()       - Numero de Reynolds
+//   MF_MA()       - Numero de Mach
+//   MF_FR()       - Numero de Froude
+//   MF_PE()       - Peso especifico y densidad relativa
+//   MF_VC()       - Viscosidad cinematica
+//   MF_PD()       - Presion dinamica
+// ============================================================
+
+// Formatea numero para mostrar (4 decimales o notacion HP)
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// Clasifica regimen segun Reynolds en tuberias
+regimenRe(Re)
+BEGIN
+  IF Re < 2300 THEN
+    RETURN "LAMINAR (Re < 2300)";
+  END;
+  IF Re <= 4000 THEN
+    RETURN "TRANSICIONAL (2300 <= Re <= 4000)";
+  END;
+  RETURN "TURBULENTO (Re > 4000)";
+END;
+
+// ---- Numero de Reynolds ----
+MF_RE()
+BEGIN
+  LOCAL c, V, D, rho, mu, nu, Re, ok;
+  LOCAL res, reg;
+
+  CHOOSE(c, "Numero de Reynolds",
+    "Usar rho y mu: Re = rho*V*D/mu",
+    "Usar nu: Re = V*D/nu",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  IF c == 1 THEN
+    // Entrada con densidad y viscosidad dinamica
+    IF NOT INPUT({V, D, rho, mu},
+        "Reynolds: rho*V*D/mu",
+        {"V (m/s)=", "D (m)=", "rho (kg/m3)=", "mu (Pa*s)="},
+        {"Velocidad media", "Diametro hidraulico", "Densidad del fluido", "Viscosidad dinamica"},
+        {1.0, 0.05, 1000.0, 0.001}) THEN RETURN; END;
+
+    IF V <= 0 THEN MSGBOX("Error: V debe ser mayor que cero."); RETURN; END;
+    IF D <= 0 THEN MSGBOX("Error: D debe ser mayor que cero."); RETURN; END;
+    IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
+    IF mu <= 0 THEN MSGBOX("Error: mu debe ser mayor que cero."); RETURN; END;
+
+    Re := rho * V * D / mu;
+    nu := mu / rho;
+  END;
+
+  IF c == 2 THEN
+    // Entrada con viscosidad cinematica
+    IF NOT INPUT({V, D, nu},
+        "Reynolds: V*D/nu",
+        {"V (m/s)=", "D (m)=", "nu (m2/s)="},
+        {"Velocidad media", "Diametro hidraulico", "Viscosidad cinematica"},
+        {1.0, 0.05, 1E-6}) THEN RETURN; END;
+
+    IF V <= 0 THEN MSGBOX("Error: V debe ser mayor que cero."); RETURN; END;
+    IF D <= 0 THEN MSGBOX("Error: D debe ser mayor que cero."); RETURN; END;
+    IF nu <= 0 THEN MSGBOX("Error: nu debe ser mayor que cero."); RETURN; END;
+
+    Re := V * D / nu;
+    rho := 0; mu := 0;
+  END;
+
+  reg := regimenRe(Re);
+
+  res := "=== NUMERO DE REYNOLDS ===" + CHAR(10);
+  res := res + "Re = " + fmt_(Re) + CHAR(10);
+  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "D  = " + fmt_(D) + " m" + CHAR(10);
+  IF c == 1 THEN
+    res := res + "rho= " + fmt_(rho) + " kg/m3" + CHAR(10);
+    res := res + "mu = " + fmt_(mu) + " Pa*s" + CHAR(10);
+  END;
+  res := res + "nu = " + fmt_(nu) + " m2/s" + CHAR(10);
+  res := res + CHAR(10) + "Regimen: " + reg;
+
+  MSGBOX(res);
+END;
+
+// ---- Numero de Mach ----
+MF_MA()
+BEGIN
+  LOCAL V, k, R, T, a, Ma, ok;
+  LOCAL res, aviso;
+
+  IF NOT INPUT({V, k, R, T},
+      "Numero de Mach",
+      {"V (m/s)=", "k (-)=", "R (J/kg*K)=", "T (K)="},
+      {"Velocidad del fluido", "Razon de calores especificos (aire=1.4)", "Constante del gas (aire=287)", "Temperatura absoluta"},
+      {100.0, 1.4, 287.0, 293.15}) THEN RETURN; END;
+
+  IF V < 0 THEN MSGBOX("Error: V no puede ser negativa."); RETURN; END;
+  IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
+  IF R <= 0 THEN MSGBOX("Error: R debe ser mayor que cero."); RETURN; END;
+  IF T <= 0 THEN MSGBOX("Error: T debe ser mayor que cero (K)."); RETURN; END;
+
+  a := SQRT(k * R * T);
+  Ma := V / a;
+
+  IF Ma < 0.3 THEN
+    aviso := "SUBSÓNICO - Flujo incompresible aceptable (Ma < 0.3)";
+  ELSE
+    IF Ma < 1.0 THEN
+      aviso := "SUBSÓNICO COMPRESIBLE - Efectos de compresibilidad relevantes";
+    ELSE
+      IF Ma == 1.0 THEN
+        aviso := "FLUJO SÓNICO (Ma = 1) - Condicion de garganta";
+      ELSE
+        aviso := "SUPERSONICO (Ma > 1) - Usar relaciones compresibles";
+      END;
+    END;
+  END;
+
+  res := "=== NUMERO DE MACH ===" + CHAR(10);
+  res := res + "Ma = " + fmt_(Ma) + CHAR(10);
+  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "a  = " + fmt_(a) + " m/s  (vel. sonido)" + CHAR(10);
+  res := res + "k  = " + fmt_(k) + CHAR(10);
+  res := res + "R  = " + fmt_(R) + " J/(kg*K)" + CHAR(10);
+  res := res + "T  = " + fmt_(T) + " K" + CHAR(10);
+  res := res + CHAR(10) + aviso;
+
+  MSGBOX(res);
+END;
+
+// ---- Numero de Froude ----
+MF_FR()
+BEGIN
+  LOCAL V, g, L, Fr, ok;
+  LOCAL res, tipo;
+
+  IF NOT INPUT({V, g, L},
+      "Numero de Froude",
+      {"V (m/s)=", "g (m/s2)=", "L (m)="},
+      {"Velocidad caracteristica", "Aceleracion gravitacional", "Longitud caracteristica (tirante hidraulico, etc.)"},
+      {2.0, 9.81, 1.0}) THEN RETURN; END;
+
+  IF V < 0 THEN MSGBOX("Error: V no puede ser negativa."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser mayor que cero."); RETURN; END;
+  IF L <= 0 THEN MSGBOX("Error: L debe ser mayor que cero."); RETURN; END;
+
+  Fr := V / SQRT(g * L);
+
+  IF Fr < 1.0 THEN
+    tipo := "SUBCRITICO (Fr < 1) - Flujo tranquilo";
+  ELSE
+    IF Fr == 1.0 THEN
+      tipo := "CRITICO (Fr = 1)";
+    ELSE
+      tipo := "SUPERCRITICO (Fr > 1) - Flujo rapido";
+    END;
+  END;
+
+  res := "=== NUMERO DE FROUDE ===" + CHAR(10);
+  res := res + "Fr = " + fmt_(Fr) + CHAR(10);
+  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "g  = " + fmt_(g) + " m/s2" + CHAR(10);
+  res := res + "L  = " + fmt_(L) + " m" + CHAR(10);
+  res := res + CHAR(10) + tipo;
+
+  MSGBOX(res);
+END;
+
+// ---- Peso especifico y densidad relativa ----
+MF_PE()
+BEGIN
+  LOCAL rho, g, gamma, SG, ok;
+  LOCAL res;
+
+  IF NOT INPUT({rho, g},
+      "Peso Especifico",
+      {"rho (kg/m3)=", "g (m/s2)="},
+      {"Densidad del fluido", "Aceleracion gravitacional"},
+      {1000.0, 9.81}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser mayor que cero."); RETURN; END;
+
+  gamma := rho * g;           // N/m3
+  SG := rho / 1000.0;         // Densidad relativa respecto al agua a 4 C
+
+  res := "=== PESO ESPECIFICO ===" + CHAR(10);
+  res := res + "gamma = " + fmt_(gamma) + " N/m3" + CHAR(10);
+  res := res + "rho   = " + fmt_(rho) + " kg/m3" + CHAR(10);
+  res := res + "g     = " + fmt_(g) + " m/s2" + CHAR(10);
+  res := res + "SG    = " + fmt_(SG) + "  (dens. relativa vs agua 4 C)";
+
+  MSGBOX(res);
+END;
+
+// ---- Viscosidad cinematica ----
+MF_VC()
+BEGIN
+  LOCAL mu, rho, nu, ok;
+  LOCAL res;
+
+  IF NOT INPUT({mu, rho},
+      "Viscosidad Cinematica",
+      {"mu (Pa*s)=", "rho (kg/m3)="},
+      {"Viscosidad dinamica", "Densidad del fluido"},
+      {0.001, 1000.0}) THEN RETURN; END;
+
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser mayor que cero."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
+
+  nu := mu / rho;
+
+  res := "=== VISCOSIDAD CINEMATICA ===" + CHAR(10);
+  res := res + "nu = mu/rho" + CHAR(10);
+  res := res + "nu = " + fmt_(nu) + " m2/s" + CHAR(10);
+  res := res + "nu = " + fmt_(nu * 1E6) + " x10^-6 m2/s" + CHAR(10);
+  res := res + "nu = " + fmt_(nu * 1E4) + " cSt  (centiStokes)" + CHAR(10);
+  res := res + "mu = " + fmt_(mu) + " Pa*s" + CHAR(10);
+  res := res + "rho= " + fmt_(rho) + " kg/m3";
+
+  MSGBOX(res);
+END;
+
+// ---- Presion dinamica ----
+MF_PD()
+BEGIN
+  LOCAL rho, V, q, ok;
+  LOCAL res;
+
+  IF NOT INPUT({rho, V},
+      "Presion Dinamica",
+      {"rho (kg/m3)=", "V (m/s)="},
+      {"Densidad del fluido", "Velocidad del fluido"},
+      {1000.0, 1.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
+  IF V < 0 THEN MSGBOX("Error: V no puede ser negativa."); RETURN; END;
+
+  q := 0.5 * rho * V ^ 2;
+
+  res := "=== PRESION DINAMICA ===" + CHAR(10);
+  res := res + "q = 0.5*rho*V^2" + CHAR(10);
+  res := res + "q = " + fmt_(q) + " Pa" + CHAR(10);
+  res := res + "q = " + fmt_(q / 1000) + " kPa" + CHAR(10);
+  res := res + "V = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "rho= " + fmt_(rho) + " kg/m3";
+
+  MSGBOX(res);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_PROPS()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "PROPIEDADES Y NUM. ADIM.",
+      "1. Numero de Reynolds",
+      "2. Numero de Mach",
+      "3. Numero de Froude",
+      "4. Peso Especifico",
+      "5. Viscosidad Cinematica",
+      "6. Presion Dinamica",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 7 THEN RETURN; END;
+    IF c == 1 THEN MF_RE(); END;
+    IF c == 2 THEN MF_MA(); END;
+    IF c == 3 THEN MF_FR(); END;
+    IF c == 4 THEN MF_PE(); END;
+    IF c == 5 THEN MF_VC(); END;
+    IF c == 6 THEN MF_PD(); END;
+  END;
+END;

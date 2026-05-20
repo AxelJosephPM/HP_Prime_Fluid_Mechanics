@@ -1,0 +1,444 @@
+// ============================================================
+// MF_CAS.hpprgm
+// FLUIDOS PRIME v1.0 - Herramientas CAS Simbolicas
+// HP Prime G2
+// ============================================================
+// Estas funciones invocan el motor CAS de HP Prime desde PPL
+// usando la funcion CAS() que evalua expresiones simbolicas.
+//
+// Sintaxis HP PPL: CAS("expresion_cas")
+//   - Retorna el resultado como objeto CAS
+//   - Para convertir a string: STRING(CAS("..."))
+//
+// Contenido:
+//   MF_CAS()         - Menu principal (EXPORT)
+//   MF_CAS_SOLV()    - Resolver ecuacion para variable
+//   MF_CAS_SIMP()    - Simplificar expresion
+//   MF_CAS_DIFF()    - Derivar expresion
+//   MF_CAS_INTG()    - Integrar expresion
+//   MF_CAS_KIN()     - Cinematica: div, rot, aceleracion material
+//   MF_CAS_FLOW()    - Caudal integral Q = int u(r)*2pi*r dr
+//   MF_CAS_EQSOLV()  - Resolver ecuacion de fluidos predefinida
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// ---- Resolver expresion = 0 para una variable ----
+MF_CAS_SOLV()
+BEGIN
+  LOCAL expr, var, sol, res;
+  LOCAL ok;
+
+  // Pedir expresion y variable
+  IF NOT INPUT({expr, var},
+      "CAS: Resolver Ecuacion",
+      {"Ecuacion (igualada a 0)=", "Variable a despejar="},
+      {"Escriba la expresion (sin igual): ej. P1/(rho*g)+V1^2/(2*g)+z1-P2/(rho*g)-V2^2/(2*g)-z2-hL", "Variable a despejar: ej. P2"},
+      {"P1/(rho*g)+V1^2/(2*g)+z1-P2/(rho*g)-V2^2/(2*g)-z2-hL", "P2"}) THEN RETURN; END;
+
+  IF expr == "" OR var == "" THEN
+    MSGBOX("Error: Debe ingresar la expresion y la variable.");
+    RETURN;
+  END;
+
+  // Llamada al motor CAS
+  IFERR
+    sol := CAS("solve(" + expr + "=0," + var + ")");
+    res := "=== CAS: RESULTADO ===" + CHAR(10);
+    res := res + var + " = " + STRING(sol);
+    MSGBOX(res);
+  THEN
+    MSGBOX("Error CAS: No se pudo resolver." + CHAR(10) + "Verifique la expresion y la variable.");
+  END;
+END;
+
+// ---- Simplificar expresion ----
+MF_CAS_SIMP()
+BEGIN
+  LOCAL expr, sol, res;
+
+  IF NOT INPUT(expr,
+      "CAS: Simplificar",
+      "Expresion=",
+      "Ingrese la expresion a simplificar (ej. (x^2-1)/(x-1))",
+      "(sin(x)^2+cos(x)^2)") THEN RETURN; END;
+
+  IF expr == "" THEN MSGBOX("Error: Ingrese una expresion."); RETURN; END;
+
+  IFERR
+    sol := CAS("simplify(" + expr + ")");
+    res := "=== CAS: SIMPLIFICACION ===" + CHAR(10);
+    res := res + "Entrada: " + expr + CHAR(10);
+    res := res + "Resultado: " + STRING(sol);
+    MSGBOX(res);
+  THEN
+    MSGBOX("Error CAS: No se pudo simplificar." + CHAR(10) + "Verifique la expresion.");
+  END;
+END;
+
+// ---- Derivar expresion ----
+MF_CAS_DIFF()
+BEGIN
+  LOCAL expr, var, sol, res, n;
+
+  IF NOT INPUT({expr, var, n},
+      "CAS: Derivar",
+      {"Expresion=", "Variable=", "Orden (1,2,...)="},
+      {"Expresion a derivar (ej. u_max*(1-r^2/R^2))", "Variable de derivacion (ej. r)", "Orden de la derivada"},
+      {"u_max*(1-r^2/R^2)", "r", 1}) THEN RETURN; END;
+
+  IF expr == "" OR var == "" THEN MSGBOX("Error: Complete todos los campos."); RETURN; END;
+  IF n <= 0 THEN MSGBOX("Error: El orden debe ser al menos 1."); RETURN; END;
+
+  IFERR
+    LOCAL ord;
+    ord := IP(n);
+    sol := CAS("diff(" + expr + "," + var + "," + STRING(ord) + ")");
+    res := "=== CAS: DERIVADA ===" + CHAR(10);
+    res := res + "d^" + STRING(ord) + "(" + expr + ")/d" + var + "^" + STRING(ord) + CHAR(10);
+    res := res + "= " + STRING(sol);
+    MSGBOX(res);
+  THEN
+    MSGBOX("Error CAS: No se pudo derivar." + CHAR(10) + "Verifique la expresion.");
+  END;
+END;
+
+// ---- Integrar expresion ----
+MF_CAS_INTG()
+BEGIN
+  LOCAL c;
+  CHOOSE(c, "CAS: Integrar",
+    "Integral indefinida",
+    "Integral definida",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  LOCAL expr, var, sol, res;
+
+  IF c == 1 THEN
+    IF NOT INPUT({expr, var},
+        "CAS: Integral Indefinida",
+        {"Expresion=", "Variable="},
+        {"Expresion a integrar (ej. r^2)", "Variable de integracion (ej. r)"},
+        {"r^2", "r"}) THEN RETURN; END;
+
+    IF expr == "" OR var == "" THEN MSGBOX("Error: Complete todos los campos."); RETURN; END;
+
+    IFERR
+      sol := CAS("int(" + expr + "," + var + ")");
+      res := "=== CAS: INTEGRAL INDEFINIDA ===" + CHAR(10);
+      res := res + "integral(" + expr + ")d" + var + " = " + STRING(sol) + " + C";
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS. Verifique la expresion.");
+    END;
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    LOCAL a, b;
+    IF NOT INPUT({expr, var, a, b},
+        "CAS: Integral Definida",
+        {"Expresion=", "Variable=", "Limite inf.=", "Limite sup.="},
+        {"Expresion (ej. u_max*(1-r^2/R^2)*2*pi*r)", "Variable (ej. r)", "Limite inferior (ej. 0)", "Limite superior (ej. R)"},
+        {"u_max*(1-r^2/R^2)*2*pi*r", "r", "0", "R"}) THEN RETURN; END;
+
+    IF expr == "" OR var == "" THEN MSGBOX("Error: Complete todos los campos."); RETURN; END;
+
+    IFERR
+      sol := CAS("int(" + expr + "," + var + "," + a + "," + b + ")");
+      res := "=== CAS: INTEGRAL DEFINIDA ===" + CHAR(10);
+      res := res + "integral_[" + a + "," + b + "] " + expr + " d" + var + CHAR(10);
+      res := res + "= " + STRING(sol);
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS. Verifique la expresion y los limites.");
+    END;
+  END;
+END;
+
+// ---- Cinematica de fluidos: div, rot, aceleracion material ----
+MF_CAS_KIN()
+BEGIN
+  LOCAL u, v, x, y, t, sol, res;
+  LOCAL c;
+
+  CHOOSE(c, "CAS: Cinematica 2D",
+    "Divergencia div(V)",
+    "Vorticidad (rot_z)",
+    "Aceleracion material (ax, ay)",
+    "Volver");
+  IF c == 0 OR c == 4 THEN RETURN; END;
+
+  IF NOT INPUT({u, v},
+      "Campo de Velocidades 2D",
+      {"u(x,y,t)=", "v(x,y,t)="},
+      {"Componente x de velocidad (ej. 2*x+y)", "Componente y de velocidad (ej. x-2*y)"},
+      {"2*x+y", "x-2*y"}) THEN RETURN; END;
+
+  IF u == "" OR v == "" THEN MSGBOX("Error: Ingrese ambas componentes."); RETURN; END;
+
+  IF c == 1 THEN
+    // div(V) = du/dx + dv/dy
+    IFERR
+      LOCAL dudx, dvdy, div_;
+      dudx := CAS("diff(" + u + ",x)");
+      dvdy := CAS("diff(" + v + ",y)");
+      div_ := CAS("simplify((" + STRING(dudx) + ")+(" + STRING(dvdy) + "))");
+      res := "=== DIVERGENCIA del Campo ===" + CHAR(10);
+      res := res + "u = " + u + CHAR(10);
+      res := res + "v = " + v + CHAR(10);
+      res := res + "du/dx  = " + STRING(dudx) + CHAR(10);
+      res := res + "dv/dy  = " + STRING(dvdy) + CHAR(10);
+      res := res + "div(V) = " + STRING(div_);
+      IF STRING(div_) == "0" THEN
+        res := res + CHAR(10) + "→ Fluido incompresible (div=0)";
+      ELSE
+        res := res + CHAR(10) + "→ Fluido compresible (div ≠ 0)";
+      END;
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS en calculo de divergencia.");
+    END;
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    // omega_z = dv/dx - du/dy
+    IFERR
+      LOCAL dvdx, dudy, omega;
+      dvdx := CAS("diff(" + v + ",x)");
+      dudy := CAS("diff(" + u + ",y)");
+      omega := CAS("simplify((" + STRING(dvdx) + ")-(" + STRING(dudy) + "))");
+      res := "=== VORTICIDAD (componente z) ===" + CHAR(10);
+      res := res + "u = " + u + CHAR(10);
+      res := res + "v = " + v + CHAR(10);
+      res := res + "dv/dx     = " + STRING(dvdx) + CHAR(10);
+      res := res + "du/dy     = " + STRING(dudy) + CHAR(10);
+      res := res + "omega_z   = " + STRING(omega);
+      IF STRING(omega) == "0" THEN
+        res := res + CHAR(10) + "→ Flujo irrotacional";
+      ELSE
+        res := res + CHAR(10) + "→ Flujo rotacional";
+      END;
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS en calculo de vorticidad.");
+    END;
+    RETURN;
+  END;
+
+  IF c == 3 THEN
+    // a_x = du/dt + u*du/dx + v*du/dy
+    // a_y = dv/dt + u*dv/dx + v*dv/dy
+    IFERR
+      LOCAL dudt, dudx2, dudy2, dvdt, dvdx2, dvdy2, ax, ay;
+      dudt := CAS("diff(" + u + ",t)");
+      dudx2 := CAS("diff(" + u + ",x)");
+      dudy2 := CAS("diff(" + u + ",y)");
+      dvdt := CAS("diff(" + v + ",t)");
+      dvdx2 := CAS("diff(" + v + ",x)");
+      dvdy2 := CAS("diff(" + v + ",y)");
+
+      ax := CAS("simplify((" + STRING(dudt) + ")+(" + u + ")*(" + STRING(dudx2) + ")+(" + v + ")*(" + STRING(dudy2) + "))");
+      ay := CAS("simplify((" + STRING(dvdt) + ")+(" + u + ")*(" + STRING(dvdx2) + ")+(" + v + ")*(" + STRING(dvdy2) + "))");
+
+      res := "=== ACELERACION MATERIAL 2D ===" + CHAR(10);
+      res := res + "u = " + u + CHAR(10);
+      res := res + "v = " + v + CHAR(10);
+      res := res + "a_x = du/dt + u*du/dx + v*du/dy" + CHAR(10);
+      res := res + "a_x = " + STRING(ax) + CHAR(10);
+      res := res + "a_y = dv/dt + u*dv/dx + v*dv/dy" + CHAR(10);
+      res := res + "a_y = " + STRING(ay);
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS en aceleracion material.");
+    END;
+  END;
+END;
+
+// ---- Caudal por integracion de perfil de velocidad ----
+MF_CAS_FLOW()
+BEGIN
+  LOCAL c;
+  CHOOSE(c, "CAS: Caudal integral",
+    "Perfil de Poiseuille (parabólico)",
+    "Perfil uniforme",
+    "Perfil personalizado",
+    "Volver");
+  IF c == 0 OR c == 4 THEN RETURN; END;
+
+  LOCAL R, sol, res, Q, Vmean;
+
+  IF c == 1 THEN
+    // Perfil Poiseuille: u(r) = umax*(1 - r^2/R^2)
+    // Q = int_0^R u(r)*2pi*r dr = pi*R^2*umax/2
+    IF NOT INPUT({R},
+        "Perfil de Poiseuille",
+        {"R (m)="},
+        {"Radio de la tuberia"},
+        {0.05}) THEN RETURN; END;
+    IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
+
+    IFERR
+      // CAS no necesita umax especifico, retorna simbolico
+      sol := CAS("simplify(int(u_max*(1-(r^2/R^2))*2*pi*r,r,0,R))");
+      LOCAL Qsym;
+      Qsym := STRING(sol);
+      // Para R numerico, calcular numericamente tambien
+      // Q = pi*R^2*umax/2 (resultado analitico conocido)
+      res := "=== CAUDAL - PERFIL POISEUILLE ===" + CHAR(10);
+      res := res + "u(r) = u_max*(1 - r^2/R^2)" + CHAR(10);
+      res := res + "Q = int_0^R u*2pi*r dr" + CHAR(10);
+      res := res + "Q = " + Qsym + CHAR(10);
+      res := res + CHAR(10) + "Para R = " + fmt_(R) + " m:" + CHAR(10);
+      res := res + "Q = (pi/2)*u_max*R^2" + CHAR(10);
+      res := res + "Q = " + fmt_(π / 2 * R ^ 2) + " * u_max  [m3/s]" + CHAR(10);
+      res := res + "V_media = u_max/2  (la mitad de la vel. max)";
+      MSGBOX(res);
+    THEN
+      // Fallback sin CAS si falla
+      LOCAL Qnum;
+      Qnum := π / 2 * R ^ 2;
+      res := "=== CAUDAL - PERFIL POISEUILLE ===" + CHAR(10);
+      res := res + "Q = (pi/2) * u_max * R^2" + CHAR(10);
+      res := res + "Q = " + fmt_(Qnum) + " * u_max  [m3/s]" + CHAR(10);
+      res := res + "V_media = u_max / 2";
+      MSGBOX(res);
+    END;
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    // Perfil uniforme: u(r) = U  => Q = pi*R^2*U
+    IF NOT INPUT({R},
+        "Perfil Uniforme",
+        {"R (m)="},
+        {"Radio de la tuberia"},
+        {0.05}) THEN RETURN; END;
+    IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
+
+    LOCAL A2;
+    A2 := π * R ^ 2;
+    res := "=== CAUDAL - PERFIL UNIFORME ===" + CHAR(10);
+    res := res + "u(r) = U (constante)" + CHAR(10);
+    res := res + "Q = U * pi * R^2 = U * A" + CHAR(10);
+    res := res + "A = " + fmt_(A2) + " m2" + CHAR(10);
+    res := res + "Q = " + fmt_(A2) + " * U  [m3/s]" + CHAR(10);
+    res := res + "V_media = U";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 3 THEN
+    LOCAL ur;
+    IF NOT INPUT({ur, R},
+        "Perfil Personalizado",
+        {"u(r)=", "R (m)="},
+        {"Expresion de u en funcion de r (variable: r)", "Radio maximo de integracion"},
+        {"u_max*(1-(r/R)^(1/7))", "0.05"}) THEN RETURN; END;
+
+    IF ur == "" THEN MSGBOX("Error: Ingrese la expresion de u(r)."); RETURN; END;
+
+    IFERR
+      sol := CAS("simplify(int((" + ur + ")*2*pi*r,r,0," + R + "))");
+      res := "=== CAUDAL - PERFIL PERSONALIZADO ===" + CHAR(10);
+      res := res + "u(r) = " + ur + CHAR(10);
+      res := res + "Q = int_0^" + R + " u(r)*2pi*r dr" + CHAR(10);
+      res := res + "Q = " + STRING(sol) + " m3/s";
+      MSGBOX(res);
+    THEN
+      MSGBOX("Error CAS en integracion del perfil." + CHAR(10) + "Verifique que u(r) sea valida.");
+    END;
+  END;
+END;
+
+// ---- Resolver ecuacion de fluidos predefinida ----
+MF_CAS_EQSOLV()
+BEGIN
+  LOCAL c, sol, res, var;
+
+  CHOOSE(c, "CAS: Ecuaciones Predefinidas",
+    "Bernoulli ideal (despejar P2)",
+    "Darcy-Weisbach (despejar hf)",
+    "Reynolds (despejar V)",
+    "Hidrostatica (despejar h)",
+    "Mach (despejar M)",
+    "Volver");
+  IF c == 0 OR c == 6 THEN RETURN; END;
+
+  LOCAL eq, vdes;
+
+  IF c == 1 THEN
+    eq := "P1/(rho*g)+V1^2/(2*g)+z1-P2/(rho*g)-V2^2/(2*g)-z2";
+    vdes := "P2";
+  END;
+  IF c == 2 THEN
+    eq := "hf-f*(L/D)*V^2/(2*g)";
+    vdes := "hf";
+  END;
+  IF c == 3 THEN
+    eq := "Re-rho*V*D/mu";
+    vdes := "V";
+  END;
+  IF c == 4 THEN
+    eq := "P-P0-rho*g*h";
+    vdes := "h";
+  END;
+  IF c == 5 THEN
+    eq := "Ma-V/sqrt(k*R*T)";
+    vdes := "Ma";
+  END;
+
+  IFERR
+    sol := CAS("solve(" + eq + "=0," + vdes + ")");
+    res := "=== CAS: Ecuacion ===" + CHAR(10);
+    res := res + eq + " = 0" + CHAR(10);
+    res := res + "Despejando: " + vdes + CHAR(10);
+    res := res + CHAR(10) + vdes + " = " + STRING(sol);
+    MSGBOX(res);
+  THEN
+    res := "CAS: Solucion para " + vdes + ":" + CHAR(10);
+    // Mostrar resultado analitico conocido como alternativa
+    IF c == 1 THEN res := res + "P2 = P1 + rho*g*(V1^2-V2^2)/2 + rho*g*(z1-z2)"; END;
+    IF c == 2 THEN res := res + "hf = f*(L/D)*V^2/(2*g)"; END;
+    IF c == 3 THEN res := res + "V = Re*mu/(rho*D)"; END;
+    IF c == 4 THEN res := res + "h = (P-P0)/(rho*g)"; END;
+    IF c == 5 THEN res := res + "Ma = V/sqrt(k*R*T)"; END;
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_CAS()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "HERRAMIENTAS CAS",
+      "1. Resolver Ecuacion",
+      "2. Simplificar Expresion",
+      "3. Derivar Expresion",
+      "4. Integrar Expresion",
+      "5. Cinematica 2D (div/rot/aceleracion)",
+      "6. Caudal por Integracion",
+      "7. Ecuaciones Predefinidas",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_CAS_SOLV(); END;
+    IF c == 2 THEN MF_CAS_SIMP(); END;
+    IF c == 3 THEN MF_CAS_DIFF(); END;
+    IF c == 4 THEN MF_CAS_INTG(); END;
+    IF c == 5 THEN MF_CAS_KIN(); END;
+    IF c == 6 THEN MF_CAS_FLOW(); END;
+    IF c == 7 THEN MF_CAS_EQSOLV(); END;
+  END;
+END;

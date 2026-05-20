@@ -1,0 +1,94 @@
+// ============================================================
+// FLUIDOS PRIME v1.0
+// Herramientas de Mecanica de Fluidos - Universidad
+// Compatible con HP Prime G2 / Connectivity Kit
+// Modulo: Menu principal
+//
+// Uso: Ejecutar FLUIDOS() desde la calculadora.
+// Todos los demas modulos deben estar instalados.
+// ============================================================
+
+// Punto de entrada principal del programa
+EXPORT FLUIDOS()
+BEGIN
+  LOCAL c, conf;
+  WHILE 1 DO
+    CHOOSE(c,
+      "=== FLUIDOS PRIME v1.0 ===",
+      "1. Propiedades y Num. Adim.",
+      "2. Manometros y Presiones",
+      "3. Hidrostatica",
+      "4. Flotabilidad y Empuje",
+      "5. Ecuacion de Bernoulli",
+      "6. Flujo en Tuberias",
+      "7. Bombas y Cavitacion",
+      "8. Flujo Compresible",
+      "9. Herramientas CAS",
+      "10. Convertidor de Unidades",
+      "11. Ayuda Rapida",
+      "0. SALIR");
+
+    // ESC o seleccion de SALIR (item 12)
+    IF c == 0 OR c == 12 THEN
+      CHOOSE(conf, "Salir de FLUIDOS PRIME?",
+        "Si, salir", "No, volver al menu");
+      IF conf == 1 THEN RETURN; END;
+    END;
+
+    IF c == 1 THEN
+      IFERR MF_PROPS();
+      THEN MSGBOX("Modulo MF_PROPS no encontrado." + CHAR(10) + "Instale todos los modulos.");
+      END;
+    END;
+    IF c == 2 THEN
+      IFERR MF_MANO();
+      THEN MSGBOX("Modulo MF_MANO no encontrado.");
+      END;
+    END;
+    IF c == 3 THEN
+      IFERR MF_HYDRO();
+      THEN MSGBOX("Modulo MF_HYDRO no encontrado.");
+      END;
+    END;
+    IF c == 4 THEN
+      IFERR MF_BUOY();
+      THEN MSGBOX("Modulo MF_BUOY no encontrado.");
+      END;
+    END;
+    IF c == 5 THEN
+      IFERR MF_BERN();
+      THEN MSGBOX("Modulo MF_BERN no encontrado.");
+      END;
+    END;
+    IF c == 6 THEN
+      IFERR MF_PIPES();
+      THEN MSGBOX("Modulo MF_PIPES no encontrado.");
+      END;
+    END;
+    IF c == 7 THEN
+      IFERR MF_PUMPS();
+      THEN MSGBOX("Modulo MF_PUMPS no encontrado.");
+      END;
+    END;
+    IF c == 8 THEN
+      IFERR MF_COMP();
+      THEN MSGBOX("Modulo MF_COMP no encontrado.");
+      END;
+    END;
+    IF c == 9 THEN
+      IFERR MF_CAS();
+      THEN MSGBOX("Modulo MF_CAS no encontrado.");
+      END;
+    END;
+    IF c == 10 THEN
+      IFERR MF_UNITS();
+      THEN MSGBOX("Modulo MF_UNITS no encontrado.");
+      END;
+    END;
+    IF c == 11 THEN
+      IFERR MF_HELP();
+      THEN MSGBOX("Modulo MF_HELP no encontrado.");
+      END;
+    END;
+  END;
+END;

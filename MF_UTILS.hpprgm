@@ -1,0 +1,416 @@
+// ============================================================
+// MF_UTILS.hpprgm
+// FLUIDOS PRIME v1.0 - Convertidor de Unidades y Ayuda
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_UNITS()     - Convertidor de unidades (EXPORT)
+//   MF_HELP()      - Ayuda rapida del programa (EXPORT)
+//   Sub-modulos de conversion:
+//     MF_U_PRES()  - Presion
+//     MF_U_CAUD()  - Caudal
+//     MF_U_VISC()  - Viscosidad dinamica
+//     MF_U_LONG()  - Longitud
+//     MF_U_TEMP()  - Temperatura
+//     MF_U_ENER()  - Energia / Potencia
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 6));
+END;
+
+// ---- Conversion de presion ----
+MF_U_PRES()
+BEGIN
+  LOCAL val, uc, Pa_val, res;
+  CHOOSE(uc, "Presion: Unidad de entrada",
+    "Pa (Pascal)",
+    "kPa",
+    "bar",
+    "atm",
+    "mmHg",
+    "psi",
+    "Volver");
+  IF uc == 0 OR uc == 7 THEN RETURN; END;
+
+  IF NOT INPUT(val, "Valor a convertir", "Valor=", "Ingrese el valor numerico", 101325.0) THEN RETURN; END;
+
+  IF uc == 1 THEN Pa_val := val; END;
+  IF uc == 2 THEN Pa_val := val * 1000; END;
+  IF uc == 3 THEN Pa_val := val * 1E5; END;
+  IF uc == 4 THEN Pa_val := val * 101325; END;
+  IF uc == 5 THEN Pa_val := val * 133.322; END;
+  IF uc == 6 THEN Pa_val := val * 6894.76; END;
+
+  res := "=== EQUIVALENCIAS DE PRESION ===" + CHAR(10);
+  res := res + fmt_(Pa_val) + " Pa" + CHAR(10);
+  res := res + fmt_(Pa_val / 1000) + " kPa" + CHAR(10);
+  res := res + fmt_(Pa_val / 1E5) + " bar" + CHAR(10);
+  res := res + fmt_(Pa_val / 101325) + " atm" + CHAR(10);
+  res := res + fmt_(Pa_val / 133.322) + " mmHg" + CHAR(10);
+  res := res + fmt_(Pa_val / 6894.76) + " psi";
+  MSGBOX(res);
+END;
+
+// ---- Conversion de caudal ----
+MF_U_CAUD()
+BEGIN
+  LOCAL val, uc, m3s_val, res;
+  CHOOSE(uc, "Caudal: Unidad de entrada",
+    "m3/s",
+    "L/s",
+    "L/min",
+    "m3/h",
+    "GPM (galones/min)",
+    "Volver");
+  IF uc == 0 OR uc == 6 THEN RETURN; END;
+
+  IF NOT INPUT(val, "Valor a convertir", "Valor=", "Ingrese el caudal", 0.001) THEN RETURN; END;
+  IF val < 0 THEN MSGBOX("Error: El caudal debe ser no negativo."); RETURN; END;
+
+  IF uc == 1 THEN m3s_val := val; END;
+  IF uc == 2 THEN m3s_val := val / 1000; END;
+  IF uc == 3 THEN m3s_val := val / 60000; END;
+  IF uc == 4 THEN m3s_val := val / 3600; END;
+  IF uc == 5 THEN m3s_val := val * 6.30902E-5; END;  // 1 GPM = 6.309e-5 m3/s
+
+  res := "=== EQUIVALENCIAS DE CAUDAL ===" + CHAR(10);
+  res := res + fmt_(m3s_val) + " m3/s" + CHAR(10);
+  res := res + fmt_(m3s_val * 1000) + " L/s" + CHAR(10);
+  res := res + fmt_(m3s_val * 60000) + " L/min" + CHAR(10);
+  res := res + fmt_(m3s_val * 3600) + " m3/h" + CHAR(10);
+  res := res + fmt_(m3s_val / 6.30902E-5) + " GPM";
+  MSGBOX(res);
+END;
+
+// ---- Conversion de viscosidad dinamica ----
+MF_U_VISC()
+BEGIN
+  LOCAL val, uc, Pas_val, res;
+  CHOOSE(uc, "Viscosidad Din.: Unidad entrada",
+    "Pa*s",
+    "mPa*s (= cP)",
+    "cP (centiPoise)",
+    "P (Poise)",
+    "Volver");
+  IF uc == 0 OR uc == 5 THEN RETURN; END;
+
+  IF NOT INPUT(val, "Valor a convertir", "Valor=", "Ingrese la viscosidad", 1.0) THEN RETURN; END;
+  IF val <= 0 THEN MSGBOX("Error: La viscosidad debe ser positiva."); RETURN; END;
+
+  IF uc == 1 THEN Pas_val := val; END;
+  IF uc == 2 THEN Pas_val := val / 1000; END;
+  IF uc == 3 THEN Pas_val := val / 1000; END;
+  IF uc == 4 THEN Pas_val := val / 10; END;
+
+  res := "=== EQUIVALENCIAS DE VISCOSIDAD ===" + CHAR(10);
+  res := res + fmt_(Pas_val) + " Pa*s" + CHAR(10);
+  res := res + fmt_(Pas_val * 1000) + " mPa*s = cP" + CHAR(10);
+  res := res + fmt_(Pas_val * 10) + " P (Poise)" + CHAR(10);
+  res := res + CHAR(10) + "Agua 20 C : 1.002 cP = 0.001002 Pa*s" + CHAR(10);
+  res := res + "Aceite SAE30: ~110 cP  (aprox. a 40 C)";
+  MSGBOX(res);
+END;
+
+// ---- Conversion de longitud ----
+MF_U_LONG()
+BEGIN
+  LOCAL val, uc, m_val, res;
+  CHOOSE(uc, "Longitud: Unidad de entrada",
+    "m (metro)",
+    "cm",
+    "mm",
+    "in (pulgada)",
+    "ft (pie)",
+    "Volver");
+  IF uc == 0 OR uc == 6 THEN RETURN; END;
+
+  IF NOT INPUT(val, "Valor a convertir", "Valor=", "Ingrese la longitud", 1.0) THEN RETURN; END;
+
+  IF uc == 1 THEN m_val := val; END;
+  IF uc == 2 THEN m_val := val / 100; END;
+  IF uc == 3 THEN m_val := val / 1000; END;
+  IF uc == 4 THEN m_val := val * 0.0254; END;
+  IF uc == 5 THEN m_val := val * 0.3048; END;
+
+  res := "=== EQUIVALENCIAS DE LONGITUD ===" + CHAR(10);
+  res := res + fmt_(m_val) + " m" + CHAR(10);
+  res := res + fmt_(m_val * 100) + " cm" + CHAR(10);
+  res := res + fmt_(m_val * 1000) + " mm" + CHAR(10);
+  res := res + fmt_(m_val / 0.0254) + " in" + CHAR(10);
+  res := res + fmt_(m_val / 0.3048) + " ft";
+  MSGBOX(res);
+END;
+
+// ---- Conversion de temperatura ----
+MF_U_TEMP()
+BEGIN
+  LOCAL val, uc, K_val, res;
+  CHOOSE(uc, "Temperatura: Unidad entrada",
+    "K (Kelvin)",
+    "C (Celsius)",
+    "F (Fahrenheit)",
+    "R (Rankine)",
+    "Volver");
+  IF uc == 0 OR uc == 5 THEN RETURN; END;
+
+  IF NOT INPUT(val, "Valor a convertir", "Valor=", "Ingrese la temperatura", 293.15) THEN RETURN; END;
+
+  IF uc == 1 THEN K_val := val; END;
+  IF uc == 2 THEN K_val := val + 273.15; END;
+  IF uc == 3 THEN K_val := (val + 459.67) * 5 / 9; END;
+  IF uc == 4 THEN K_val := val * 5 / 9; END;
+
+  IF K_val < 0 THEN MSGBOX("Error: Temperatura en Kelvin negativa. Imposible fisicamente."); RETURN; END;
+
+  res := "=== EQUIVALENCIAS DE TEMPERATURA ===" + CHAR(10);
+  res := res + fmt_(K_val) + " K" + CHAR(10);
+  res := res + fmt_(K_val - 273.15) + " C" + CHAR(10);
+  res := res + fmt_(K_val * 9 / 5 - 459.67) + " F" + CHAR(10);
+  res := res + fmt_(K_val * 9 / 5) + " R (Rankine)";
+  MSGBOX(res);
+END;
+
+// ---- Conversion de energia y potencia ----
+MF_U_ENER()
+BEGIN
+  LOCAL c;
+  CHOOSE(c, "Energia / Potencia",
+    "Energia",
+    "Potencia",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  LOCAL val, uc, val_base, res;
+
+  IF c == 1 THEN
+    CHOOSE(uc, "Energia: Unidad entrada",
+      "J (Joule)",
+      "kJ",
+      "Wh",
+      "kWh",
+      "kcal",
+      "BTU",
+      "Volver");
+    IF uc == 0 OR uc == 7 THEN RETURN; END;
+    IF NOT INPUT(val, "Energia a convertir", "Valor=", "", 1000.0) THEN RETURN; END;
+    IF uc == 1 THEN val_base := val; END;
+    IF uc == 2 THEN val_base := val * 1000; END;
+    IF uc == 3 THEN val_base := val * 3600; END;
+    IF uc == 4 THEN val_base := val * 3.6E6; END;
+    IF uc == 5 THEN val_base := val * 4186.8; END;
+    IF uc == 6 THEN val_base := val * 1055.06; END;
+    res := "=== ENERGIA ===" + CHAR(10);
+    res := res + fmt_(val_base) + " J" + CHAR(10);
+    res := res + fmt_(val_base / 1000) + " kJ" + CHAR(10);
+    res := res + fmt_(val_base / 3600) + " Wh" + CHAR(10);
+    res := res + fmt_(val_base / 3.6E6) + " kWh" + CHAR(10);
+    res := res + fmt_(val_base / 4186.8) + " kcal" + CHAR(10);
+    res := res + fmt_(val_base / 1055.06) + " BTU";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    CHOOSE(uc, "Potencia: Unidad entrada",
+      "W (Watt)",
+      "kW",
+      "CV (Caballo de Vapor)",
+      "HP (Horse Power)",
+      "Volver");
+    IF uc == 0 OR uc == 5 THEN RETURN; END;
+    IF NOT INPUT(val, "Potencia a convertir", "Valor=", "", 1000.0) THEN RETURN; END;
+    IF uc == 1 THEN val_base := val; END;
+    IF uc == 2 THEN val_base := val * 1000; END;
+    IF uc == 3 THEN val_base := val * 735.499; END;
+    IF uc == 4 THEN val_base := val * 745.7; END;
+    res := "=== POTENCIA ===" + CHAR(10);
+    res := res + fmt_(val_base) + " W" + CHAR(10);
+    res := res + fmt_(val_base / 1000) + " kW" + CHAR(10);
+    res := res + fmt_(val_base / 735.499) + " CV (Caballo de Vapor)" + CHAR(10);
+    res := res + fmt_(val_base / 745.7) + " HP";
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Menu del convertidor de unidades ----
+EXPORT MF_UNITS()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "CONVERTIDOR DE UNIDADES",
+      "1. Presion",
+      "2. Caudal",
+      "3. Viscosidad Dinamica",
+      "4. Longitud",
+      "5. Temperatura",
+      "6. Energia / Potencia",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 7 THEN RETURN; END;
+    IF c == 1 THEN MF_U_PRES(); END;
+    IF c == 2 THEN MF_U_CAUD(); END;
+    IF c == 3 THEN MF_U_VISC(); END;
+    IF c == 4 THEN MF_U_LONG(); END;
+    IF c == 5 THEN MF_U_TEMP(); END;
+    IF c == 6 THEN MF_U_ENER(); END;
+  END;
+END;
+
+// ---- Pantallas de ayuda ----
+MF_HELP_UNID()
+BEGIN
+  LOCAL res;
+  res := "=== UNIDADES SI USADAS ===" + CHAR(10);
+  res := res + "Longitud    : m" + CHAR(10);
+  res := res + "Masa        : kg" + CHAR(10);
+  res := res + "Tiempo      : s" + CHAR(10);
+  res := res + "Presion     : Pa (= N/m2)" + CHAR(10);
+  res := res + "Temperatura : K (Kelvin)" + CHAR(10);
+  res := res + "Densidad    : kg/m3" + CHAR(10);
+  res := res + "Visc. din.  : Pa*s" + CHAR(10);
+  res := res + "Visc. cin.  : m2/s" + CHAR(10);
+  res := res + "Caudal      : m3/s" + CHAR(10);
+  res := res + "Potencia    : W (= J/s)";
+  MSGBOX(res);
+END;
+
+MF_HELP_PRES()
+BEGIN
+  LOCAL res;
+  res := "=== PRESION: CONVENIOS ===" + CHAR(10);
+  res := res + "P_abs = P_man + P_atm" + CHAR(10);
+  res := res + "P_man = P_abs - P_atm" + CHAR(10);
+  res := res + "P_vac = P_atm - P_abs (cuando P_abs < P_atm)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "P_atm estandar = 101325 Pa" + CHAR(10);
+  res := res + "              = 101.325 kPa" + CHAR(10);
+  res := res + "              = 1.01325 bar" + CHAR(10);
+  res := res + "              = 1 atm" + CHAR(10);
+  res := res + "              = 760 mmHg" + CHAR(10);
+  res := res + "              = 14.696 psi";
+  MSGBOX(res);
+END;
+
+MF_HELP_RE()
+BEGIN
+  LOCAL res;
+  res := "=== REGIMENES DE FLUJO ===" + CHAR(10);
+  res := res + "Re < 2300     : Laminar" + CHAR(10);
+  res := res + "2300-4000     : Transicional" + CHAR(10);
+  res := res + "Re > 4000     : Turbulento" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Laminar: f = 64/Re (Hagen-Poiseuille)" + CHAR(10);
+  res := res + "Turbulento: f = Swamee-Jain o Colebrook" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Re = rho*V*D/mu = V*D/nu";
+  MSGBOX(res);
+END;
+
+MF_HELP_BERN()
+BEGIN
+  LOCAL res;
+  res := "=== ECUACION DE BERNOULLI ===" + CHAR(10);
+  res := res + "P1/rg + V1^2/2g + z1 + h_bom" + CHAR(10);
+  res := res + "= P2/rg + V2^2/2g + z2 + h_tur + hL" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Terminos en metros de columna de fluido:" + CHAR(10);
+  res := res + "P/rg   : altura de presion" + CHAR(10);
+  res := res + "V^2/2g : altura de velocidad" + CHAR(10);
+  res := res + "z      : altura geometrica" + CHAR(10);
+  res := res + "hL     : perdidas totales (mayor+menor)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "hL mayor = f*(L/D)*V^2/2g  (Darcy)" + CHAR(10);
+  res := res + "hL menor = K*V^2/2g";
+  MSGBOX(res);
+END;
+
+MF_HELP_COMP()
+BEGIN
+  LOCAL res;
+  res := "=== FLUJO COMPRESIBLE ===" + CHAR(10);
+  res := res + "Ma = V/a  (a = sqrt(k*R*T))" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Ma < 0.3 : Compresibilidad despreciable" + CHAR(10);
+  res := res + "Ma < 1   : Subsonico" + CHAR(10);
+  res := res + "Ma = 1   : Sonico (garganta)" + CHAR(10);
+  res := res + "Ma > 1   : Supersonico" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Relaciones isentropicas:" + CHAR(10);
+  res := res + "T0/T = 1+(k-1)/2*M^2" + CHAR(10);
+  res := res + "P0/P = (T0/T)^(k/(k-1))" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Onda de choque: M1 > 1  =>  M2 < 1";
+  MSGBOX(res);
+END;
+
+MF_HELP_CAVI()
+BEGIN
+  LOCAL res;
+  res := "=== CAVITACION ===" + CHAR(10);
+  res := res + "Cavitacion: formacion de burbujas de vapor" + CHAR(10);
+  res := res + "cuando la presion local cae a P_vapor." + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "NPSHa: disponible (calculado del sistema)" + CHAR(10);
+  res := res + "NPSHr: requerido (dato del fabricante)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Condicion: NPSHa > NPSHr + margen (0.5-1 m)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "NPSHa = Patm/rg - Pv/rg + z_res - hL_s" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Pv agua: 2340 Pa a 20 C, 101325 Pa a 100 C";
+  MSGBOX(res);
+END;
+
+MF_HELP_PROPF()
+BEGIN
+  LOCAL res;
+  res := "=== PROPIEDADES TIPICAS ===" + CHAR(10);
+  res := res + "AGUA a 20 C:" + CHAR(10);
+  res := res + "  rho = 998.2 kg/m3" + CHAR(10);
+  res := res + "  mu  = 0.001002 Pa*s" + CHAR(10);
+  res := res + "  nu  = 1.004e-6 m2/s" + CHAR(10);
+  res := res + "  Pv  = 2340 Pa (abs.)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "AIRE a 20 C, 1 atm:" + CHAR(10);
+  res := res + "  rho = 1.204 kg/m3" + CHAR(10);
+  res := res + "  mu  = 1.82e-5 Pa*s" + CHAR(10);
+  res := res + "  k   = 1.4, R = 287 J/kg*K" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "MERCURIO (Hg) a 20 C:" + CHAR(10);
+  res := res + "  rho = 13600 kg/m3";
+  MSGBOX(res);
+END;
+
+// ---- Menu principal de ayuda ----
+EXPORT MF_HELP()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "AYUDA RAPIDA - FLUIDOS PRIME",
+      "1. Unidades del Sistema SI",
+      "2. Presion: Tipos y Conversion",
+      "3. Regimenes de Flujo (Reynolds)",
+      "4. Ecuacion de Bernoulli",
+      "5. Flujo Compresible (Mach)",
+      "6. Cavitacion (NPSH)",
+      "7. Propiedades de Fluidos Tipicos",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_HELP_UNID(); END;
+    IF c == 2 THEN MF_HELP_PRES(); END;
+    IF c == 3 THEN MF_HELP_RE(); END;
+    IF c == 4 THEN MF_HELP_BERN(); END;
+    IF c == 5 THEN MF_HELP_COMP(); END;
+    IF c == 6 THEN MF_HELP_CAVI(); END;
+    IF c == 7 THEN MF_HELP_PROPF(); END;
+  END;
+END;
