@@ -30,7 +30,7 @@ END;
 MF_BERN_P2()
 BEGIN
   LOCAL P1, V1, z1, V2, z2, hL, hbomba, hturb, rho, g, a1, a2;
-  LOCAL H1, H2, P2, res;
+  LOCAL H1, H2, P2, rhs, res;
 
   IF NOT INPUT({P1, V1, z1, V2, z2, hL, hbomba, hturb, rho, g},
       "Bernoulli: Hallar P2",
@@ -52,7 +52,6 @@ BEGIN
   //
   // P2/(rho*g) = P1/(rho*g) + a1*V1^2/(2g) + z1 + hbomba - a2*V2^2/(2g) - z2 - hturb - hL
 
-  LOCAL rhs;
   rhs := P1/(rho*g) + a1*V1^2/(2*g) + z1 + hbomba - a2*V2^2/(2*g) - z2 - hturb - hL;
   P2 := rhs * rho * g;
 
@@ -190,7 +189,7 @@ END;
 // V2 = sqrt(2*g*(z1-z2) + V1^2)  con V1≈0 para recipiente grande
 MF_BERN_V2()
 BEGIN
-  LOCAL z1, z2, P1, P2, rho, g, V2, dh, res;
+  LOCAL z1, z2, P1, P2, rho, g, V2, dh, bajo_raiz, res;
 
   IF NOT INPUT({z1, z2, P1, P2, rho, g},
       "Velocidad de Salida",
@@ -204,7 +203,6 @@ BEGIN
   // V1 ≈ 0 (recipiente grande), sin perdidas, alpha=1
   // P1/(rg) + z1 = P2/(rg) + V2^2/(2g) + z2
   // V2^2 = 2g*[ (P1-P2)/(rg) + (z1-z2) ]
-  LOCAL bajo_raiz;
   bajo_raiz := 2*g * ((P1 - P2)/(rho*g) + (z1 - z2));
 
   IF bajo_raiz < 0 THEN

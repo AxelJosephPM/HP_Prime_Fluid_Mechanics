@@ -56,7 +56,7 @@ END;
 // ---- Velocidad del sonido ----
 MF_COMP_SONIDO()
 BEGIN
-  LOCAL k, R, T, a, res;
+  LOCAL k, R, T, a, res2;
 
   IF NOT INPUT({k, R, T},
       "Velocidad del Sonido",
@@ -70,7 +70,6 @@ BEGIN
 
   a := SQRT(k * R * T);
 
-  LOCAL res2;
   res2 := "=== VELOCIDAD DEL SONIDO ===" + CHAR(10);
   res2 := res2 + "a = sqrt(k*R*T)" + CHAR(10);
   res2 := res2 + "a = " + fmt_(a) + " m/s" + CHAR(10);
@@ -85,7 +84,7 @@ END;
 MF_COMP_IS()
 BEGIN
   LOCAL M, k, R, T, P, rho_s;
-  LOCAL T0, P0, rho0, a, V, res;
+  LOCAL T0, P0, rho0, a, V, res2;
   LOCAL TR, PR, rhoR;
 
   IF NOT INPUT({M, k, R, T, P},
@@ -112,7 +111,6 @@ BEGIN
   a := SQRT(k * R * T);
   V := M * a;
 
-  LOCAL res2;
   res2 := "=== RELACIONES ISENTROPICAS ===" + CHAR(10);
   res2 := res2 + "─── Condicion local ───" + CHAR(10);
   res2 := res2 + "M    = " + fmt_(M) + CHAR(10);
@@ -137,14 +135,13 @@ END;
 MF_COMP_AREA()
 BEGIN
   LOCAL c;
+  LOCAL k, M, AA, res2, res3, res4, Msol;
   CHOOSE(c, "Relacion Area-Mach (A/A*)",
     "Calcular A/A* dado M",
     "Calcular M dado A/A* (subsónico)",
     "Calcular M dado A/A* (supersónico)",
     "Volver");
   IF c == 0 OR c == 4 THEN RETURN; END;
-
-  LOCAL k, M, AA, res;
 
   IF c == 1 THEN
     IF NOT INPUT({M, k},
@@ -157,7 +154,6 @@ BEGIN
     IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
 
     AA := aAstar_(M, k);
-    LOCAL res2;
     res2 := "=== AREA-MACH ===" + CHAR(10);
     res2 := res2 + "A/A* = " + fmt_(AA) + CHAR(10);
     res2 := res2 + "M    = " + fmt_(M) + CHAR(10);
@@ -185,11 +181,9 @@ BEGIN
     IF AA < 1 THEN MSGBOX("Error: A/A* no puede ser menor que 1 (A* es la seccion minima)."); RETURN; END;
     IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
 
-    LOCAL Msol;
     IF c == 2 THEN
       // Rama subsonica: M en (0, 1)
       Msol := solveMach_(AA, 1E-6, 1.0, k);
-      LOCAL res3;
       res3 := "=== AREA-MACH (SUBSONICO) ===" + CHAR(10);
       res3 := res3 + "M (sub) = " + fmt_(Msol) + CHAR(10);
       res3 := res3 + "A/A*    = " + fmt_(AA) + CHAR(10);
@@ -198,7 +192,6 @@ BEGIN
     ELSE
       // Rama supersonica: M en (1, 10]
       Msol := solveMach_(AA, 1.0 + 1E-6, 10.0, k);
-      LOCAL res4;
       res4 := "=== AREA-MACH (SUPERSONICO) ===" + CHAR(10);
       res4 := res4 + "M (sup) = " + fmt_(Msol) + CHAR(10);
       res4 := res4 + "A/A*    = " + fmt_(AA) + CHAR(10);
@@ -215,7 +208,8 @@ END;
 // ---- Onda de choque normal ----
 MF_COMP_SHOCK()
 BEGIN
-  LOCAL M1, k, M2sq, M2, P21, rho21, T21, res;
+  LOCAL M1, k, M2sq, M2, P21, rho21, T21;
+  LOCAL TR1, TR2, PR1, PR2, P02_P01, res2;
 
   IF NOT INPUT({M1, k},
       "Onda de Choque Normal",
@@ -238,19 +232,14 @@ BEGIN
   T21 := P21 / rho21;                                    // T2/T1
 
   // Razon de presiones de remanso (medida de perdida total)
-  LOCAL P01_P02;
-  LOCAL TR1, TR2, PR1, PR2;
   TR1 := 1 + (k - 1) / 2 * M1 ^ 2;
   TR2 := 1 + (k - 1) / 2 * M2 ^ 2;
   PR1 := TR1 ^ (k / (k - 1));
   PR2 := TR2 ^ (k / (k - 1));
-  // P02/P01 = (P2/P1)*(P02/P2)/(P01/P1) = P21*PR2_P2 / PR1_P1
   // mas directo: P02/P01 formula directa
-  LOCAL P02_P01;
   P02_P01 := ((k + 1) * M1 ^ 2 / ((k - 1) * M1 ^ 2 + 2)) ^ (k / (k - 1)) *
               ((k + 1) / (2 * k * M1 ^ 2 - (k - 1))) ^ (1 / (k - 1));
 
-  LOCAL res2;
   res2 := "=== ONDA DE CHOQUE NORMAL ===" + CHAR(10);
   res2 := res2 + "─── Antes (1) → Despues (2) ───" + CHAR(10);
   res2 := res2 + "M1      = " + fmt_(M1) + CHAR(10);

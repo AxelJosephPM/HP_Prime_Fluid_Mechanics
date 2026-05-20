@@ -111,7 +111,7 @@ END;
 // h_cp = y_cp * sin(theta)
 MF_HYDRO_FI()
 BEGIN
-  LOCAL rho, g, hc, b, L, theta, F, A, yc, IG, ycp, hcp, ecp, res;
+  LOCAL rho, g, hc, b, L, theta, F, A, yc, IG, ycp, hcp, ecp, res, sinT;
 
   IF NOT INPUT({rho, g, hc, b, L, theta},
       "Fuerza - Placa Inclinada",
@@ -126,7 +126,6 @@ BEGIN
   IF L <= 0 THEN MSGBOX("Error: L debe ser positivo."); RETURN; END;
   IF theta <= 0 OR theta > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
 
-  LOCAL sinT;
   sinT := SIN(theta * π / 180);
   IF sinT <= 0 THEN MSGBOX("Error: sin(theta) = 0, angulo invalido."); RETURN; END;
 

@@ -228,7 +228,7 @@ BEGIN
   res := res + "nu = mu/rho" + CHAR(10);
   res := res + "nu = " + fmt_(nu) + " m2/s" + CHAR(10);
   res := res + "nu = " + fmt_(nu * 1E6) + " x10^-6 m2/s" + CHAR(10);
-  res := res + "nu = " + fmt_(nu * 1E4) + " cSt  (centiStokes)" + CHAR(10);
+  res := res + "nu = " + fmt_(nu * 1E6) + " cSt  (centiStokes)" + CHAR(10);
   res := res + "mu = " + fmt_(mu) + " Pa*s" + CHAR(10);
   res := res + "rho= " + fmt_(rho) + " kg/m3";
 

@@ -26,6 +26,7 @@ END;
 MF_MANO_PC()
 BEGIN
   LOCAL c, P, Patm, res;
+  LOCAL Pman, Pvac, Pabs2, Pabs3, Pin, uc, Pa_val;
 
   CHOOSE(c, "Conversion de Presiones",
     "Absoluta → Manometrica y Vacio",
@@ -44,7 +45,6 @@ BEGIN
     IF P < 0 THEN MSGBOX("Error: La presion absoluta no puede ser negativa."); RETURN; END;
     IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
 
-    LOCAL Pman, Pvac;
     Pman := P - Patm;
     Pvac := Patm - P;
 
@@ -70,7 +70,6 @@ BEGIN
         {50000.0, 101325.0}) THEN RETURN; END;
     IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
 
-    LOCAL Pabs2;
     Pabs2 := P + Patm;
     IF Pabs2 < 0 THEN
       MSGBOX("ATENCION: Presion absoluta negativa (" + fmt_(Pabs2) + " Pa)." + CHAR(10) + "Fisicamente imposible. Verifique los datos.");
@@ -94,7 +93,6 @@ BEGIN
     IF P < 0 THEN MSGBOX("Error: La presion de vacio se expresa como valor positivo."); RETURN; END;
     IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
 
-    LOCAL Pabs3;
     Pabs3 := Patm - P;
     IF Pabs3 < 0 THEN
       MSGBOX("ATENCION: P_vac > P_atm, resultado negativo no fisicamente valido.");
@@ -111,8 +109,6 @@ BEGIN
 
   IF c == 4 THEN
     // Convertidor de unidades de presion
-    LOCAL Pin;
-    LOCAL uc;
     CHOOSE(uc, "Unidad de entrada",
       "Pa",
       "kPa",
@@ -129,7 +125,6 @@ BEGIN
         101325.0) THEN RETURN; END;
 
     // Convertir a Pa primero
-    LOCAL Pa_val;
     IF uc == 1 THEN Pa_val := Pin; END;
     IF uc == 2 THEN Pa_val := Pin * 1000; END;
     IF uc == 3 THEN Pa_val := Pin * 1E5; END;

@@ -88,7 +88,6 @@ BEGIN
     Q := V * A;
   END;
 
-  LOCAL res;
   res := "=== VELOCIDAD / CAUDAL ===" + CHAR(10);
   res := res + "A  = pi*D^2/4 = " + fmt_(A) + " m2" + CHAR(10);
   res := res + "D  = " + fmt_(D) + " m  (" + fmt_(D*1000) + " mm)" + CHAR(10);
@@ -120,7 +119,6 @@ BEGIN
   nu := mu / rho;
   reg := regimenStr(Re);
 
-  LOCAL res;
   res := "=== REYNOLDS EN TUBERIA ===" + CHAR(10);
   res := res + "Re = " + fmt_(Re) + CHAR(10);
   res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
@@ -150,7 +148,6 @@ BEGIN
 
   reg := regimenStr(Re);
 
-  LOCAL res;
   res := "=== FACTOR DE FRICCION ===" + CHAR(10);
   res := res + "Re   = " + fmt_(Re) + CHAR(10);
   res := res + "eps/D= " + fmt_(eps/D) + "  (rugosidad relativa)" + CHAR(10);
@@ -197,7 +194,6 @@ BEGIN
 
   hf := f * (L / D) * V ^ 2 / (2 * g);
 
-  LOCAL res;
   res := "=== PERDIDA MAYOR (Darcy-Weisbach) ===" + CHAR(10);
   res := res + "hf = f*(L/D)*V^2/(2g)" + CHAR(10);
   res := res + "hf = " + fmt_(hf) + " m" + CHAR(10);
@@ -227,7 +223,6 @@ BEGIN
 
   hm_tot := K * V ^ 2 / (2 * g);
 
-  LOCAL res;
   res := "=== PERDIDAS MENORES ===" + CHAR(10);
   res := res + "hm = K * V^2/(2g)" + CHAR(10);
   res := res + "hm = " + fmt_(hm_tot) + " m" + CHAR(10);
@@ -294,7 +289,6 @@ BEGIN
   hL := hf + hm;
   DP := rho * g * hL;
 
-  LOCAL res;
   res := "=== TUBERIA: RESULTADOS ===" + CHAR(10);
   res := res + "─── Condiciones de Flujo ───" + CHAR(10);
   res := res + "A  = " + fmt_(A) + " m2" + CHAR(10);

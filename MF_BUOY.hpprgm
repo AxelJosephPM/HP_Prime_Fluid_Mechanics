@@ -36,7 +36,6 @@ BEGIN
 
   E := rho_f * g * Vsub;
 
-  LOCAL res2;
   res := "=== FUERZA DE EMPUJE ===" + CHAR(10);
   res := res + "E = rho_f * g * V_sub" + CHAR(10);
   res := res + "E      = " + fmt_(E) + " N" + CHAR(10);

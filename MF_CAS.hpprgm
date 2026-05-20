@@ -86,7 +86,7 @@ END;
 // ---- Derivar expresion ----
 MF_CAS_DIFF()
 BEGIN
-  LOCAL expr, var, sol, res, n;
+  LOCAL expr, var, sol, res, n, ord;
 
   IF NOT INPUT({expr, var, n},
       "CAS: Derivar",
@@ -98,7 +98,6 @@ BEGIN
   IF n <= 0 THEN MSGBOX("Error: El orden debe ser al menos 1."); RETURN; END;
 
   IFERR
-    LOCAL ord;
     ord := IP(n);
     sol := CAS("diff(" + expr + "," + var + "," + STRING(ord) + ")");
     res := "=== CAS: DERIVADA ===" + CHAR(10);
@@ -113,14 +112,12 @@ END;
 // ---- Integrar expresion ----
 MF_CAS_INTG()
 BEGIN
-  LOCAL c;
+  LOCAL c, expr, var, sol, res, a, b;
   CHOOSE(c, "CAS: Integrar",
     "Integral indefinida",
     "Integral definida",
     "Volver");
   IF c == 0 OR c == 3 THEN RETURN; END;
-
-  LOCAL expr, var, sol, res;
 
   IF c == 1 THEN
     IF NOT INPUT({expr, var},
@@ -143,7 +140,6 @@ BEGIN
   END;
 
   IF c == 2 THEN
-    LOCAL a, b;
     IF NOT INPUT({expr, var, a, b},
         "CAS: Integral Definida",
         {"Expresion=", "Variable=", "Limite inf.=", "Limite sup.="},
@@ -169,6 +165,9 @@ MF_CAS_KIN()
 BEGIN
   LOCAL u, v, x, y, t, sol, res;
   LOCAL c;
+  LOCAL dudx, dvdy, div_;
+  LOCAL dvdx, dudy, omega;
+  LOCAL dudt, dudx2, dudy2, dvdt, dvdx2, dvdy2, ax, ay;
 
   CHOOSE(c, "CAS: Cinematica 2D",
     "Divergencia div(V)",
@@ -188,7 +187,6 @@ BEGIN
   IF c == 1 THEN
     // div(V) = du/dx + dv/dy
     IFERR
-      LOCAL dudx, dvdy, div_;
       dudx := CAS("diff(" + u + ",x)");
       dvdy := CAS("diff(" + v + ",y)");
       div_ := CAS("simplify((" + STRING(dudx) + ")+(" + STRING(dvdy) + "))");
@@ -213,7 +211,6 @@ BEGIN
   IF c == 2 THEN
     // omega_z = dv/dx - du/dy
     IFERR
-      LOCAL dvdx, dudy, omega;
       dvdx := CAS("diff(" + v + ",x)");
       dudy := CAS("diff(" + u + ",y)");
       omega := CAS("simplify((" + STRING(dvdx) + ")-(" + STRING(dudy) + "))");
@@ -239,7 +236,6 @@ BEGIN
     // a_x = du/dt + u*du/dx + v*du/dy
     // a_y = dv/dt + u*dv/dx + v*dv/dy
     IFERR
-      LOCAL dudt, dudx2, dudy2, dvdt, dvdx2, dvdy2, ax, ay;
       dudt := CAS("diff(" + u + ",t)");
       dudx2 := CAS("diff(" + u + ",x)");
       dudy2 := CAS("diff(" + u + ",y)");
@@ -267,15 +263,13 @@ END;
 // ---- Caudal por integracion de perfil de velocidad ----
 MF_CAS_FLOW()
 BEGIN
-  LOCAL c;
+  LOCAL c, R, sol, res, Qsym, Qnum, A2, ur;
   CHOOSE(c, "CAS: Caudal integral",
     "Perfil de Poiseuille (parabólico)",
     "Perfil uniforme",
     "Perfil personalizado",
     "Volver");
   IF c == 0 OR c == 4 THEN RETURN; END;
-
-  LOCAL R, sol, res, Q, Vmean;
 
   IF c == 1 THEN
     // Perfil Poiseuille: u(r) = umax*(1 - r^2/R^2)
@@ -290,7 +284,6 @@ BEGIN
     IFERR
       // CAS no necesita umax especifico, retorna simbolico
       sol := CAS("simplify(int(u_max*(1-(r^2/R^2))*2*pi*r,r,0,R))");
-      LOCAL Qsym;
       Qsym := STRING(sol);
       // Para R numerico, calcular numericamente tambien
       // Q = pi*R^2*umax/2 (resultado analitico conocido)
@@ -305,7 +298,6 @@ BEGIN
       MSGBOX(res);
     THEN
       // Fallback sin CAS si falla
-      LOCAL Qnum;
       Qnum := π / 2 * R ^ 2;
       res := "=== CAUDAL - PERFIL POISEUILLE ===" + CHAR(10);
       res := res + "Q = (pi/2) * u_max * R^2" + CHAR(10);
@@ -325,7 +317,6 @@ BEGIN
         {0.05}) THEN RETURN; END;
     IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
 
-    LOCAL A2;
     A2 := π * R ^ 2;
     res := "=== CAUDAL - PERFIL UNIFORME ===" + CHAR(10);
     res := res + "u(r) = U (constante)" + CHAR(10);
@@ -338,7 +329,6 @@ BEGIN
   END;
 
   IF c == 3 THEN
-    LOCAL ur;
     IF NOT INPUT({ur, R},
         "Perfil Personalizado",
         {"u(r)=", "R (m)="},
@@ -363,7 +353,7 @@ END;
 // ---- Resolver ecuacion de fluidos predefinida ----
 MF_CAS_EQSOLV()
 BEGIN
-  LOCAL c, sol, res, var;
+  LOCAL c, sol, res, eq, vdes;
 
   CHOOSE(c, "CAS: Ecuaciones Predefinidas",
     "Bernoulli ideal (despejar P2)",
@@ -373,8 +363,6 @@ BEGIN
     "Mach (despejar M)",
     "Volver");
   IF c == 0 OR c == 6 THEN RETURN; END;
-
-  LOCAL eq, vdes;
 
   IF c == 1 THEN
     eq := "P1/(rho*g)+V1^2/(2*g)+z1-P2/(rho*g)-V2^2/(2*g)-z2";

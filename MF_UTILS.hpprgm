@@ -179,14 +179,12 @@ END;
 // ---- Conversion de energia y potencia ----
 MF_U_ENER()
 BEGIN
-  LOCAL c;
+  LOCAL c, val, uc, val_base, res;
   CHOOSE(c, "Energia / Potencia",
     "Energia",
     "Potencia",
     "Volver");
   IF c == 0 OR c == 3 THEN RETURN; END;
-
-  LOCAL val, uc, val_base, res;
 
   IF c == 1 THEN
     CHOOSE(uc, "Energia: Unidad entrada",
