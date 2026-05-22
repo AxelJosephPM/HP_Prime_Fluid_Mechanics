@@ -117,13 +117,13 @@ BEGIN
   Ma := V / a;
 
   IF Ma < 0.3 THEN
-    aviso := "SUBSÓNICO - Flujo incompresible aceptable (Ma < 0.3)";
+    aviso := "SUBSONICO - Flujo incompresible aceptable (Ma < 0.3)";
   ELSE
     IF Ma < 1.0 THEN
-      aviso := "SUBSÓNICO COMPRESIBLE - Efectos de compresibilidad relevantes";
+      aviso := "SUBSONICO COMPRESIBLE - Efectos de compresibilidad relevantes";
     ELSE
       IF Ma == 1.0 THEN
-        aviso := "FLUJO SÓNICO (Ma = 1) - Condicion de garganta";
+        aviso := "FLUJO SONICO (Ma = 1) - Condicion de garganta";
       ELSE
         aviso := "SUPERSONICO (Ma > 1) - Usar relaciones compresibles";
       END;

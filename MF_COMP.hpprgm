@@ -112,18 +112,18 @@ BEGIN
   V := M * a;
 
   res2 := "=== RELACIONES ISENTROPICAS ===" + CHAR(10);
-  res2 := res2 + "─── Condicion local ───" + CHAR(10);
+  res2 := res2 + "--- Condicion local ---" + CHAR(10);
   res2 := res2 + "M    = " + fmt_(M) + CHAR(10);
   res2 := res2 + "T    = " + fmt_(T) + " K" + CHAR(10);
   res2 := res2 + "P    = " + fmt_(P) + " Pa" + CHAR(10);
   res2 := res2 + "rho  = " + fmt_(rho_s) + " kg/m3" + CHAR(10);
   res2 := res2 + "a    = " + fmt_(a) + " m/s" + CHAR(10);
   res2 := res2 + "V    = " + fmt_(V) + " m/s" + CHAR(10);
-  res2 := res2 + "─── Condicion de remanso (0) ───" + CHAR(10);
+  res2 := res2 + "--- Condicion de remanso (0) ---" + CHAR(10);
   res2 := res2 + "T0   = " + fmt_(T0) + " K" + CHAR(10);
   res2 := res2 + "P0   = " + fmt_(P0) + " Pa  (" + fmt_(P0 / 1000) + " kPa)" + CHAR(10);
   res2 := res2 + "rho0 = " + fmt_(rho0) + " kg/m3" + CHAR(10);
-  res2 := res2 + "─── Razones ───" + CHAR(10);
+  res2 := res2 + "--- Razones ---" + CHAR(10);
   res2 := res2 + "T0/T = " + fmt_(TR) + CHAR(10);
   res2 := res2 + "P0/P = " + fmt_(PR) + CHAR(10);
   res2 := res2 + "r0/r = " + fmt_(rhoR);
@@ -138,8 +138,8 @@ BEGIN
   LOCAL k, M, AA, res2, res3, res4, Msol;
   CHOOSE(c, "Relacion Area-Mach (A/A*)",
     "Calcular A/A* dado M",
-    "Calcular M dado A/A* (subsónico)",
-    "Calcular M dado A/A* (supersónico)",
+    "Calcular M dado A/A* (subsonico)",
+    "Calcular M dado A/A* (supersonico)",
     "Volver");
   IF c == 0 OR c == 4 THEN RETURN; END;
 
@@ -241,7 +241,7 @@ BEGIN
               ((k + 1) / (2 * k * M1 ^ 2 - (k - 1))) ^ (1 / (k - 1));
 
   res2 := "=== ONDA DE CHOQUE NORMAL ===" + CHAR(10);
-  res2 := res2 + "─── Antes (1) → Despues (2) ───" + CHAR(10);
+  res2 := res2 + "--- Antes (1) -> Despues (2) ---" + CHAR(10);
   res2 := res2 + "M1      = " + fmt_(M1) + CHAR(10);
   res2 := res2 + "M2      = " + fmt_(M2) + CHAR(10);
   res2 := res2 + "P2/P1   = " + fmt_(P21) + CHAR(10);

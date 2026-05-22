@@ -126,7 +126,7 @@ BEGIN
   IF L <= 0 THEN MSGBOX("Error: L debe ser positivo."); RETURN; END;
   IF theta <= 0 OR theta > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
 
-  sinT := SIN(theta * π / 180);
+  sinT := SIN(theta * 3.14159265358979 / 180);
   IF sinT <= 0 THEN MSGBOX("Error: sin(theta) = 0, angulo invalido."); RETURN; END;
 
   A := b * L;

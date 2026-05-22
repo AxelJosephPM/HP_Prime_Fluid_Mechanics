@@ -58,7 +58,7 @@ BEGIN
   res := "=== BERNOULLI: P2 ===" + CHAR(10);
   res := res + "P2  = " + fmt_(P2) + " Pa" + CHAR(10);
   res := res + "P2  = " + fmt_(P2 / 1000) + " kPa" + CHAR(10);
-  res := res + "─────────────────────" + CHAR(10);
+  res := res + "---------------------" + CHAR(10);
   res := res + "Terminos en metros de columna:" + CHAR(10);
   res := res + "P1/rg  = " + fmt_(P1/(rho*g)) + " m" + CHAR(10);
   res := res + "V1^2/2g= " + fmt_(V1^2/(2*g)) + " m" + CHAR(10);
@@ -172,7 +172,7 @@ BEGIN
 
   IF eta > 0 THEN
     Peje := Ph / eta;
-    res := res + CHAR(10) + "─────────────────────" + CHAR(10);
+    res := res + CHAR(10) + "---------------------" + CHAR(10);
     res := res + "P_eje= P_h / eta" + CHAR(10);
     res := res + "P_eje= " + fmt_(Peje) + " W" + CHAR(10);
     res := res + "P_eje= " + fmt_(Peje / 1000) + " kW" + CHAR(10);
@@ -217,7 +217,7 @@ BEGIN
   res := res + "V2   = " + fmt_(V2) + " m/s" + CHAR(10);
   res := res + "z1-z2= " + fmt_(z1 - z2) + " m" + CHAR(10);
   res := res + "(P1-P2)/rg = " + fmt_((P1-P2)/(rho*g)) + " m";
-  res := res + CHAR(10) + CHAR(10) + "NOTA: Se asume V1 ≈ 0 y sin perdidas.";
+  res := res + CHAR(10) + CHAR(10) + "NOTA: Se asume V1 ~= 0 y sin perdidas.";
 
   MSGBOX(res);
 END;

@@ -29,16 +29,16 @@ BEGIN
   LOCAL Pman, Pvac, Pabs2, Pabs3, Pin, uc, Pa_val;
 
   CHOOSE(c, "Conversion de Presiones",
-    "Absoluta → Manometrica y Vacio",
-    "Manometrica → Absoluta",
-    "Vacio → Absoluta",
+    "Absoluta -> Manometrica y Vacio",
+    "Manometrica -> Absoluta",
+    "Vacio -> Absoluta",
     "Presion en unidades multiples",
     "Volver");
   IF c == 0 OR c == 5 THEN RETURN; END;
 
   IF c == 1 THEN
     IF NOT INPUT({P, Patm},
-        "Presion Abs → Man/Vacio",
+        "Presion Abs -> Man/Vacio",
         {"P_abs (Pa)=", "P_atm (Pa)="},
         {"Presion absoluta", "Presion atmosferica (101325 Pa std.)"},
         {101325.0, 101325.0}) THEN RETURN; END;
@@ -64,7 +64,7 @@ BEGIN
 
   IF c == 2 THEN
     IF NOT INPUT({P, Patm},
-        "Manometrica → Absoluta",
+        "Manometrica -> Absoluta",
         {"P_man (Pa)=", "P_atm (Pa)="},
         {"Presion manometrica (puede ser negativa)", "Presion atmosferica"},
         {50000.0, 101325.0}) THEN RETURN; END;
@@ -86,7 +86,7 @@ BEGIN
 
   IF c == 3 THEN
     IF NOT INPUT({P, Patm},
-        "Presion Vacio → Absoluta",
+        "Presion Vacio -> Absoluta",
         {"P_vac (Pa)=", "P_atm (Pa)="},
         {"Presion de vacio (positiva)", "Presion atmosferica"},
         {20000.0, 101325.0}) THEN RETURN; END;
@@ -223,7 +223,7 @@ BEGIN
   IF theta <= 0 OR theta > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
 
   // h = L * sin(theta)  [theta en radianes para SIN]
-  h_eq := L * SIN(theta * π / 180);
+  h_eq := L * SIN(theta * 3.14159265358979 / 180);
   DP := rho * g * h_eq;
 
   res := "=== MANOMETRO INCLINADO ===" + CHAR(10);
@@ -234,7 +234,7 @@ BEGIN
   res := res + "DeltaP = " + fmt_(DP / 1000) + " kPa" + CHAR(10);
   res := res + "L      = " + fmt_(L) + " m" + CHAR(10);
   res := res + "theta  = " + fmt_(theta) + " grados" + CHAR(10);
-  res := res + "NOTA: Amplificacion vs manometro vertical: 1/sin(" + fmt_(theta) + ")=" + fmt_(1/SIN(theta*π/180));
+  res := res + "NOTA: Amplificacion vs manometro vertical: 1/sin(" + fmt_(theta) + ")=" + fmt_(1/SIN(theta*3.14159265358979/180));
 
   MSGBOX(res);
 END;

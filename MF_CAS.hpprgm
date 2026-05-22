@@ -197,9 +197,9 @@ BEGIN
       res := res + "dv/dy  = " + STRING(dvdy) + CHAR(10);
       res := res + "div(V) = " + STRING(div_);
       IF STRING(div_) == "0" THEN
-        res := res + CHAR(10) + "→ Fluido incompresible (div=0)";
+        res := res + CHAR(10) + "-> Fluido incompresible (div=0)";
       ELSE
-        res := res + CHAR(10) + "→ Fluido compresible (div ≠ 0)";
+        res := res + CHAR(10) + "-> Fluido compresible (div != 0)";
       END;
       MSGBOX(res);
     THEN
@@ -221,9 +221,9 @@ BEGIN
       res := res + "du/dy     = " + STRING(dudy) + CHAR(10);
       res := res + "omega_z   = " + STRING(omega);
       IF STRING(omega) == "0" THEN
-        res := res + CHAR(10) + "→ Flujo irrotacional";
+        res := res + CHAR(10) + "-> Flujo irrotacional";
       ELSE
-        res := res + CHAR(10) + "→ Flujo rotacional";
+        res := res + CHAR(10) + "-> Flujo rotacional";
       END;
       MSGBOX(res);
     THEN
@@ -265,7 +265,7 @@ MF_CAS_FLOW()
 BEGIN
   LOCAL c, R, sol, res, Qsym, Qnum, A2, ur;
   CHOOSE(c, "CAS: Caudal integral",
-    "Perfil de Poiseuille (parabólico)",
+    "Perfil de Poiseuille (parabolico)",
     "Perfil uniforme",
     "Perfil personalizado",
     "Volver");
@@ -293,12 +293,12 @@ BEGIN
       res := res + "Q = " + Qsym + CHAR(10);
       res := res + CHAR(10) + "Para R = " + fmt_(R) + " m:" + CHAR(10);
       res := res + "Q = (pi/2)*u_max*R^2" + CHAR(10);
-      res := res + "Q = " + fmt_(π / 2 * R ^ 2) + " * u_max  [m3/s]" + CHAR(10);
+      res := res + "Q = " + fmt_(3.14159265358979 / 2 * R ^ 2) + " * u_max  [m3/s]" + CHAR(10);
       res := res + "V_media = u_max/2  (la mitad de la vel. max)";
       MSGBOX(res);
     THEN
       // Fallback sin CAS si falla
-      Qnum := π / 2 * R ^ 2;
+      Qnum := 3.14159265358979 / 2 * R ^ 2;
       res := "=== CAUDAL - PERFIL POISEUILLE ===" + CHAR(10);
       res := res + "Q = (pi/2) * u_max * R^2" + CHAR(10);
       res := res + "Q = " + fmt_(Qnum) + " * u_max  [m3/s]" + CHAR(10);
@@ -317,7 +317,7 @@ BEGIN
         {0.05}) THEN RETURN; END;
     IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
 
-    A2 := π * R ^ 2;
+    A2 := 3.14159265358979 * R ^ 2;
     res := "=== CAUDAL - PERFIL UNIFORME ===" + CHAR(10);
     res := res + "u(r) = U (constante)" + CHAR(10);
     res := res + "Q = U * pi * R^2 = U * A" + CHAR(10);

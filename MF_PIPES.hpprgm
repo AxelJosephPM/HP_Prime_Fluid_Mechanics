@@ -72,7 +72,7 @@ BEGIN
         {0.1, 0.005}) THEN RETURN; END;
     IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
     IF Q < 0 THEN MSGBOX("Error: Q debe ser no negativo."); RETURN; END;
-    A := π * D ^ 2 / 4;
+    A := 3.14159265358979 * D ^ 2 / 4;
     V := Q / A;
   END;
 
@@ -84,7 +84,7 @@ BEGIN
         {0.1, 1.0}) THEN RETURN; END;
     IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
     IF V < 0 THEN MSGBOX("Error: V debe ser no negativa."); RETURN; END;
-    A := π * D ^ 2 / 4;
+    A := 3.14159265358979 * D ^ 2 / 4;
     Q := V * A;
   END;
 
@@ -152,7 +152,7 @@ BEGIN
   res := res + "Re   = " + fmt_(Re) + CHAR(10);
   res := res + "eps/D= " + fmt_(eps/D) + "  (rugosidad relativa)" + CHAR(10);
   res := res + "Reg. = " + reg + CHAR(10);
-  res := res + "─────────────────────" + CHAR(10);
+  res := res + "---------------------" + CHAR(10);
 
   IF Re < 2300 THEN
     f := 64 / Re;
@@ -261,7 +261,7 @@ BEGIN
   IF K < 0 THEN MSGBOX("Error: K debe ser no negativo."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
 
-  A := π * D ^ 2 / 4;
+  A := 3.14159265358979 * D ^ 2 / 4;
   V := Q / A;
   nu := mu / rho;
   Re := rho * V * D / mu;
@@ -290,13 +290,13 @@ BEGIN
   DP := rho * g * hL;
 
   res := "=== TUBERIA: RESULTADOS ===" + CHAR(10);
-  res := res + "─── Condiciones de Flujo ───" + CHAR(10);
+  res := res + "--- Condiciones de Flujo ---" + CHAR(10);
   res := res + "A  = " + fmt_(A) + " m2" + CHAR(10);
   res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
   res := res + "Q  = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
   res := res + "Re = " + fmt_(Re) + CHAR(10);
   res := res + "Reg: " + reg + CHAR(10);
-  res := res + "─── Perdidas ───" + CHAR(10);
+  res := res + "--- Perdidas ---" + CHAR(10);
   res := res + "f  = " + fmt_(f) + "  " + aviso + CHAR(10);
   res := res + "hf = " + fmt_(hf) + " m  (mayor)" + CHAR(10);
   res := res + "hm = " + fmt_(hm) + " m  (menor)" + CHAR(10);
