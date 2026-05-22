@@ -36,58 +36,80 @@ BEGIN
     END;
 
     IF c == 1 THEN
-      IFERR MF_PROPS();
-      THEN MSGBOX("Modulo MF_PROPS no encontrado." + CHAR(10) + "Instale todos los modulos.");
+      IFERR
+        MF_PROPS();
+      THEN
+        MSGBOX("Modulo MF_PROPS no encontrado." + CHAR(10) + "Instale todos los modulos.");
       END;
     END;
     IF c == 2 THEN
-      IFERR MF_MANO();
-      THEN MSGBOX("Modulo MF_MANO no encontrado.");
+      IFERR
+        MF_MANO();
+      THEN
+        MSGBOX("Modulo MF_MANO no encontrado.");
       END;
     END;
     IF c == 3 THEN
-      IFERR MF_HYDRO();
-      THEN MSGBOX("Modulo MF_HYDRO no encontrado.");
+      IFERR
+        MF_HYDRO();
+      THEN
+        MSGBOX("Modulo MF_HYDRO no encontrado.");
       END;
     END;
     IF c == 4 THEN
-      IFERR MF_BUOY();
-      THEN MSGBOX("Modulo MF_BUOY no encontrado.");
+      IFERR
+        MF_BUOY();
+      THEN
+        MSGBOX("Modulo MF_BUOY no encontrado.");
       END;
     END;
     IF c == 5 THEN
-      IFERR MF_BERN();
-      THEN MSGBOX("Modulo MF_BERN no encontrado.");
+      IFERR
+        MF_BERN();
+      THEN
+        MSGBOX("Modulo MF_BERN no encontrado.");
       END;
     END;
     IF c == 6 THEN
-      IFERR MF_PIPES();
-      THEN MSGBOX("Modulo MF_PIPES no encontrado.");
+      IFERR
+        MF_PIPES();
+      THEN
+        MSGBOX("Modulo MF_PIPES no encontrado.");
       END;
     END;
     IF c == 7 THEN
-      IFERR MF_PUMPS();
-      THEN MSGBOX("Modulo MF_PUMPS no encontrado.");
+      IFERR
+        MF_PUMPS();
+      THEN
+        MSGBOX("Modulo MF_PUMPS no encontrado.");
       END;
     END;
     IF c == 8 THEN
-      IFERR MF_COMP();
-      THEN MSGBOX("Modulo MF_COMP no encontrado.");
+      IFERR
+        MF_COMP();
+      THEN
+        MSGBOX("Modulo MF_COMP no encontrado.");
       END;
     END;
     IF c == 9 THEN
-      IFERR MF_CAS();
-      THEN MSGBOX("Modulo MF_CAS no encontrado.");
+      IFERR
+        MF_CAS();
+      THEN
+        MSGBOX("Modulo MF_CAS no encontrado.");
       END;
     END;
     IF c == 10 THEN
-      IFERR MF_UNITS();
-      THEN MSGBOX("Modulo MF_UNITS no encontrado.");
+      IFERR
+        MF_UNITS();
+      THEN
+        MSGBOX("Modulo MF_UNITS no encontrado.");
       END;
     END;
     IF c == 11 THEN
-      IFERR MF_HELP();
-      THEN MSGBOX("Modulo MF_HELP no encontrado.");
+      IFERR
+        MF_HELP();
+      THEN
+        MSGBOX("Modulo MF_HELP no encontrado.");
       END;
     END;
   END;

@@ -241,16 +241,17 @@ BEGIN
   // = (a-R)*Q^2 + b*Q + (cc - Hest)
   // Busqueda por biseccion en [0, Qmax]
   Qlo := 0;
-  Qhi := 1.0;  // Limite superior inicial (aumentar si no converge)
-  // Buscar un Qhi donde F < 0
+  Qhi := 1.0;
   ok_range := 0;
-  FOR i FROM 1 TO 20 DO
+  i := 1;
+  WHILE i <= 20 AND ok_range == 0 DO
     Flo := (a * Qhi ^ 2 + b * Qhi + cc) - (Hest + R * Qhi ^ 2);
     IF Flo < 0 THEN
       ok_range := 1;
-      BREAK;
+    ELSE
+      Qhi := Qhi * 2;
     END;
-    Qhi := Qhi * 2;
+    i := i + 1;
   END;
 
   IF ok_range == 0 THEN
@@ -259,7 +260,8 @@ BEGIN
   END;
 
   // Biseccion
-  FOR i FROM 1 TO 60 DO
+  i := 1;
+  WHILE i <= 60 DO
     Qmid := (Qlo + Qhi) / 2;
     Fmid := (a * Qmid ^ 2 + b * Qmid + cc) - (Hest + R * Qmid ^ 2);
     Flo := (a * Qlo ^ 2 + b * Qlo + cc) - (Hest + R * Qlo ^ 2);
@@ -268,7 +270,11 @@ BEGIN
     ELSE
       Qlo := Qmid;
     END;
-    IF ABS(Qhi - Qlo) < 1E-8 THEN BREAK; END;
+    IF ABS(Qhi - Qlo) < 1E-8 THEN
+      i := 61;
+    ELSE
+      i := i + 1;
+    END;
   END;
 
   Q_op := (Qlo + Qhi) / 2;
