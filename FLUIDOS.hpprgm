@@ -8,7 +8,6 @@
 // Todos los demas modulos deben estar instalados.
 // ============================================================
 
-// Punto de entrada principal del programa
 EXPORT FLUIDOS()
 BEGIN
   LOCAL c, conf;
@@ -28,89 +27,29 @@ BEGIN
       "11. Ayuda Rapida",
       "0. SALIR");
 
-    // ESC o seleccion de SALIR (item 12)
+    // ESC (c=0) o item "0. SALIR" (c=12) -> confirmar salida
     IF c == 0 OR c == 12 THEN
       CHOOSE(conf, "Salir de FLUIDOS PRIME?",
         "Si, salir", "No, volver al menu");
       IF conf == 1 THEN RETURN; END;
     END;
 
-    IF c == 1 THEN
-      IFERR
-        MF_PROPS();
-      THEN
-        MSGBOX("Modulo MF_PROPS no encontrado." + CHAR(10) + "Instale todos los modulos.");
-      END;
+    // Despacho de modulos: un solo IFERR que no esta anidado en IF
+    IFERR
+      IF c == 1 THEN MF_PROPS(); END;
+      IF c == 2 THEN MF_MANO(); END;
+      IF c == 3 THEN MF_HYDRO(); END;
+      IF c == 4 THEN MF_BUOY(); END;
+      IF c == 5 THEN MF_BERN(); END;
+      IF c == 6 THEN MF_PIPES(); END;
+      IF c == 7 THEN MF_PUMPS(); END;
+      IF c == 8 THEN MF_COMP(); END;
+      IF c == 9 THEN MF_CAS(); END;
+      IF c == 10 THEN MF_UNITS(); END;
+      IF c == 11 THEN MF_HELP(); END;
+    THEN
+      MSGBOX("Modulo no encontrado." + CHAR(10) + "Instale todos los modulos.");
     END;
-    IF c == 2 THEN
-      IFERR
-        MF_MANO();
-      THEN
-        MSGBOX("Modulo MF_MANO no encontrado.");
-      END;
-    END;
-    IF c == 3 THEN
-      IFERR
-        MF_HYDRO();
-      THEN
-        MSGBOX("Modulo MF_HYDRO no encontrado.");
-      END;
-    END;
-    IF c == 4 THEN
-      IFERR
-        MF_BUOY();
-      THEN
-        MSGBOX("Modulo MF_BUOY no encontrado.");
-      END;
-    END;
-    IF c == 5 THEN
-      IFERR
-        MF_BERN();
-      THEN
-        MSGBOX("Modulo MF_BERN no encontrado.");
-      END;
-    END;
-    IF c == 6 THEN
-      IFERR
-        MF_PIPES();
-      THEN
-        MSGBOX("Modulo MF_PIPES no encontrado.");
-      END;
-    END;
-    IF c == 7 THEN
-      IFERR
-        MF_PUMPS();
-      THEN
-        MSGBOX("Modulo MF_PUMPS no encontrado.");
-      END;
-    END;
-    IF c == 8 THEN
-      IFERR
-        MF_COMP();
-      THEN
-        MSGBOX("Modulo MF_COMP no encontrado.");
-      END;
-    END;
-    IF c == 9 THEN
-      IFERR
-        MF_CAS();
-      THEN
-        MSGBOX("Modulo MF_CAS no encontrado.");
-      END;
-    END;
-    IF c == 10 THEN
-      IFERR
-        MF_UNITS();
-      THEN
-        MSGBOX("Modulo MF_UNITS no encontrado.");
-      END;
-    END;
-    IF c == 11 THEN
-      IFERR
-        MF_HELP();
-      THEN
-        MSGBOX("Modulo MF_HELP no encontrado.");
-      END;
-    END;
+
   END;
 END;
