@@ -1,0 +1,434 @@
+// ============================================================
+// MF_CONT.hpprgm
+// FLUIDOS PRIME v1.0 - Continuidad y Conservacion de Masa
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_CONT()        - Menu principal (EXPORT)
+//   MF_CONT_Q()      - Caudal volumetrico Q = A*V
+//   MF_CONT_MDOT()   - Caudal masico mdot = rho*Q
+//   MF_CONT_C11()    - Continuidad 1 entrada, 1 salida
+//   MF_CONT_C21()    - Continuidad 2 entradas, 1 salida
+//   MF_CONT_C12()    - Continuidad 1 entrada, 2 salidas
+//   MF_CONT_DHT()    - Tasa de cambio de nivel en deposito
+//   MF_CONT_TFILL()  - Tiempo de llenado o vaciado
+//   MF_CONT_CONV()   - Conversor de unidades de caudal
+//   MF_CONT_HELP()   - Ayuda de continuidad
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// ---- Caudal volumetrico Q = A*V ----
+MF_CONT_Q()
+BEGIN
+  LOCAL A, V, Q, res;
+
+  IF NOT INPUT({A, V},
+      "Caudal Volumetrico",
+      {"A (m2)=", "V (m/s)="},
+      {"Area de la seccion transversal", "Velocidad media del flujo"},
+      {0.01, 2.0}) THEN RETURN; END;
+
+  IF A <= 0 THEN MSGBOX("Error: A debe ser mayor que cero."); RETURN; END;
+  IF V < 0 THEN MSGBOX("Error: V no puede ser negativa."); RETURN; END;
+
+  Q := A * V;
+
+  res := "=== CAUDAL VOLUMETRICO ===" + CHAR(10);
+  res := res + "Q = A * V" + CHAR(10);
+  res := res + "Q = " + fmt_(Q) + " m3/s" + CHAR(10);
+  res := res + "Q = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
+  res := res + "Q = " + fmt_(Q * 3600) + " m3/h" + CHAR(10);
+  res := res + "A = " + fmt_(A) + " m2" + CHAR(10);
+  res := res + "V = " + fmt_(V) + " m/s";
+
+  MSGBOX(res);
+END;
+
+// ---- Caudal masico mdot = rho*Q ----
+MF_CONT_MDOT()
+BEGIN
+  LOCAL rho, Q, mdot, res;
+
+  IF NOT INPUT({rho, Q},
+      "Caudal Masico",
+      {"rho (kg/m3)=", "Q (m3/s)="},
+      {"Densidad del fluido", "Caudal volumetrico"},
+      {1000.0, 0.01}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
+  IF Q < 0 THEN MSGBOX("Error: Q no puede ser negativo."); RETURN; END;
+
+  mdot := rho * Q;
+
+  res := "=== CAUDAL MASICO ===" + CHAR(10);
+  res := res + "mdot = rho * Q" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot * 3600) + " kg/h" + CHAR(10);
+  res := res + "rho  = " + fmt_(rho) + " kg/m3" + CHAR(10);
+  res := res + "Q    = " + fmt_(Q) + " m3/s";
+
+  MSGBOX(res);
+END;
+
+// ---- Continuidad 1 entrada -> 1 salida ----
+// A1*V1 = A2*V2  (flujo incompresible)
+// Resolver para cualquier incognita
+MF_CONT_C11()
+BEGIN
+  LOCAL c, A1, V1, A2, V2, res;
+
+  CHOOSE(c, "Continuidad 1-1: A1*V1=A2*V2",
+    "Calcular V2 (dada A1,V1,A2)",
+    "Calcular V1 (dada A1,A2,V2)",
+    "Calcular A2 (dada A1,V1,V2)",
+    "Calcular A1 (dada V1,A2,V2)",
+    "Volver");
+  IF c == 0 OR c == 5 THEN RETURN; END;
+
+  IF c == 1 THEN
+    IF NOT INPUT({A1, V1, A2},
+        "Continuidad: calcular V2",
+        {"A1 (m2)=", "V1 (m/s)=", "A2 (m2)="},
+        {"Area seccion 1", "Velocidad en seccion 1", "Area seccion 2"},
+        {0.02, 1.5, 0.01}) THEN RETURN; END;
+    IF A1 <= 0 THEN MSGBOX("Error: A1 debe ser positiva."); RETURN; END;
+    IF V1 < 0 THEN MSGBOX("Error: V1 no puede ser negativa."); RETURN; END;
+    IF A2 <= 0 THEN MSGBOX("Error: A2 debe ser positiva."); RETURN; END;
+    V2 := A1 * V1 / A2;
+    res := "V2 = A1*V1/A2" + CHAR(10);
+    res := res + "V2 = " + fmt_(V2) + " m/s" + CHAR(10);
+    res := res + "Q  = " + fmt_(A1*V1) + " m3/s";
+    MSGBOX("=== CONTINUIDAD 1-1 ===" + CHAR(10) + res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    IF NOT INPUT({A1, A2, V2},
+        "Continuidad: calcular V1",
+        {"A1 (m2)=", "A2 (m2)=", "V2 (m/s)="},
+        {"Area seccion 1", "Area seccion 2", "Velocidad en seccion 2"},
+        {0.01, 0.02, 1.5}) THEN RETURN; END;
+    IF A1 <= 0 THEN MSGBOX("Error: A1 debe ser positiva."); RETURN; END;
+    IF A2 <= 0 THEN MSGBOX("Error: A2 debe ser positiva."); RETURN; END;
+    IF V2 < 0 THEN MSGBOX("Error: V2 no puede ser negativa."); RETURN; END;
+    V1 := A2 * V2 / A1;
+    res := "V1 = A2*V2/A1" + CHAR(10);
+    res := res + "V1 = " + fmt_(V1) + " m/s" + CHAR(10);
+    res := res + "Q  = " + fmt_(A2*V2) + " m3/s";
+    MSGBOX("=== CONTINUIDAD 1-1 ===" + CHAR(10) + res);
+    RETURN;
+  END;
+
+  IF c == 3 THEN
+    IF NOT INPUT({A1, V1, V2},
+        "Continuidad: calcular A2",
+        {"A1 (m2)=", "V1 (m/s)=", "V2 (m/s)="},
+        {"Area seccion 1", "Velocidad en seccion 1", "Velocidad en seccion 2"},
+        {0.02, 1.0, 2.0}) THEN RETURN; END;
+    IF A1 <= 0 THEN MSGBOX("Error: A1 debe ser positiva."); RETURN; END;
+    IF V1 < 0 THEN MSGBOX("Error: V1 no puede ser negativa."); RETURN; END;
+    IF V2 <= 0 THEN MSGBOX("Error: V2 debe ser mayor que cero."); RETURN; END;
+    A2 := A1 * V1 / V2;
+    res := "A2 = A1*V1/V2" + CHAR(10);
+    res := res + "A2 = " + fmt_(A2) + " m2" + CHAR(10);
+    res := res + "Q  = " + fmt_(A1*V1) + " m3/s";
+    MSGBOX("=== CONTINUIDAD 1-1 ===" + CHAR(10) + res);
+    RETURN;
+  END;
+
+  IF c == 4 THEN
+    IF NOT INPUT({V1, A2, V2},
+        "Continuidad: calcular A1",
+        {"V1 (m/s)=", "A2 (m2)=", "V2 (m/s)="},
+        {"Velocidad en seccion 1", "Area seccion 2", "Velocidad en seccion 2"},
+        {2.0, 0.02, 1.0}) THEN RETURN; END;
+    IF V1 <= 0 THEN MSGBOX("Error: V1 debe ser mayor que cero."); RETURN; END;
+    IF A2 <= 0 THEN MSGBOX("Error: A2 debe ser positiva."); RETURN; END;
+    IF V2 < 0 THEN MSGBOX("Error: V2 no puede ser negativa."); RETURN; END;
+    A1 := A2 * V2 / V1;
+    res := "A1 = A2*V2/V1" + CHAR(10);
+    res := res + "A1 = " + fmt_(A1) + " m2" + CHAR(10);
+    res := res + "Q  = " + fmt_(A2*V2) + " m3/s";
+    MSGBOX("=== CONTINUIDAD 1-1 ===" + CHAR(10) + res);
+  END;
+END;
+
+// ---- Continuidad 2 entradas -> 1 salida ----
+// Q1 + Q2 = Q3
+MF_CONT_C21()
+BEGIN
+  LOCAL c, A1, V1, A2, V2, A3, V3, Q1, Q2, Q3, res;
+
+  CHOOSE(c, "Continuidad 2-1: Q1+Q2=Q3",
+    "Calcular Q3, V3 (dadas Q1, Q2, A3)",
+    "Calcular Q1, V1 (dadas Q2, Q3, A1)",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  IF c == 1 THEN
+    IF NOT INPUT({A1, V1, A2, V2, A3},
+        "Continuidad 2-1: calcular Q3",
+        {"A1 (m2)=", "V1 (m/s)=", "A2 (m2)=", "V2 (m/s)=", "A3 (m2)="},
+        {"Area entrada 1", "Velocidad entrada 1", "Area entrada 2", "Velocidad entrada 2", "Area salida 3"},
+        {0.01, 2.0, 0.01, 1.5, 0.015}) THEN RETURN; END;
+    IF A1 <= 0 OR A2 <= 0 OR A3 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+    IF V1 < 0 OR V2 < 0 THEN MSGBOX("Error: velocidades no pueden ser negativas."); RETURN; END;
+    Q1 := A1 * V1;
+    Q2 := A2 * V2;
+    Q3 := Q1 + Q2;
+    V3 := Q3 / A3;
+    res := "=== CONTINUIDAD 2-1 ===" + CHAR(10);
+    res := res + "Q1 + Q2 = Q3" + CHAR(10);
+    res := res + "Q1 = " + fmt_(Q1) + " m3/s" + CHAR(10);
+    res := res + "Q2 = " + fmt_(Q2) + " m3/s" + CHAR(10);
+    res := res + "Q3 = " + fmt_(Q3) + " m3/s" + CHAR(10);
+    res := res + "V3 = " + fmt_(V3) + " m/s";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    IF NOT INPUT({A2, V2, Q3, A1},
+        "Continuidad 2-1: calcular Q1",
+        {"A2 (m2)=", "V2 (m/s)=", "Q3 (m3/s)=", "A1 (m2)="},
+        {"Area entrada 2", "Velocidad entrada 2", "Caudal total salida", "Area entrada 1"},
+        {0.01, 1.5, 0.025, 0.01}) THEN RETURN; END;
+    IF A2 <= 0 OR A1 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+    IF V2 < 0 THEN MSGBOX("Error: V2 no puede ser negativa."); RETURN; END;
+    IF Q3 <= 0 THEN MSGBOX("Error: Q3 debe ser mayor que cero."); RETURN; END;
+    Q2 := A2 * V2;
+    Q1 := Q3 - Q2;
+    IF Q1 < 0 THEN MSGBOX("Error: Q2 > Q3, resultado negativo para Q1."); RETURN; END;
+    V1 := Q1 / A1;
+    res := "=== CONTINUIDAD 2-1 ===" + CHAR(10);
+    res := res + "Q1 = Q3 - Q2" + CHAR(10);
+    res := res + "Q1 = " + fmt_(Q1) + " m3/s" + CHAR(10);
+    res := res + "V1 = " + fmt_(V1) + " m/s" + CHAR(10);
+    res := res + "Q2 = " + fmt_(Q2) + " m3/s" + CHAR(10);
+    res := res + "Q3 = " + fmt_(Q3) + " m3/s";
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Continuidad 1 entrada -> 2 salidas ----
+// Q1 = Q2 + Q3
+MF_CONT_C12()
+BEGIN
+  LOCAL c, A1, V1, A2, V2, A3, V3, Q1, Q2, Q3, res;
+
+  CHOOSE(c, "Continuidad 1-2: Q1=Q2+Q3",
+    "Calcular Q2, V2 (dadas Q1, Q3, A2)",
+    "Calcular Q3, V3 (dadas Q1, Q2, A3)",
+    "Volver");
+  IF c == 0 OR c == 3 THEN RETURN; END;
+
+  IF c == 1 THEN
+    IF NOT INPUT({A1, V1, Q3, A2},
+        "Continuidad 1-2: calcular Q2",
+        {"A1 (m2)=", "V1 (m/s)=", "Q3 (m3/s)=", "A2 (m2)="},
+        {"Area entrada 1", "Velocidad entrada 1", "Caudal salida 3", "Area salida 2"},
+        {0.02, 2.0, 0.01, 0.015}) THEN RETURN; END;
+    IF A1 <= 0 OR A2 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+    IF V1 < 0 THEN MSGBOX("Error: V1 no puede ser negativa."); RETURN; END;
+    IF Q3 < 0 THEN MSGBOX("Error: Q3 no puede ser negativo."); RETURN; END;
+    Q1 := A1 * V1;
+    Q2 := Q1 - Q3;
+    IF Q2 < 0 THEN MSGBOX("Error: Q3 > Q1, resultado negativo para Q2."); RETURN; END;
+    V2 := Q2 / A2;
+    res := "=== CONTINUIDAD 1-2 ===" + CHAR(10);
+    res := res + "Q2 = Q1 - Q3" + CHAR(10);
+    res := res + "Q1 = " + fmt_(Q1) + " m3/s" + CHAR(10);
+    res := res + "Q2 = " + fmt_(Q2) + " m3/s" + CHAR(10);
+    res := res + "V2 = " + fmt_(V2) + " m/s" + CHAR(10);
+    res := res + "Q3 = " + fmt_(Q3) + " m3/s";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    IF NOT INPUT({A1, V1, Q2, A3},
+        "Continuidad 1-2: calcular Q3",
+        {"A1 (m2)=", "V1 (m/s)=", "Q2 (m3/s)=", "A3 (m2)="},
+        {"Area entrada 1", "Velocidad entrada 1", "Caudal salida 2", "Area salida 3"},
+        {0.02, 2.0, 0.01, 0.015}) THEN RETURN; END;
+    IF A1 <= 0 OR A3 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+    IF V1 < 0 THEN MSGBOX("Error: V1 no puede ser negativa."); RETURN; END;
+    IF Q2 < 0 THEN MSGBOX("Error: Q2 no puede ser negativo."); RETURN; END;
+    Q1 := A1 * V1;
+    Q3 := Q1 - Q2;
+    IF Q3 < 0 THEN MSGBOX("Error: Q2 > Q1, resultado negativo para Q3."); RETURN; END;
+    V3 := Q3 / A3;
+    res := "=== CONTINUIDAD 1-2 ===" + CHAR(10);
+    res := res + "Q3 = Q1 - Q2" + CHAR(10);
+    res := res + "Q1 = " + fmt_(Q1) + " m3/s" + CHAR(10);
+    res := res + "Q2 = " + fmt_(Q2) + " m3/s" + CHAR(10);
+    res := res + "Q3 = " + fmt_(Q3) + " m3/s" + CHAR(10);
+    res := res + "V3 = " + fmt_(V3) + " m/s";
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Tasa de cambio de nivel en deposito ----
+// dh/dt = (Qin - Qout) / As
+MF_CONT_DHT()
+BEGIN
+  LOCAL Qin, Qout, As, dhdt, res;
+
+  IF NOT INPUT({Qin, Qout, As},
+      "Tasa de Cambio de Nivel",
+      {"Qin (m3/s)=", "Qout (m3/s)=", "As (m2)="},
+      {"Caudal de entrada al deposito", "Caudal de salida del deposito", "Area de la superficie libre"},
+      {0.05, 0.02, 10.0}) THEN RETURN; END;
+
+  IF Qin < 0 THEN MSGBOX("Error: Qin no puede ser negativo."); RETURN; END;
+  IF Qout < 0 THEN MSGBOX("Error: Qout no puede ser negativo."); RETURN; END;
+  IF As <= 0 THEN MSGBOX("Error: As debe ser mayor que cero."); RETURN; END;
+
+  dhdt := (Qin - Qout) / As;
+
+  res := "=== TASA DE CAMBIO DE NIVEL ===" + CHAR(10);
+  res := res + "dh/dt = (Qin - Qout) / As" + CHAR(10);
+  res := res + "dh/dt = " + fmt_(dhdt) + " m/s" + CHAR(10);
+  res := res + "dh/dt = " + fmt_(dhdt * 3600) + " m/h" + CHAR(10);
+  res := res + "Qin   = " + fmt_(Qin) + " m3/s" + CHAR(10);
+  res := res + "Qout  = " + fmt_(Qout) + " m3/s" + CHAR(10);
+  res := res + "As    = " + fmt_(As) + " m2" + CHAR(10);
+  IF dhdt > 0 THEN
+    res := res + CHAR(10) + "ESTADO: El deposito se esta LLENANDO.";
+  ELSE
+    IF dhdt < 0 THEN
+      res := res + CHAR(10) + "ESTADO: El deposito se esta VACIANDO.";
+    ELSE
+      res := res + CHAR(10) + "ESTADO: Nivel CONSTANTE (Qin = Qout).";
+    END;
+  END;
+
+  MSGBOX(res);
+END;
+
+// ---- Tiempo de llenado o vaciado ----
+// t = As * |dh| / |Qin - Qout|
+MF_CONT_TFILL()
+BEGIN
+  LOCAL Qin, Qout, As, dh, tspan, dhdt, res;
+
+  IF NOT INPUT({Qin, Qout, As, dh},
+      "Tiempo Llenado/Vaciado",
+      {"Qin (m3/s)=", "Qout (m3/s)=", "As (m2)=", "|dh| (m)="},
+      {"Caudal de entrada", "Caudal de salida", "Area superficie libre", "Cambio de nivel (positivo)"},
+      {0.05, 0.0, 10.0, 2.0}) THEN RETURN; END;
+
+  IF Qin < 0 THEN MSGBOX("Error: Qin no puede ser negativo."); RETURN; END;
+  IF Qout < 0 THEN MSGBOX("Error: Qout no puede ser negativo."); RETURN; END;
+  IF As <= 0 THEN MSGBOX("Error: As debe ser mayor que cero."); RETURN; END;
+  IF dh <= 0 THEN MSGBOX("Error: dh debe ser mayor que cero."); RETURN; END;
+
+  dhdt := Qin - Qout;
+  IF dhdt == 0 THEN
+    MSGBOX("Error: Qin = Qout, el nivel no cambia. Tiempo infinito.");
+    RETURN;
+  END;
+
+  tspan := As * dh / ABS(dhdt);
+
+  res := "=== TIEMPO DE LLENADO/VACIADO ===" + CHAR(10);
+  res := res + "t = As * dh / |Qin - Qout|" + CHAR(10);
+  res := res + "t = " + fmt_(tspan) + " s" + CHAR(10);
+  res := res + "t = " + fmt_(tspan / 60) + " min" + CHAR(10);
+  res := res + "t = " + fmt_(tspan / 3600) + " h" + CHAR(10);
+  res := res + "dh/dt = " + fmt_(dhdt/As) + " m/s" + CHAR(10);
+  IF dhdt > 0 THEN
+    res := res + CHAR(10) + "Operacion: LLENADO";
+  ELSE
+    res := res + CHAR(10) + "Operacion: VACIADO";
+  END;
+
+  MSGBOX(res);
+END;
+
+// ---- Conversor de unidades de caudal ----
+MF_CONT_CONV()
+BEGIN
+  LOCAL Q, res;
+
+  IF NOT INPUT({Q},
+      "Conversor de Caudal",
+      {"Q (m3/s)="},
+      {"Caudal volumetrico en m3/s"},
+      {0.001}) THEN RETURN; END;
+
+  IF Q < 0 THEN MSGBOX("Error: Q no puede ser negativo."); RETURN; END;
+
+  res := "=== CONVERSOR DE CAUDAL ===" + CHAR(10);
+  res := res + "Q = " + fmt_(Q) + " m3/s" + CHAR(10);
+  res := res + "  = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
+  res := res + "  = " + fmt_(Q * 3600) + " m3/h" + CHAR(10);
+  res := res + "  = " + fmt_(Q * 1000 * 3600) + " L/h" + CHAR(10);
+  res := res + "  = " + fmt_(Q * 264.172) + " gal/min (US)" + CHAR(10);
+  res := res + "  = " + fmt_(Q * 35.3147) + " ft3/s";
+
+  MSGBOX(res);
+END;
+
+// ---- Ayuda de continuidad ----
+MF_CONT_HELP()
+BEGIN
+  LOCAL res;
+  res := "=== CONTINUIDAD (INCOMPRESIBLE) ===" + CHAR(10);
+  res := res + "Principio: La masa se conserva." + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Para 1 entrada - 1 salida:" + CHAR(10);
+  res := res + "  Q = A1*V1 = A2*V2 = cte" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Para multiples ramales:" + CHAR(10);
+  res := res + "  SUM(Qentrada) = SUM(Qsalida)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Deposito (vol. control):" + CHAR(10);
+  res := res + "  dh/dt = (Qin-Qout)/As" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Caudal masico:" + CHAR(10);
+  res := res + "  mdot = rho*Q  [kg/s]" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Valido para flujo incompresible," + CHAR(10);
+  res := res + "estacionario y unidimensional.";
+  MSGBOX(res);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_CONT()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "CONTINUIDAD",
+      "1. Caudal Q = A*V",
+      "2. Caudal masico mdot=rho*Q",
+      "3. Continuidad 1 entrada-1 salida",
+      "4. Continuidad 2 entradas-1 salida",
+      "5. Continuidad 1 entrada-2 salidas",
+      "6. Tasa de nivel en deposito",
+      "7. Tiempo llenado/vaciado",
+      "8. Conversor de caudal",
+      "9. Ayuda continuidad",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 10 THEN RETURN; END;
+    IF c == 1 THEN MF_CONT_Q(); END;
+    IF c == 2 THEN MF_CONT_MDOT(); END;
+    IF c == 3 THEN MF_CONT_C11(); END;
+    IF c == 4 THEN MF_CONT_C21(); END;
+    IF c == 5 THEN MF_CONT_C12(); END;
+    IF c == 6 THEN MF_CONT_DHT(); END;
+    IF c == 7 THEN MF_CONT_TFILL(); END;
+    IF c == 8 THEN MF_CONT_CONV(); END;
+    IF c == 9 THEN MF_CONT_HELP(); END;
+  END;
+END;

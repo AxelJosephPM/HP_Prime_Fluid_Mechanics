@@ -1,0 +1,319 @@
+// ============================================================
+// MF_MOM.hpprgm
+// FLUIDOS PRIME v1.0 - Cantidad de Movimiento Lineal
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_MOM()         - Menu principal (EXPORT)
+//   MF_MOM_NOZ()     - Fuerza axial en tobera o difusor
+//   MF_MOM_BEND()    - Reaccion en codo 2D
+//   MF_MOM_PLATE()   - Chorro contra placa fija
+//   MF_MOM_DEF()     - Chorro desviado por angulo
+//   MF_MOM_THRUST()  - Empuje tipo motor (cohete/turbina)
+//   MF_MOM_2D()      - Fuerza resultante 2D
+//   MF_MOM_HELP()    - Ayuda cantidad de movimiento
+// ============================================================
+// Nota: Se asume flujo incompresible, estacionario, 1D.
+// La ecuacion de cantidad de movimiento para volumen de control:
+//   SUM(F) = SUM(mdot_out * V_out) - SUM(mdot_in * V_in)
+// Fuerzas de reaccion son las que ejerce el fluido sobre la
+// estructura; las fuerzas de anclaje son iguales y opuestas.
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// Calcula angulo en grados a partir de componentes Fx, Fy
+// Devuelve angulo en grados [-180, 180]
+angulo_(Fx, Fy)
+BEGIN
+  LOCAL ang;
+  IF Fx == 0 THEN
+    IF Fy >= 0 THEN RETURN 90.0; ELSE RETURN -90.0; END;
+  END;
+  ang := ATAN(Fy / Fx) * 180 / 3.14159265358979;
+  IF Fx < 0 THEN
+    IF Fy >= 0 THEN ang := ang + 180; ELSE ang := ang - 180; END;
+  END;
+  RETURN ang;
+END;
+
+// ---- Fuerza axial en tobera o difusor ----
+// Flujo 1D, eje x. Control de volumen: entrada (1) y salida (2).
+// Rx = P1*A1 - P2*A2 + mdot*(V1 - V2)
+// (Rx = fuerza que el fluido ejerce sobre la tobera, eje x positivo hacia salida)
+MF_MOM_NOZ()
+BEGIN
+  LOCAL rho, Q, A1, V1, P1, A2, V2, P2;
+  LOCAL mdot, Rx, Fanc, res;
+
+  IF NOT INPUT({rho, Q, A1, P1, A2, P2},
+      "Tobera/Difusor - Fuerza Axial",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "P1 (Pa)=", "A2 (m2)=", "P2 (Pa)="},
+      {"Densidad del fluido", "Caudal volumetrico", "Area seccion entrada", "Presion manometrica entrada", "Area seccion salida", "Presion manometrica salida"},
+      {1000.0, 0.01, 0.02, 50000.0, 0.005, 0.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser mayor que cero."); RETURN; END;
+  IF A1 <= 0 THEN MSGBOX("Error: A1 debe ser positiva."); RETURN; END;
+  IF A2 <= 0 THEN MSGBOX("Error: A2 debe ser positiva."); RETURN; END;
+
+  V1 := Q / A1;
+  V2 := Q / A2;
+  mdot := rho * Q;
+
+  // Fuerza que el fluido ejerce sobre la tobera (eje x, positivo en direccion del flujo)
+  Rx := P1 * A1 - P2 * A2 + mdot * (V1 - V2);
+  // Fuerza de anclaje requerida (opuesta a Rx si la tobera no tiene apoyo externo)
+  Fanc := -Rx;
+
+  res := "=== TOBERA/DIFUSOR ===" + CHAR(10);
+  res := res + "Rx = P1A1 - P2A2 + mdot(V1-V2)" + CHAR(10);
+  res := res + "V1   = " + fmt_(V1) + " m/s" + CHAR(10);
+  res := res + "V2   = " + fmt_(V2) + " m/s" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "Rx   = " + fmt_(Rx) + " N  (fluido->tobera)" + CHAR(10);
+  res := res + "Fanc = " + fmt_(Fanc) + " N  (fuerza anclaje)";
+
+  MSGBOX(res);
+END;
+
+// ---- Reaccion en codo 2D ----
+// Codo que deflecta el flujo de theta1 a theta2 (angulos respecto al eje x, en grados)
+// Fx = mdot*(V2*cos(th2) - V1*cos(th1)) + P2*A2*cos(th2) - P1*A1*cos(th1)  [signo corregido]
+// Fy = mdot*(V2*sin(th2) - V1*sin(th1)) + P2*A2*sin(th2) - P1*A1*sin(th1)
+// Nota: Rx, Ry son las fuerzas que el fluido ejerce sobre el codo.
+// La fuerza de anclaje es -Rx, -Ry.
+MF_MOM_BEND()
+BEGIN
+  LOCAL rho, Q, A1, P1, th1, A2, P2, th2;
+  LOCAL V1, V2, mdot, c1, s1, c2, s2;
+  LOCAL Rx, Ry, Fanc, ang, res;
+
+  IF NOT INPUT({rho, Q, A1, P1, th1, A2, P2, th2},
+      "Codo 2D - Reaccion",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "P1 (Pa)=", "th1 (grados)=", "A2 (m2)=", "P2 (Pa)=", "th2 (grados)="},
+      {"Densidad", "Caudal", "Area entrada", "Presion man. entrada", "Angulo direccion entrada (grados)", "Area salida", "Presion man. salida", "Angulo direccion salida (grados)"},
+      {1000.0, 0.01, 0.01, 40000.0, 0.0, 0.01, 20000.0, 90.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser mayor que cero."); RETURN; END;
+  IF A1 <= 0 OR A2 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+
+  V1 := Q / A1;
+  V2 := Q / A2;
+  mdot := rho * Q;
+
+  c1 := COS(th1 * 3.14159265358979 / 180);
+  s1 := SIN(th1 * 3.14159265358979 / 180);
+  c2 := COS(th2 * 3.14159265358979 / 180);
+  s2 := SIN(th2 * 3.14159265358979 / 180);
+
+  // Fuerzas del fluido sobre el codo
+  Rx := mdot * (V2 * c2 - V1 * c1) - P1 * A1 * c1 + P2 * A2 * c2;
+  Ry := mdot * (V2 * s2 - V1 * s1) - P1 * A1 * s1 + P2 * A2 * s2;
+
+  Fanc := SQRT(Rx ^ 2 + Ry ^ 2);
+  ang := angulo_(Rx, Ry);
+
+  res := "=== REACCION EN CODO 2D ===" + CHAR(10);
+  res := res + "V1   = " + fmt_(V1) + " m/s  (th1=" + fmt_(th1) + " grados)" + CHAR(10);
+  res := res + "V2   = " + fmt_(V2) + " m/s  (th2=" + fmt_(th2) + " grados)" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "Rx   = " + fmt_(Rx) + " N" + CHAR(10);
+  res := res + "Ry   = " + fmt_(Ry) + " N" + CHAR(10);
+  res := res + "|R|  = " + fmt_(Fanc) + " N" + CHAR(10);
+  res := res + "ang  = " + fmt_(ang) + " grados (desde eje x)";
+
+  MSGBOX(res);
+END;
+
+// ---- Chorro contra placa fija ----
+// Chorro normal a placa: toda la velocidad se deflecta.
+// Fuerza normal = rho*Q*V = mdot*V
+// Se asume chorro libre (presion manometrica = 0 fuera)
+MF_MOM_PLATE()
+BEGIN
+  LOCAL rho, V, A, Q, mdot, Fn, res;
+
+  IF NOT INPUT({rho, V, A},
+      "Chorro contra Placa Fija",
+      {"rho (kg/m3)=", "V (m/s)=", "A (m2)="},
+      {"Densidad del fluido", "Velocidad del chorro (normal a la placa)", "Area transversal del chorro"},
+      {1000.0, 5.0, 0.005}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF V <= 0 THEN MSGBOX("Error: V debe ser mayor que cero."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+
+  Q := A * V;
+  mdot := rho * Q;
+  Fn := mdot * V;
+
+  res := "=== CHORRO EN PLACA FIJA ===" + CHAR(10);
+  res := res + "F = rho * Q * V = mdot * V" + CHAR(10);
+  res := res + "Q    = " + fmt_(Q) + " m3/s" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "F    = " + fmt_(Fn) + " N  (normal a la placa)" + CHAR(10);
+  res := res + "F    = " + fmt_(Fn / 1000) + " kN";
+
+  MSGBOX(res);
+END;
+
+// ---- Chorro desviado por angulo ----
+// Chorro incide a angulo theta respecto a la normal de la placa.
+// Componente de fuerzas sobre la placa (libre de presion, flujo ideal):
+//   Fx = mdot * V * (1 - cos(theta)) en la direccion del chorro
+//   Fy = mdot * V * sin(theta)       perpendicular
+MF_MOM_DEF()
+BEGIN
+  LOCAL rho, V, A, theta, Q, mdot, Fx, Fy, Ftot, ang, res;
+
+  IF NOT INPUT({rho, V, A, theta},
+      "Chorro Desviado por Angulo",
+      {"rho (kg/m3)=", "V (m/s)=", "A (m2)=", "theta (grados)="},
+      {"Densidad del fluido", "Velocidad del chorro", "Area del chorro", "Angulo de deflexion (0=normal, 90=tangencial)"},
+      {1000.0, 5.0, 0.005, 45.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF V <= 0 THEN MSGBOX("Error: V debe ser mayor que cero."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF theta < 0 OR theta > 180 THEN MSGBOX("Error: theta debe estar entre 0 y 180 grados."); RETURN; END;
+
+  Q := A * V;
+  mdot := rho * Q;
+
+  Fx := mdot * V * (1 - COS(theta * 3.14159265358979 / 180));
+  Fy := mdot * V * SIN(theta * 3.14159265358979 / 180);
+  Ftot := SQRT(Fx ^ 2 + Fy ^ 2);
+  ang := angulo_(Fx, Fy);
+
+  res := "=== CHORRO DESVIADO ===" + CHAR(10);
+  res := res + "Fx = mdot*V*(1-cos(th))" + CHAR(10);
+  res := res + "Fy = mdot*V*sin(th)" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "Fx   = " + fmt_(Fx) + " N" + CHAR(10);
+  res := res + "Fy   = " + fmt_(Fy) + " N" + CHAR(10);
+  res := res + "|F|  = " + fmt_(Ftot) + " N" + CHAR(10);
+  res := res + "ang  = " + fmt_(ang) + " grados";
+
+  MSGBOX(res);
+END;
+
+// ---- Empuje tipo motor ----
+// T = mdot*(Ve - Vi) + (Pe - Pi)*Ae
+// Ve: velocidad de salida de gases (o chorro)
+// Vi: velocidad de entrada al motor (= velocidad del vehiculo en vuelo)
+// Ae: area de salida del tobera
+// Pe - Pi: diferencia de presiones en tobera de salida (manometrica)
+MF_MOM_THRUST()
+BEGIN
+  LOCAL mdot, Ve, Vi, Ae, Pe, Pi, T, res;
+
+  IF NOT INPUT({mdot, Ve, Vi, Ae, Pe, Pi},
+      "Empuje Motor / Cohete",
+      {"mdot (kg/s)=", "Ve (m/s)=", "Vi (m/s)=", "Ae (m2)=", "Pe (Pa)=", "Pi (Pa)="},
+      {"Flujo masico de propelente/gas", "Velocidad de salida (tobera)", "Velocidad de entrada (relativa al motor)", "Area de salida de la tobera", "Presion estatica salida tobera", "Presion estatica entrada (ambiente)"},
+      {10.0, 500.0, 0.0, 0.05, 101325.0, 101325.0}) THEN RETURN; END;
+
+  IF mdot <= 0 THEN MSGBOX("Error: mdot debe ser mayor que cero."); RETURN; END;
+  IF Ve < 0 THEN MSGBOX("Error: Ve no puede ser negativa."); RETURN; END;
+  IF Ae <= 0 THEN MSGBOX("Error: Ae debe ser positiva."); RETURN; END;
+
+  T := mdot * (Ve - Vi) + (Pe - Pi) * Ae;
+
+  res := "=== EMPUJE MOTOR/COHETE ===" + CHAR(10);
+  res := res + "T = mdot*(Ve-Vi) + (Pe-Pi)*Ae" + CHAR(10);
+  res := res + "T    = " + fmt_(T) + " N" + CHAR(10);
+  res := res + "T    = " + fmt_(T / 1000) + " kN" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
+  res := res + "Ve   = " + fmt_(Ve) + " m/s" + CHAR(10);
+  res := res + "Vi   = " + fmt_(Vi) + " m/s" + CHAR(10);
+  res := res + "Isp  = " + fmt_(T / (mdot * 9.81)) + " s  (impulso especifico)";
+
+  MSGBOX(res);
+END;
+
+// ---- Fuerza resultante 2D ----
+// Dado Fx y Fy del fluido sobre una estructura, calcula magnitud y angulo.
+MF_MOM_2D()
+BEGIN
+  LOCAL Fx, Fy, Ftot, ang, res;
+
+  IF NOT INPUT({Fx, Fy},
+      "Fuerza Resultante 2D",
+      {"Fx (N)=", "Fy (N)="},
+      {"Componente x de la fuerza del fluido", "Componente y de la fuerza del fluido"},
+      {1000.0, -500.0}) THEN RETURN; END;
+
+  Ftot := SQRT(Fx ^ 2 + Fy ^ 2);
+  ang := angulo_(Fx, Fy);
+
+  res := "=== FUERZA RESULTANTE 2D ===" + CHAR(10);
+  res := res + "Fx   = " + fmt_(Fx) + " N" + CHAR(10);
+  res := res + "Fy   = " + fmt_(Fy) + " N" + CHAR(10);
+  res := res + "|F|  = " + fmt_(Ftot) + " N" + CHAR(10);
+  res := res + "|F|  = " + fmt_(Ftot / 1000) + " kN" + CHAR(10);
+  res := res + "ang  = " + fmt_(ang) + " grados (desde eje x positivo)" + CHAR(10);
+  res := res + CHAR(10) + "Fuerza de anclaje requerida:" + CHAR(10);
+  res := res + "Fanc_x = " + fmt_(-Fx) + " N" + CHAR(10);
+  res := res + "Fanc_y = " + fmt_(-Fy) + " N";
+
+  MSGBOX(res);
+END;
+
+// ---- Ayuda cantidad de movimiento ----
+MF_MOM_HELP()
+BEGIN
+  LOCAL res;
+  res := "=== CANTIDAD DE MOVIMIENTO ===" + CHAR(10);
+  res := res + "Vol. control estacionario:" + CHAR(10);
+  res := res + "  SUM(F) = SUM(mdot_sal*V_sal)" + CHAR(10);
+  res := res + "          - SUM(mdot_ent*V_ent)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Fuerzas externas incluyen:" + CHAR(10);
+  res := res + "  - Presion en superficies" + CHAR(10);
+  res := res + "  - Fuerza de anclaje (Rx, Ry)" + CHAR(10);
+  res := res + "  - Peso del fluido en VC" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Convenio de signos:" + CHAR(10);
+  res := res + "  Rx,Ry = reaccion del fluido" + CHAR(10);
+  res := res + "  Fuerza anclaje = -(Rx, Ry)" + CHAR(10);
+  res := res + CHAR(10);
+  res := res + "Presiones: usar manometricas." + CHAR(10);
+  res := res + "Flujo incompresible, 1D, ideal.";
+  MSGBOX(res);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_MOM()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "CANTIDAD DE MOVIMIENTO",
+      "1. Tobera/Difusor - Fuerza axial",
+      "2. Reaccion en codo 2D",
+      "3. Chorro contra placa fija",
+      "4. Chorro desviado por angulo",
+      "5. Empuje motor/cohete",
+      "6. Fuerza resultante 2D",
+      "7. Ayuda cant. movimiento",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_MOM_NOZ(); END;
+    IF c == 2 THEN MF_MOM_BEND(); END;
+    IF c == 3 THEN MF_MOM_PLATE(); END;
+    IF c == 4 THEN MF_MOM_DEF(); END;
+    IF c == 5 THEN MF_MOM_THRUST(); END;
+    IF c == 6 THEN MF_MOM_2D(); END;
+    IF c == 7 THEN MF_MOM_HELP(); END;
+  END;
+END;

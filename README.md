@@ -29,6 +29,8 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 | `MF_HYDRO.hpprgm`     | Hidrostática                                     |
 | `MF_BUOY.hpprgm`      | Flotabilidad y empuje                            |
 | `MF_BERN.hpprgm`      | Ecuación de Bernoulli generalizada               |
+| `MF_CONT.hpprgm`      | Continuidad y conservación de masa               |
+| `MF_MOM.hpprgm`       | Cantidad de movimiento lineal                    |
 | `MF_PIPES.hpprgm`     | Flujo incompresible en tuberías                  |
 | `MF_PUMPS.hpprgm`     | Bombas y cavitación                              |
 | `MF_COMP.hpprgm`      | Flujo compresible (isentrópico, A/A*, choque)    |
@@ -83,7 +85,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 
 ---
 
-## Módulos implementados (Fase 1–3 completas)
+## Módulos implementados (Fase 1–3 + Fase 2 completas)
 
 ### 1. Propiedades y Números Adimensionales (`MF_PROPS`)
 - Número de Reynolds (Re = ρVD/μ o Re = VD/ν)
@@ -123,7 +125,27 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Velocidad de salida (Torricelli)
 - Desglose completo en metros de columna de fluido
 
-### 6. Flujo en Tuberías (`MF_PIPES`)
+### 6. Continuidad y Conservación de Masa (`MF_CONT`)
+- Caudal volumétrico: Q = A·V (con conversiones L/s, m³/h)
+- Caudal másico: ṁ = ρ·Q
+- Continuidad 1 entrada → 1 salida: A₁V₁ = A₂V₂ (resolver cualquier incógnita)
+- Continuidad 2 entradas → 1 salida: Q₁ + Q₂ = Q₃
+- Continuidad 1 entrada → 2 salidas: Q₁ = Q₂ + Q₃
+- Tasa de cambio de nivel en depósito: dh/dt = (Qin − Qout)/As
+- Tiempo de llenado o vaciado de depósito
+- Conversor de unidades de caudal (m³/s, L/s, m³/h, L/h, GPM, ft³/s)
+- Ayuda integrada con principios y fórmulas
+
+### 7. Cantidad de Movimiento Lineal (`MF_MOM`)
+- Fuerza axial en tobera o difusor: Rx = P₁A₁ − P₂A₂ + ṁ(V₁ − V₂)
+- Reacción en codo 2D: componentes Rx, Ry, magnitud y ángulo
+- Chorro contra placa fija: F = ρQV = ṁV
+- Chorro desviado por ángulo θ: Fx = ṁV(1−cosθ), Fy = ṁV·sinθ
+- Empuje tipo motor/cohete: T = ṁ(Ve − Vi) + (Pe − Pi)Ae, impulso específico
+- Fuerza resultante 2D: magnitud, ángulo y fuerza de anclaje requerida
+- Ayuda integrada con ecuación de cantidad de movimiento para volumen de control
+
+### 8. Flujo en Tuberías (`MF_PIPES`)
 - Velocidad media V = Q/A y caudal Q = V·A
 - Reynolds en tubería
 - Factor de fricción: f = 64/Re (laminar) o Swamee-Jain (turbulento)
@@ -131,21 +153,21 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Pérdidas menores: h_m = K·V²/2g
 - Cálculo completo: Reynolds, f, h_f, h_m, h_L, ΔP
 
-### 7. Bombas y Cavitación (`MF_PUMPS`)
+### 9. Bombas y Cavitación (`MF_PUMPS`)
 - Potencia hidráulica y en eje
 - Eficiencia η = P_h / P_eje
 - NPSHa desde brida de succión o desde depósito
 - Comparación NPSHa vs NPSHr con diagnóstico de cavitación
 - Punto de operación bomba-sistema (curvas cuadráticas, bisección numérica)
 
-### 8. Flujo Compresible (`MF_COMP`)
+### 10. Flujo Compresible (`MF_COMP`)
 - Velocidad del sonido: a = √(kRT)
 - Relaciones isentrópicas: T₀/T, P₀/P, ρ₀/ρ
 - Relación Área-Mach: A/A* para M dado, y M para A/A* dado (ramas subsónica y supersónica, bisección numérica)
 - Onda de choque normal: M₂, P₂/P₁, ρ₂/ρ₁, T₂/T₁, P₀₂/P₀₁
 - Aviso si M₁ ≤ 1 (choque no físico)
 
-### 9. Herramientas CAS (`MF_CAS`)
+### 11. Herramientas CAS (`MF_CAS`)
 - Resolver ecuación simbólica para variable
 - Simplificar expresión
 - Derivar expresión (orden n)
@@ -154,7 +176,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Caudal por integración de perfil u(r): Poiseuille, uniforme, personalizado
 - Ecuaciones predefinidas de fluidos para despejar variables
 
-### 10. Convertidor de Unidades (`MF_UNITS`)
+### 12. Convertidor de Unidades (`MF_UNITS`)
 - Presión: Pa, kPa, bar, atm, mmHg, psi
 - Caudal: m³/s, L/s, L/min, m³/h, GPM
 - Viscosidad dinámica: Pa·s, cP, P
@@ -163,7 +185,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Energía: J, kJ, Wh, kWh, kcal, BTU
 - Potencia: W, kW, CV, HP
 
-### 11. Ayuda Rápida (`MF_HELP`)
+### 13. Ayuda Rápida (`MF_HELP`)
 - Unidades SI del sistema
 - Tipos de presión y conversión
 - Regímenes de flujo
@@ -176,8 +198,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 
 ## Funciones pendientes (fases futuras)
 
-- Continuidad (ecuación de continuidad integral y diferencial)
-- Cantidad de movimiento (fuerzas en codos, toberas)
+- CAS avanzado: resolver y simplificar ecuaciones de fluidos simbólicamente
 - Perfil de Couette (flujo entre placas)
 - Flujo en canales abiertos (tirante normal, curva de energía)
 - Diagrama de Moody interactivo

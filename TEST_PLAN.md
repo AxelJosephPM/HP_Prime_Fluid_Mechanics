@@ -263,6 +263,154 @@ V_sub/V = 800/1000 = 0.8 → 80% sumergido, 20% fuera
 
 ---
 
+---
+
+## TEST 12: Continuidad 1-1 — Calcular V2
+
+**Menú:** Continuidad → Continuidad 1 entrada-1 salida → Calcular V2
+
+**Entrada:**
+- A1 = 0.02 m² (tubería mayor)
+- V1 = 1.5 m/s
+- A2 = 0.005 m² (tubería menor)
+
+**Cálculo:**
+```
+Q = A1*V1 = 0.02 × 1.5 = 0.030 m3/s
+V2 = Q/A2 = 0.030 / 0.005 = 6.0 m/s
+```
+
+**Esperado en pantalla:**
+```
+V2 = 6.0 m/s
+Q  = 0.03 m3/s
+```
+
+---
+
+## TEST 13: Caudal volumétrico y conversor
+
+**Menú:** Continuidad → Caudal Q = A*V
+
+**Entrada:**
+- A = 0.007854 m² (tubería D = 0.1 m)
+- V = 2.0 m/s
+
+**Cálculo:**
+```
+Q = 0.007854 × 2.0 = 0.015708 m3/s
+Q = 15.708 L/s
+Q = 56.549 m3/h
+```
+
+**Esperado en pantalla:** Q ≈ 0.0157 m3/s, ≈ 15.71 L/s, ≈ 56.55 m3/h
+
+---
+
+## TEST 14: Tasa de cambio de nivel en depósito
+
+**Menú:** Continuidad → Tasa de nivel en deposito
+
+**Entrada:**
+- Qin = 0.05 m³/s
+- Qout = 0.02 m³/s
+- As = 10.0 m²
+
+**Cálculo:**
+```
+dh/dt = (0.05 - 0.02) / 10.0 = 0.003 m/s = 10.8 m/h
+Estado: LLENADO
+```
+
+**Entrada crítica (vaciado):**
+- Qin = 0.01, Qout = 0.05, As = 10.0
+
+```
+dh/dt = (0.01 - 0.05) / 10.0 = -0.004 m/s → VACIANDO
+```
+
+---
+
+## TEST 15: Fuerza axial en tobera (MF_MOM_NOZ)
+
+**Menú:** Cant. Movimiento → Tobera/Difusor - Fuerza axial
+
+**Entrada:**
+- rho = 1000 kg/m³
+- Q = 0.01 m³/s
+- A1 = 0.02 m², P1 = 50000 Pa (man.)
+- A2 = 0.005 m², P2 = 0 Pa (man.)
+
+**Cálculo:**
+```
+V1 = 0.01/0.02 = 0.5 m/s
+V2 = 0.01/0.005 = 2.0 m/s
+mdot = 1000 × 0.01 = 10 kg/s
+Rx = 50000×0.02 - 0×0.005 + 10×(0.5 - 2.0)
+   = 1000 - 0 - 15 = 985 N
+Fanc = -985 N (fuerza de anclaje)
+```
+
+**Esperado en pantalla:**
+```
+V1   = 0.5 m/s
+V2   = 2.0 m/s
+mdot = 10.0 kg/s
+Rx   = 985.0 N
+Fanc = -985.0 N
+```
+
+---
+
+## TEST 16: Chorro contra placa fija
+
+**Menú:** Cant. Movimiento → Chorro contra placa fija
+
+**Entrada:**
+- rho = 1000 kg/m³
+- V = 8.0 m/s
+- A = 0.01 m²
+
+**Cálculo:**
+```
+Q = 0.01 × 8.0 = 0.08 m3/s
+mdot = 1000 × 0.08 = 80 kg/s
+F = mdot × V = 80 × 8.0 = 640 N
+```
+
+**Esperado en pantalla:**
+```
+mdot = 80.0 kg/s
+F    = 640.0 N
+F    = 0.64 kN
+```
+
+---
+
+## TEST 17: Reacción en codo 90° (MF_MOM_BEND)
+
+**Menú:** Cant. Movimiento → Reaccion en codo 2D
+
+**Entrada (tubería uniforme, codo 90°):**
+- rho = 1000, Q = 0.02 m³/s
+- A1 = 0.01 m², P1 = 30000 Pa, th1 = 0° (entrada en eje x)
+- A2 = 0.01 m², P2 = 15000 Pa, th2 = 90° (salida en eje y)
+
+**Cálculo:**
+```
+V1 = V2 = 0.02/0.01 = 2.0 m/s
+mdot = 1000 × 0.02 = 20 kg/s
+Rx = 20*(2.0*cos90 - 2.0*cos0) - 30000*0.01*cos0 + 15000*0.01*cos90
+   = 20*(0 - 2.0) - 300 + 0 = -40 - 300 = -340 N
+Ry = 20*(2.0*sin90 - 2.0*sin0) - 30000*0.01*sin0 + 15000*0.01*sin90
+   = 20*(2.0 - 0) - 0 + 150 = 40 + 150 = 190 N
+|R| = sqrt(340² + 190²) = sqrt(115600+36100) = sqrt(151700) ≈ 389.5 N
+```
+
+**Esperado:** Rx ≈ -340 N, Ry ≈ 190 N, |R| ≈ 389.5 N
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los cálculos fueron verificados manualmente antes de la implementación.

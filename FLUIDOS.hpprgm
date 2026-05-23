@@ -9,22 +9,26 @@ BEGIN
       "Hidrostatica",
       "Flotabilidad",
       "Bernoulli",
+      "Continuidad",
+      "Cant. Movimiento",
       "Tuberias",
       "Bombas",
       "Compresible",
       "CAS",
       "Utilidades",
       "Salir");
-    IF op == 0 OR op == 11 THEN RETURN; END;
+    IF op == 0 OR op == 13 THEN RETURN; END;
     IF op == 1 THEN MF_PROPS(); END;
     IF op == 2 THEN MF_MANO(); END;
     IF op == 3 THEN MF_HYDRO(); END;
     IF op == 4 THEN MF_BUOY(); END;
     IF op == 5 THEN MF_BERN(); END;
-    IF op == 6 THEN MF_PIPES(); END;
-    IF op == 7 THEN MF_PUMPS(); END;
-    IF op == 8 THEN MF_COMP(); END;
-    IF op == 9 THEN MF_CAS(); END;
-    IF op == 10 THEN MF_UTILS(); END;
+    IF op == 6 THEN MF_CONT(); END;
+    IF op == 7 THEN MF_MOM(); END;
+    IF op == 8 THEN MF_PIPES(); END;
+    IF op == 9 THEN MF_PUMPS(); END;
+    IF op == 10 THEN MF_COMP(); END;
+    IF op == 11 THEN MF_CAS(); END;
+    IF op == 12 THEN MF_UTILS(); END;
   END;
 END;

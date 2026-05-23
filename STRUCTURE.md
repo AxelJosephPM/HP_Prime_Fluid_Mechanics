@@ -10,6 +10,8 @@ HP_PRIME_FLUID_MECHANICS/
 ├── MF_HYDRO.hpprgm       ← Módulo: Hidrostática
 ├── MF_BUOY.hpprgm        ← Módulo: Flotabilidad y Empuje
 ├── MF_BERN.hpprgm        ← Módulo: Ecuación de Bernoulli
+├── MF_CONT.hpprgm        ← Módulo: Continuidad y Conservación de Masa
+├── MF_MOM.hpprgm         ← Módulo: Cantidad de Movimiento Lineal
 ├── MF_PIPES.hpprgm       ← Módulo: Flujo en Tuberías
 ├── MF_PUMPS.hpprgm       ← Módulo: Bombas y Cavitación
 ├── MF_COMP.hpprgm        ← Módulo: Flujo Compresible
@@ -58,6 +60,27 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_BERN_HB()    Hallar h_bomba
 │   ├── MF_BERN_POT()   Potencia hidráulica
 │   └── MF_BERN_V2()    Velocidad de salida
+│
+├── MF_CONT()     ← Módulo independiente
+│   ├── MF_CONT_Q()      Caudal volumetrico Q = A*V
+│   ├── MF_CONT_MDOT()   Caudal masico mdot = rho*Q
+│   ├── MF_CONT_C11()    Continuidad 1 entrada - 1 salida
+│   ├── MF_CONT_C21()    Continuidad 2 entradas - 1 salida
+│   ├── MF_CONT_C12()    Continuidad 1 entrada - 2 salidas
+│   ├── MF_CONT_DHT()    Tasa de cambio de nivel en deposito
+│   ├── MF_CONT_TFILL()  Tiempo de llenado o vaciado
+│   ├── MF_CONT_CONV()   Conversor de unidades de caudal
+│   └── MF_CONT_HELP()   Ayuda de continuidad
+│
+├── MF_MOM()      ← Módulo independiente
+│   ├── angulo_()        (interna) angulo desde componentes Fx, Fy
+│   ├── MF_MOM_NOZ()     Fuerza axial en tobera o difusor
+│   ├── MF_MOM_BEND()    Reaccion en codo 2D
+│   ├── MF_MOM_PLATE()   Chorro contra placa fija
+│   ├── MF_MOM_DEF()     Chorro desviado por angulo
+│   ├── MF_MOM_THRUST()  Empuje motor/cohete
+│   ├── MF_MOM_2D()      Fuerza resultante 2D
+│   └── MF_MOM_HELP()    Ayuda cantidad de movimiento
 │
 ├── MF_PIPES()    ← Módulo independiente
 │   ├── MF_PIPES_V()    Velocidad media / caudal
