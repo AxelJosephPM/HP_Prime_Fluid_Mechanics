@@ -8,23 +8,6 @@
 // Todos los demas modulos deben estar instalados.
 // ============================================================
 
-// Despacho de modulos en funcion separada para que IFERR
-// solo contenga una llamada simple (sin THEN internos).
-dispatch_(c)
-BEGIN
-  IF c == 1 THEN MF_PROPS(); END;
-  IF c == 2 THEN MF_MANO(); END;
-  IF c == 3 THEN MF_HYDRO(); END;
-  IF c == 4 THEN MF_BUOY(); END;
-  IF c == 5 THEN MF_BERN(); END;
-  IF c == 6 THEN MF_PIPES(); END;
-  IF c == 7 THEN MF_PUMPS(); END;
-  IF c == 8 THEN MF_COMP(); END;
-  IF c == 9 THEN MF_CAS(); END;
-  IF c == 10 THEN MF_UNITS(); END;
-  IF c == 11 THEN MF_HELP(); END;
-END;
-
 EXPORT FLUIDOS()
 BEGIN
   LOCAL c, conf;
@@ -51,7 +34,17 @@ BEGIN
     END;
 
     IFERR
-      dispatch_(c);
+      IF c == 1 THEN MF_PROPS(); END;
+      IF c == 2 THEN MF_MANO(); END;
+      IF c == 3 THEN MF_HYDRO(); END;
+      IF c == 4 THEN MF_BUOY(); END;
+      IF c == 5 THEN MF_BERN(); END;
+      IF c == 6 THEN MF_PIPES(); END;
+      IF c == 7 THEN MF_PUMPS(); END;
+      IF c == 8 THEN MF_COMP(); END;
+      IF c == 9 THEN MF_CAS(); END;
+      IF c == 10 THEN MF_UNITS(); END;
+      IF c == 11 THEN MF_HELP(); END;
     THEN
       MSGBOX("Modulo no encontrado." + CHAR(10) + "Instale todos los modulos.");
     END;

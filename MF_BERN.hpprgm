@@ -186,7 +186,7 @@ END;
 
 // ---- Velocidad de salida (Torricelli simplificado) ----
 // Para recipiente grande con superficie libre en z1, orificio en z2
-// V2 = sqrt(2*g*(z1-z2) + V1^2)  con V1≈0 para recipiente grande
+// V2 = sqrt(2*g*(z1-z2) + V1^2)  con V1~=0 para recipiente grande
 MF_BERN_V2()
 BEGIN
   LOCAL z1, z2, P1, P2, rho, g, V2, dh, bajo_raiz, res;
@@ -200,7 +200,7 @@ BEGIN
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
 
-  // V1 ≈ 0 (recipiente grande), sin perdidas, alpha=1
+  // V1 ~= 0 (recipiente grande), sin perdidas, alpha=1
   // P1/(rg) + z1 = P2/(rg) + V2^2/(2g) + z2
   // V2^2 = 2g*[ (P1-P2)/(rg) + (z1-z2) ]
   bajo_raiz := 2*g * ((P1 - P2)/(rho*g) + (z1 - z2));
