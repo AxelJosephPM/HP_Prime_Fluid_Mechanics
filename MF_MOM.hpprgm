@@ -173,7 +173,8 @@ END;
 //   Fy = mdot * V * sin(theta)       perpendicular
 MF_MOM_DEF()
 BEGIN
-  LOCAL rho, V, A, theta, Q, mdot, Fx, Fy, Ftot, ang, res;
+  LOCAL rho, V, A, theta, Q, mdot, Fx;
+  LOCAL Fy, Ftot, ang, res;
 
   IF NOT INPUT({rho, V, A, theta},
       "Chorro Desviado por Angulo",

@@ -165,7 +165,8 @@ END;
 // Q1 + Q2 = Q3
 MF_CONT_C21()
 BEGIN
-  LOCAL c, A1, V1, A2, V2, A3, V3, Q1, Q2, Q3, res;
+  LOCAL c, A1, V1, A2, V2, A3, V3;
+  LOCAL Q1, Q2, Q3, res;
 
   CHOOSE(c, "Continuidad 2-1: Q1+Q2=Q3",
     "Calcular Q3, V3 (dadas Q1, Q2, A3)",
@@ -222,7 +223,8 @@ END;
 // Q1 = Q2 + Q3
 MF_CONT_C12()
 BEGIN
-  LOCAL c, A1, V1, A2, V2, A3, V3, Q1, Q2, Q3, res;
+  LOCAL c, A1, V1, A2, V2, A3, V3;
+  LOCAL Q1, Q2, Q3, res;
 
   CHOOSE(c, "Continuidad 1-2: Q1=Q2+Q3",
     "Calcular Q2, V2 (dadas Q1, Q3, A2)",
