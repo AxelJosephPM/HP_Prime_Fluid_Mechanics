@@ -1,0 +1,291 @@
+// ============================================================
+// MF_MANO.hpprgm
+// FLUIDOS PRIME v1.0 - Manometros y Presiones
+// HP Prime G2
+// ============================================================
+// Contenido:
+//   MF_MANO()       - Menu principal (EXPORT)
+//   MF_MANO_PC()    - Conversion abs/manometrica/vacio
+//   MF_MANO_SIM()   - Manometro de tubo en U simple
+//   MF_MANO_DIF()   - Manometro diferencial con fluido manometrico
+//   MF_MANO_INC()   - Manometro inclinado
+//   MF_MANO_DP()    - Delta P directo rho*g*h
+// ============================================================
+
+// Formatea numero para mostrar
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// ---- Conversion de presiones ----
+MF_MANO_PC()
+BEGIN
+  LOCAL c, P, Patm, res;
+  LOCAL Pman, Pvac, Pabs2, Pabs3, Pin, uc, Pa_val;
+
+  CHOOSE(c, "Conversion de Presiones",
+    "Absoluta -> Manometrica y Vacio",
+    "Manometrica -> Absoluta",
+    "Vacio -> Absoluta",
+    "Presion en unidades multiples",
+    "Volver");
+  IF c == 0 OR c == 5 THEN RETURN; END;
+
+  IF c == 1 THEN
+    IF NOT INPUT({P, Patm},
+        "Presion Abs -> Man/Vacio",
+        {"P_abs (Pa)=", "P_atm (Pa)="},
+        {"Presion absoluta", "Presion atmosferica (101325 Pa std.)"},
+        {101325.0, 101325.0}) THEN RETURN; END;
+    IF P < 0 THEN MSGBOX("Error: La presion absoluta no puede ser negativa."); RETURN; END;
+    IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
+
+    Pman := P - Patm;
+    Pvac := Patm - P;
+
+    res := "=== CONVERSION DE PRESION ===" + CHAR(10);
+    res := res + "P_abs  = " + fmt_(P) + " Pa" + CHAR(10);
+    res := res + "P_atm  = " + fmt_(Patm) + " Pa" + CHAR(10);
+    res := res + "P_man  = " + fmt_(Pman) + " Pa";
+    IF Pman < 0 THEN
+      res := res + " (presion vacio)" + CHAR(10);
+      res := res + "P_vac  = " + fmt_(Pvac) + " Pa";
+    ELSE
+      res := res + " (presion manometrica positiva)";
+    END;
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 2 THEN
+    IF NOT INPUT({P, Patm},
+        "Manometrica -> Absoluta",
+        {"P_man (Pa)=", "P_atm (Pa)="},
+        {"Presion manometrica (puede ser negativa)", "Presion atmosferica"},
+        {50000.0, 101325.0}) THEN RETURN; END;
+    IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
+
+    Pabs2 := P + Patm;
+    IF Pabs2 < 0 THEN
+      MSGBOX("ATENCION: Presion absoluta negativa (" + fmt_(Pabs2) + " Pa)." + CHAR(10) + "Fisicamente imposible. Verifique los datos.");
+      RETURN;
+    END;
+
+    res := "=== CONVERSION DE PRESION ===" + CHAR(10);
+    res := res + "P_man  = " + fmt_(P) + " Pa" + CHAR(10);
+    res := res + "P_atm  = " + fmt_(Patm) + " Pa" + CHAR(10);
+    res := res + "P_abs  = " + fmt_(Pabs2) + " Pa";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 3 THEN
+    IF NOT INPUT({P, Patm},
+        "Presion Vacio -> Absoluta",
+        {"P_vac (Pa)=", "P_atm (Pa)="},
+        {"Presion de vacio (positiva)", "Presion atmosferica"},
+        {20000.0, 101325.0}) THEN RETURN; END;
+    IF P < 0 THEN MSGBOX("Error: La presion de vacio se expresa como valor positivo."); RETURN; END;
+    IF Patm <= 0 THEN MSGBOX("Error: P_atm debe ser positiva."); RETURN; END;
+
+    Pabs3 := Patm - P;
+    IF Pabs3 < 0 THEN
+      MSGBOX("ATENCION: P_vac > P_atm, resultado negativo no fisicamente valido.");
+      RETURN;
+    END;
+
+    res := "=== CONVERSION DE PRESION ===" + CHAR(10);
+    res := res + "P_vac  = " + fmt_(P) + " Pa" + CHAR(10);
+    res := res + "P_atm  = " + fmt_(Patm) + " Pa" + CHAR(10);
+    res := res + "P_abs  = " + fmt_(Pabs3) + " Pa";
+    MSGBOX(res);
+    RETURN;
+  END;
+
+  IF c == 4 THEN
+    // Convertidor de unidades de presion
+    CHOOSE(uc, "Unidad de entrada",
+      "Pa",
+      "kPa",
+      "bar",
+      "atm",
+      "mmHg",
+      "psi",
+      "Volver");
+    IF uc == 0 OR uc == 7 THEN RETURN; END;
+
+    IF NOT INPUT(Pin, "Presion a convertir",
+        "Valor=",
+        "Ingrese el valor en la unidad seleccionada",
+        101325.0) THEN RETURN; END;
+
+    // Convertir a Pa primero
+    IF uc == 1 THEN Pa_val := Pin; END;
+    IF uc == 2 THEN Pa_val := Pin * 1000; END;
+    IF uc == 3 THEN Pa_val := Pin * 1E5; END;
+    IF uc == 4 THEN Pa_val := Pin * 101325; END;
+    IF uc == 5 THEN Pa_val := Pin * 133.322; END;
+    IF uc == 6 THEN Pa_val := Pin * 6894.76; END;
+
+    res := "=== EQUIVALENCIAS DE PRESION ===" + CHAR(10);
+    res := res + fmt_(Pa_val) + " Pa" + CHAR(10);
+    res := res + fmt_(Pa_val / 1000) + " kPa" + CHAR(10);
+    res := res + fmt_(Pa_val / 1E5) + " bar" + CHAR(10);
+    res := res + fmt_(Pa_val / 101325) + " atm" + CHAR(10);
+    res := res + fmt_(Pa_val / 133.322) + " mmHg" + CHAR(10);
+    res := res + fmt_(Pa_val / 6894.76) + " psi";
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Manometro simple tubo en U ----
+MF_MANO_SIM()
+BEGIN
+  LOCAL rho_m, rho_f, g, h, DP, res;
+
+  IF NOT INPUT({rho_m, rho_f, g, h},
+      "Manometro Tubo en U Simple",
+      {"rho_m (kg/m3)=", "rho_f (kg/m3)=", "g (m/s2)=", "h (m)="},
+      {"Densidad fluido manometrico (ej. Hg=13600)", "Densidad fluido en tuberia", "Aceleracion gravitacional", "Diferencia de altura manometrica"},
+      {13600.0, 1000.0, 9.81, 0.1}) THEN RETURN; END;
+
+  IF rho_m <= 0 THEN MSGBOX("Error: rho_m debe ser positiva."); RETURN; END;
+  IF rho_f <= 0 THEN MSGBOX("Error: rho_f debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF h < 0 THEN MSGBOX("Error: h debe ser no negativa."); RETURN; END;
+
+  // Delta P = g * h * (rho_m - rho_f)
+  DP := g * h * (rho_m - rho_f);
+
+  res := "=== MANOMETRO TUBO EN U ===" + CHAR(10);
+  res := res + "DeltaP = g*h*(rho_m - rho_f)" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP) + " Pa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1000) + " kPa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1E5) + " bar" + CHAR(10);
+  res := res + "h      = " + fmt_(h) + " m" + CHAR(10);
+  res := res + "rho_m  = " + fmt_(rho_m) + " kg/m3" + CHAR(10);
+  res := res + "rho_f  = " + fmt_(rho_f) + " kg/m3";
+
+  MSGBOX(res);
+END;
+
+// ---- Manometro diferencial ----
+MF_MANO_DIF()
+BEGIN
+  LOCAL rho_m, rho_f, g, h, P1, DP, P2, res;
+
+  IF NOT INPUT({rho_m, rho_f, g, h, P1},
+      "Manometro Diferencial",
+      {"rho_m (kg/m3)=", "rho_f (kg/m3)=", "g (m/s2)=", "h (m)=", "P1_man (Pa)="},
+      {"Densidad fluido manometrico", "Densidad fluido en tuberia", "Aceleracion gravitacional", "Deflexion manometrica", "Presion manometrica en punto 1"},
+      {13600.0, 1000.0, 9.81, 0.05, 200000.0}) THEN RETURN; END;
+
+  IF rho_m <= 0 THEN MSGBOX("Error: rho_m debe ser positiva."); RETURN; END;
+  IF rho_f <= 0 THEN MSGBOX("Error: rho_f debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+
+  DP := g * h * (rho_m - rho_f);
+  P2 := P1 - DP;
+
+  res := "=== MANOMETRO DIFERENCIAL ===" + CHAR(10);
+  res := res + "DeltaP = g*h*(rho_m - rho_f)" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP) + " Pa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1000) + " kPa" + CHAR(10);
+  res := res + "P1     = " + fmt_(P1) + " Pa (man.)" + CHAR(10);
+  res := res + "P2     = " + fmt_(P2) + " Pa (man.)" + CHAR(10);
+  res := res + "h      = " + fmt_(h) + " m" + CHAR(10);
+  IF DP < 0 THEN
+    res := res + CHAR(10) + "NOTA: DeltaP negativo => P2 > P1";
+  END;
+
+  MSGBOX(res);
+END;
+
+// ---- Manometro inclinado ----
+MF_MANO_INC()
+BEGIN
+  LOCAL rho, g, L, theta, DP, h_eq, res;
+
+  IF NOT INPUT({rho, g, L, theta},
+      "Manometro Inclinado",
+      {"rho (kg/m3)=", "g (m/s2)=", "L (m)=", "theta (grados)="},
+      {"Densidad del fluido manometrico", "Aceleracion gravitacional", "Longitud del segmento inclinado leido", "Angulo con la horizontal (0-90 grados)"},
+      {1000.0, 9.81, 0.2, 30.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF L < 0 THEN MSGBOX("Error: L debe ser no negativa."); RETURN; END;
+  IF theta <= 0 OR theta > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
+
+  // h = L * sin(theta)  [theta en radianes para SIN]
+  h_eq := L * SIN(theta * 3.14159265358979 / 180);
+  DP := rho * g * h_eq;
+
+  res := "=== MANOMETRO INCLINADO ===" + CHAR(10);
+  res := res + "h_eq   = L*sin(theta)" + CHAR(10);
+  res := res + "h_eq   = " + fmt_(h_eq) + " m" + CHAR(10);
+  res := res + "DeltaP = rho*g*h_eq" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP) + " Pa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1000) + " kPa" + CHAR(10);
+  res := res + "L      = " + fmt_(L) + " m" + CHAR(10);
+  res := res + "theta  = " + fmt_(theta) + " grados" + CHAR(10);
+  res := res + "NOTA: Amplificacion vs manometro vertical: 1/sin(" + fmt_(theta) + ")=" + fmt_(1/SIN(theta*3.14159265358979/180));
+
+  MSGBOX(res);
+END;
+
+// ---- Delta P directo por columna de fluido ----
+MF_MANO_DP()
+BEGIN
+  LOCAL rho, g, h, DP, res;
+
+  IF NOT INPUT({rho, g, h},
+      "DeltaP = rho*g*h",
+      {"rho (kg/m3)=", "g (m/s2)=", "h (m)="},
+      {"Densidad del fluido", "Aceleracion gravitacional", "Columna de fluido (positiva hacia abajo)"},
+      {1000.0, 9.81, 1.0}) THEN RETURN; END;
+
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+
+  DP := rho * g * h;
+
+  res := "=== COLUMNA DE FLUIDO ===" + CHAR(10);
+  res := res + "DeltaP = rho*g*h" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP) + " Pa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1000) + " kPa" + CHAR(10);
+  res := res + "DeltaP = " + fmt_(DP / 1E5) + " bar" + CHAR(10);
+  res := res + "h_eq(agua 4C) = " + fmt_(DP / (1000 * 9.81)) + " m" + CHAR(10);
+  res := res + "rho = " + fmt_(rho) + " kg/m3" + CHAR(10);
+  res := res + "h   = " + fmt_(h) + " m";
+
+  MSGBOX(res);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_MANO()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "MANOMETROS Y PRESIONES",
+      "1. Conversion Abs/Man/Vacio",
+      "2. Manometro Tubo en U Simple",
+      "3. Manometro Diferencial",
+      "4. Manometro Inclinado",
+      "5. DeltaP = rho*g*h",
+      "0. Volver al menu principal");
+
+    IF c == 0 OR c == 6 THEN RETURN; END;
+    IF c == 1 THEN MF_MANO_PC(); END;
+    IF c == 2 THEN MF_MANO_SIM(); END;
+    IF c == 3 THEN MF_MANO_DIF(); END;
+    IF c == 4 THEN MF_MANO_INC(); END;
+    IF c == 5 THEN MF_MANO_DP(); END;
+  END;
+END;

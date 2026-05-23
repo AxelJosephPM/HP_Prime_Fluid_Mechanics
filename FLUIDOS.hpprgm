@@ -1,53 +1,29 @@
-// ============================================================
-// FLUIDOS PRIME v1.0
-// Herramientas de Mecanica de Fluidos - Universidad
-// Compatible con HP Prime G2 / Connectivity Kit
-// Modulo: Menu principal
-//
-// Uso: Ejecutar FLUIDOS() desde la calculadora.
-// Todos los demas modulos deben estar instalados.
-// ============================================================
-
 EXPORT FLUIDOS()
 BEGIN
-  LOCAL c, conf;
-  WHILE 1 DO
-    CHOOSE(c,
-      "=== FLUIDOS PRIME v1.0 ===",
-      "1. Propiedades y Num. Adim.",
-      "2. Manometros y Presiones",
-      "3. Hidrostatica",
-      "4. Flotabilidad y Empuje",
-      "5. Ecuacion de Bernoulli",
-      "6. Flujo en Tuberias",
-      "7. Bombas y Cavitacion",
-      "8. Flujo Compresible",
-      "9. Herramientas CAS",
-      "10. Convertidor de Unidades",
-      "11. Ayuda Rapida",
-      "0. SALIR");
-
-    IF c == 0 OR c == 12 THEN
-      CHOOSE(conf, "Salir de FLUIDOS PRIME?",
-        "Si, salir", "No, volver al menu");
-      IF conf == 1 THEN RETURN; END;
-    END;
-
-    IFERR
-      IF c == 1 THEN MF_PROPS(); END;
-      IF c == 2 THEN MF_MANO(); END;
-      IF c == 3 THEN MF_HYDRO(); END;
-      IF c == 4 THEN MF_BUOY(); END;
-      IF c == 5 THEN MF_BERN(); END;
-      IF c == 6 THEN MF_PIPES(); END;
-      IF c == 7 THEN MF_PUMPS(); END;
-      IF c == 8 THEN MF_COMP(); END;
-      IF c == 9 THEN MF_CAS(); END;
-      IF c == 10 THEN MF_UNITS(); END;
-      IF c == 11 THEN MF_HELP(); END;
-    THEN
-      MSGBOX("Modulo no encontrado." + CHAR(10) + "Instale todos los modulos.");
-    END;
-
-  END;
+  LOCAL op;
+  REPEAT
+    CHOOSE(op,
+      "FLUIDOS PRIME v1.0",
+      "Propiedades",
+      "Manometros",
+      "Hidrostatica",
+      "Flotabilidad",
+      "Bernoulli",
+      "Tuberias",
+      "Bombas",
+      "Compresible",
+      "CAS",
+      "Utilidades",
+      "Salir");
+    IF op == 1 THEN MF_PROPS(); END;
+    IF op == 2 THEN MF_MANO(); END;
+    IF op == 3 THEN MF_HYDRO(); END;
+    IF op == 4 THEN MF_BUOY(); END;
+    IF op == 5 THEN MF_BERN(); END;
+    IF op == 6 THEN MF_PIPES(); END;
+    IF op == 7 THEN MF_PUMPS(); END;
+    IF op == 8 THEN MF_COMP(); END;
+    IF op == 9 THEN MF_CAS(); END;
+    IF op == 10 THEN MF_UTILS(); END;
+  UNTIL op == 11 OR op == 0;
 END;

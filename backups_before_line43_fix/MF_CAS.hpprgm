@@ -1,0 +1,16 @@
+// ============================================================
+// MF_CAS.hpprgm
+// FLUIDOS PRIME v1.0 - Herramientas CAS Simbolicas
+// HP Prime G2
+// ============================================================
+// NOTA: Modulo CAS temporalmente reemplazado por marcador
+// minimo para garantizar importacion sin errores de sintaxis.
+// Las herramientas CAS simbolicas (solve, simplify, diff,
+// int, cinematica 2D) seran restauradas en una version futura
+// tras validacion de sintaxis CAS en HP Prime G2.
+// ============================================================
+
+EXPORT MF_CAS()
+BEGIN
+  MSGBOX("Herramientas CAS pendientes de validacion en HP Prime.");
+END;

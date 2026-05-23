@@ -412,16 +412,3 @@ BEGIN
     IF c == 7 THEN MF_HELP_PROPF(); END;
   END;
 END;
-
-// ---- Menu combinado de utilidades ----
-EXPORT MF_UTILS()
-BEGIN
-  LOCAL c;
-  CHOOSE(c,
-    "UTILIDADES",
-    "Convertidor de Unidades",
-    "Ayuda Rapida",
-    "Volver");
-  IF c == 1 THEN MF_UNITS(); END;
-  IF c == 2 THEN MF_HELP(); END;
-END;
