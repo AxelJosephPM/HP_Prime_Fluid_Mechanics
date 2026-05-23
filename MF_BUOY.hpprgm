@@ -50,7 +50,8 @@ END;
 // ---- Analisis completo de flotabilidad ----
 MF_BUOY_FL()
 BEGIN
-  LOCAL rho_f, rho_b, g, Vb, W, E, Wap, estado, res;
+  LOCAL rho_f, rho_b, g, Vb, W;
+  LOCAL E, Wap, estado, res;
 
   IF NOT INPUT({rho_f, rho_b, g, Vb},
       "Analisis de Flotabilidad",

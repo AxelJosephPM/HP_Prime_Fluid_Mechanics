@@ -58,8 +58,8 @@ END;
 // ---- Eficiencia de bomba ----
 MF_PUMPS_ETA()
 BEGIN
-  LOCAL Ph, Peje, eta_hid, rho, g, Q, H, res, res2;
-  LOCAL c;
+  LOCAL Ph, Peje, eta_hid, rho, g;
+  LOCAL Q, H, res, res2, c;
 
   CHOOSE(c, "Eficiencia de Bomba",
     "Dado Ph y Peje",

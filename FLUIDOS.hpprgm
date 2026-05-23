@@ -1,7 +1,7 @@
 EXPORT FLUIDOS()
 BEGIN
   LOCAL op;
-  REPEAT
+  WHILE 1 DO
     CHOOSE(op,
       "FLUIDOS PRIME v1.0",
       "Propiedades",
@@ -15,6 +15,7 @@ BEGIN
       "CAS",
       "Utilidades",
       "Salir");
+    IF op == 0 OR op == 11 THEN RETURN; END;
     IF op == 1 THEN MF_PROPS(); END;
     IF op == 2 THEN MF_MANO(); END;
     IF op == 3 THEN MF_HYDRO(); END;
@@ -25,5 +26,5 @@ BEGIN
     IF op == 8 THEN MF_COMP(); END;
     IF op == 9 THEN MF_CAS(); END;
     IF op == 10 THEN MF_UTILS(); END;
-  UNTIL op == 11 OR op == 0;
+  END;
 END;

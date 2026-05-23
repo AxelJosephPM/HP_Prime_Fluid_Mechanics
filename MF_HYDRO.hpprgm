@@ -64,7 +64,8 @@ END;
 //   I_G = ancho*(h2-h1)^3/12 (eje centroidal horizontal)
 MF_HYDRO_FV()
 BEGIN
-  LOCAL rho, g, h1, h2, b, hc, A, F, IG, ycp, ecp, res;
+  LOCAL rho, g, h1, h2, b, hc;
+  LOCAL A, F, IG, ycp, ecp, res;
 
   IF NOT INPUT({rho, g, h1, h2, b},
       "Fuerza - Placa Vertical",
@@ -111,7 +112,9 @@ END;
 // h_cp = y_cp * sin(theta)
 MF_HYDRO_FI()
 BEGIN
-  LOCAL rho, g, hc, b, L, theta, F, A, yc, IG, ycp, hcp, ecp, res, sinT;
+  LOCAL rho, g, hc, b, L, theta;
+  LOCAL F, A, yc, IG, ycp, hcp;
+  LOCAL ecp, res, sinT;
 
   IF NOT INPUT({rho, g, hc, b, L, theta},
       "Fuerza - Placa Inclinada",

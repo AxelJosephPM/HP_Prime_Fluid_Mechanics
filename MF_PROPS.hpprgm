@@ -24,12 +24,12 @@ BEGIN
 END;
 
 // Clasifica regimen segun Reynolds en tuberias
-regimenRe(Re)
+regimenRe(reyn)
 BEGIN
-  IF Re < 2300 THEN
+  IF reyn < 2300 THEN
     RETURN "LAMINAR (Re < 2300)";
   END;
-  IF Re <= 4000 THEN
+  IF reyn <= 4000 THEN
     RETURN "TRANSICIONAL (2300 <= Re <= 4000)";
   END;
   RETURN "TURBULENTO (Re > 4000)";
@@ -38,7 +38,7 @@ END;
 // ---- Numero de Reynolds ----
 MF_RE()
 BEGIN
-  LOCAL c, V, D, rho, mu, nu, Re, ok;
+  LOCAL c, V, D, rho, mu, nu, reyn, ok;
   LOCAL res, reg;
 
   CHOOSE(c, "Numero de Reynolds",
@@ -60,7 +60,7 @@ BEGIN
     IF rho <= 0 THEN MSGBOX("Error: rho debe ser mayor que cero."); RETURN; END;
     IF mu <= 0 THEN MSGBOX("Error: mu debe ser mayor que cero."); RETURN; END;
 
-    Re := rho * V * D / mu;
+    reyn := rho * V * D / mu;
     nu := mu / rho;
   END;
 
@@ -76,14 +76,14 @@ BEGIN
     IF D <= 0 THEN MSGBOX("Error: D debe ser mayor que cero."); RETURN; END;
     IF nu <= 0 THEN MSGBOX("Error: nu debe ser mayor que cero."); RETURN; END;
 
-    Re := V * D / nu;
+    reyn := V * D / nu;
     rho := 0; mu := 0;
   END;
 
-  reg := regimenRe(Re);
+  reg := regimenRe(reyn);
 
   res := "=== NUMERO DE REYNOLDS ===" + CHAR(10);
-  res := res + "Re = " + fmt_(Re) + CHAR(10);
+  res := res + "Re = " + fmt_(reyn) + CHAR(10);
   res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
   res := res + "D  = " + fmt_(D) + " m" + CHAR(10);
   IF c == 1 THEN

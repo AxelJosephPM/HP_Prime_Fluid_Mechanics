@@ -23,30 +23,30 @@ BEGIN
 END;
 
 // Clasifica regimen por Reynolds
-regimenStr(Re)
+regimenStr(reyn)
 BEGIN
-  IF Re < 2300 THEN RETURN "LAMINAR (Re < 2300)"; END;
-  IF Re <= 4000 THEN RETURN "TRANSICIONAL (2300-4000)"; END;
+  IF reyn < 2300 THEN RETURN "LAMINAR (Re < 2300)"; END;
+  IF reyn <= 4000 THEN RETURN "TRANSICIONAL (2300-4000)"; END;
   RETURN "TURBULENTO (Re > 4000)";
 END;
 
 // Calcula factor de friccion de Darcy
 // Laminar: f = 64/Re
 // Turbulento: Swamee-Jain
-calcFF(Re, eps, D)
+calcFF(reyn, eps, D)
 BEGIN
   LOCAL f, arg;
-  IF Re <= 0 THEN RETURN -1; END;
-  IF Re < 2300 THEN
-    RETURN 64 / Re;
+  IF reyn <= 0 THEN RETURN -1; END;
+  IF reyn < 2300 THEN
+    RETURN 64 / reyn;
   END;
-  IF Re <= 4000 THEN
+  IF reyn <= 4000 THEN
     // Zona transitoria: usar correlacion turbulenta (conservador)
     // Advertencia mostrada externamente
-    f := 64 / Re; // inicio con laminar como referencia
+    f := 64 / reyn; // inicio con laminar como referencia
   END;
   // Swamee-Jain (turbulento y transicion)
-  arg := eps / (3.7 * D) + 5.74 / Re ^ 0.9;
+  arg := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
   IF arg <= 0 THEN RETURN -1; END;
   f := 0.25 / (LOG(arg)) ^ 2;
   RETURN f;
@@ -102,7 +102,7 @@ END;
 // ---- Reynolds en tuberia ----
 MF_PIPES_RE()
 BEGIN
-  LOCAL V, D, rho, mu, Re, nu, reg, res;
+  LOCAL V, D, rho, mu, reyn, nu, reg, res;
 
   IF NOT INPUT({V, D, rho, mu},
       "Reynolds en Tuberia",
@@ -115,12 +115,12 @@ BEGIN
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
 
-  Re := rho * V * D / mu;
+  reyn := rho * V * D / mu;
   nu := mu / rho;
-  reg := regimenStr(Re);
+  reg := regimenStr(reyn);
 
   res := "=== REYNOLDS EN TUBERIA ===" + CHAR(10);
-  res := res + "Re = " + fmt_(Re) + CHAR(10);
+  res := res + "Re = " + fmt_(reyn) + CHAR(10);
   res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
   res := res + "D  = " + fmt_(D) + " m" + CHAR(10);
   res := res + "rho= " + fmt_(rho) + " kg/m3" + CHAR(10);
@@ -134,35 +134,35 @@ END;
 // ---- Factor de friccion ----
 MF_PIPES_FF()
 BEGIN
-  LOCAL Re, eps, D, f, reg, arg, res;
+  LOCAL reyn, eps, D, f, reg, arg, res;
 
-  IF NOT INPUT({Re, eps, D},
+  IF NOT INPUT({reyn, eps, D},
       "Factor de Friccion (Darcy)",
       {"Re (-)=", "eps (m)=", "D (m)="},
       {"Numero de Reynolds", "Rugosidad absoluta (acero comercial~0.046mm, hierro fund.~0.26mm)", "Diametro interno de tuberia"},
       {50000.0, 0.000046, 0.1}) THEN RETURN; END;
 
-  IF Re <= 0 THEN MSGBOX("Error: Re debe ser positivo."); RETURN; END;
+  IF reyn <= 0 THEN MSGBOX("Error: Re debe ser positivo."); RETURN; END;
   IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
   IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
 
-  reg := regimenStr(Re);
+  reg := regimenStr(reyn);
 
   res := "=== FACTOR DE FRICCION ===" + CHAR(10);
-  res := res + "Re   = " + fmt_(Re) + CHAR(10);
+  res := res + "Re   = " + fmt_(reyn) + CHAR(10);
   res := res + "eps/D= " + fmt_(eps/D) + "  (rugosidad relativa)" + CHAR(10);
   res := res + "Reg. = " + reg + CHAR(10);
   res := res + "---------------------" + CHAR(10);
 
-  IF Re < 2300 THEN
-    f := 64 / Re;
+  IF reyn < 2300 THEN
+    f := 64 / reyn;
     res := res + "f = 64/Re (Hagen-Poiseuille)" + CHAR(10);
     res := res + "f = " + fmt_(f);
   ELSE
-    IF Re <= 4000 THEN
+    IF reyn <= 4000 THEN
       res := res + "ZONA TRANSITORIA - resultado aproximado:" + CHAR(10);
     END;
-    arg := eps / (3.7 * D) + 5.74 / Re ^ 0.9;
+    arg := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
     IF arg <= 0 THEN
       MSGBOX("Error en calculo: argumento del log invalido. Verifique eps y D.");
       RETURN;
@@ -243,7 +243,8 @@ END;
 MF_PIPES_TOT()
 BEGIN
   LOCAL V, D, rho, mu, eps, L, K, g;
-  LOCAL Re, A, Q, f, hf, hm, hL, DP, nu, reg, argF;
+  LOCAL reyn, A, Q, f, hf;
+  LOCAL hm, hL, DP, nu, reg, argF;
   LOCAL res, aviso;
 
   IF NOT INPUT({D, Q, rho, mu, eps, L, K, g},
@@ -264,19 +265,19 @@ BEGIN
   A := 3.14159265358979 * D ^ 2 / 4;
   V := Q / A;
   nu := mu / rho;
-  Re := rho * V * D / mu;
-  reg := regimenStr(Re);
+  reyn := rho * V * D / mu;
+  reg := regimenStr(reyn);
 
   // Factor de friccion
   aviso := "";
-  IF Re < 2300 THEN
-    f := 64 / Re;
+  IF reyn < 2300 THEN
+    f := 64 / reyn;
     aviso := "(Laminar: f = 64/Re)";
   ELSE
-    IF Re <= 4000 THEN
+    IF reyn <= 4000 THEN
       aviso := "ATENCION: Zona transitoria. f calculado con Swamee-Jain.";
     END;
-    argF := eps / (3.7 * D) + 5.74 / Re ^ 0.9;
+    argF := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
     IF argF <= 0 THEN
       MSGBOX("Error en factor de friccion: argumento del log invalido.");
       RETURN;
@@ -294,7 +295,7 @@ BEGIN
   res := res + "A  = " + fmt_(A) + " m2" + CHAR(10);
   res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
   res := res + "Q  = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
-  res := res + "Re = " + fmt_(Re) + CHAR(10);
+  res := res + "Re = " + fmt_(reyn) + CHAR(10);
   res := res + "Reg: " + reg + CHAR(10);
   res := res + "--- Perdidas ---" + CHAR(10);
   res := res + "f  = " + fmt_(f) + "  " + aviso + CHAR(10);
@@ -304,7 +305,7 @@ BEGIN
   res := res + "DP = " + fmt_(DP) + " Pa" + CHAR(10);
   res := res + "DP = " + fmt_(DP / 1000) + " kPa";
 
-  IF Re > 0 AND Re <= 4000 AND Re >= 2300 THEN
+  IF reyn > 0 AND reyn <= 4000 AND reyn >= 2300 THEN
     res := res + CHAR(10) + CHAR(10) + "ADVERTENCIA: Flujo transicional." + CHAR(10) + "Los resultados son aproximados.";
   END;
 

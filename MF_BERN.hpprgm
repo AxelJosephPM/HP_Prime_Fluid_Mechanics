@@ -29,7 +29,8 @@ END;
 // Conocidos: P1, V1, z1, V2, z2, hL, h_bomba, h_turb, rho, g, alpha1, alpha2
 MF_BERN_P2()
 BEGIN
-  LOCAL P1, V1, z1, V2, z2, hL, hbomba, hturb, rho, g, a1, a2;
+  LOCAL P1, V1, z1, V2, z2, hL;
+  LOCAL hbomba, hturb, rho, g, a1, a2;
   LOCAL H1, H2, P2, rhs, res;
 
   IF NOT INPUT({P1, V1, z1, V2, z2, hL, hbomba, hturb, rho, g},
@@ -80,7 +81,8 @@ END;
 // ---- Hallar perdidas de carga hL ----
 MF_BERN_HL()
 BEGIN
-  LOCAL P1, V1, z1, P2, V2, z2, hbomba, hturb, rho, g, hL, res;
+  LOCAL P1, V1, z1, P2, V2, z2;
+  LOCAL hbomba, hturb, rho, g, hL, res;
 
   IF NOT INPUT({P1, V1, z1, P2, V2, z2, hbomba, hturb, rho, g},
       "Bernoulli: Hallar hL",
@@ -109,7 +111,8 @@ END;
 // ---- Hallar altura de bomba ----
 MF_BERN_HB()
 BEGIN
-  LOCAL P1, V1, z1, P2, V2, z2, hturb, hL, rho, g, hbomba, res;
+  LOCAL P1, V1, z1, P2, V2, z2;
+  LOCAL hturb, hL, rho, g, hbomba, res;
 
   IF NOT INPUT({P1, V1, z1, P2, V2, z2, hturb, hL, rho, g},
       "Bernoulli: Hallar h_bomba",
@@ -189,7 +192,8 @@ END;
 // V2 = sqrt(2*g*(z1-z2) + V1^2)  con V1~=0 para recipiente grande
 MF_BERN_V2()
 BEGIN
-  LOCAL z1, z2, P1, P2, rho, g, V2, dh, bajo_raiz, res;
+  LOCAL z1, z2, P1, P2, rho, g;
+  LOCAL V2, dh, bajo_raiz, res;
 
   IF NOT INPUT({z1, z2, P1, P2, rho, g},
       "Velocidad de Salida",
