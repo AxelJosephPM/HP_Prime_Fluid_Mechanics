@@ -387,27 +387,90 @@ F    = 0.64 kN
 
 ---
 
-## TEST 17: Reacción en codo 90° (MF_MOM_BEND)
+## TEST 17: Reaccion en codo 90 grados, sin presiones (MF_MOM_BEND)
 
-**Menú:** Cant. Movimiento → Reaccion en codo 2D
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Sin presiones
 
-**Entrada (tubería uniforme, codo 90°):**
-- rho = 1000, Q = 0.02 m³/s
-- A1 = 0.01 m², P1 = 30000 Pa, th1 = 0° (entrada en eje x)
-- A2 = 0.01 m², P2 = 15000 Pa, th2 = 90° (salida en eje y)
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- theta1 = 0
+- theta2 = 90
 
-**Cálculo:**
+**Esperado:**
 ```
-V1 = V2 = 0.02/0.01 = 2.0 m/s
-mdot = 1000 × 0.02 = 20 kg/s
-Rx = 20*(2.0*cos90 - 2.0*cos0) - 30000*0.01*cos0 + 15000*0.01*cos90
-   = 20*(0 - 2.0) - 300 + 0 = -40 - 300 = -340 N
-Ry = 20*(2.0*sin90 - 2.0*sin0) - 30000*0.01*sin0 + 15000*0.01*sin90
-   = 20*(2.0 - 0) - 0 + 150 = 40 + 150 = 190 N
-|R| = sqrt(340² + 190²) = sqrt(115600+36100) = sqrt(151700) ≈ 389.5 N
+V1 = 10 m/s
+V2 = 10 m/s
+mdot = 100 kg/s
+Mx = -1000 N
+My = 1000 N
+Fpx = 0 N
+Fpy = 0 N
+Fwx = -1000 N
+Fwy = 1000 N
+Rx = 1000 N
+Ry = -1000 N
+R  = 1414.2 N aprox
 ```
 
-**Esperado:** Rx ≈ -340 N, Ry ≈ 190 N, |R| ≈ 389.5 N
+---
+
+## TEST 17B: Reaccion en codo 90 grados, presion de entrada (MF_MOM_BEND)
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Datos completos
+
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- P1 = 200000 Pa
+- P2 = 0 Pa
+- theta1 = 0
+- theta2 = 90
+
+**Esperado:**
+```
+V1 = 10 m/s
+V2 = 10 m/s
+mdot = 100 kg/s
+Mx = -1000 N
+My = 1000 N
+Fpx = 2000 N
+Fpy = 0 N
+Fwx = -3000 N
+Fwy = 1000 N
+Rx = 3000 N
+Ry = -1000 N
+R  = 3162.3 N aprox
+```
+
+---
+
+## TEST 17C: Tuberia recta, sin presiones (MF_MOM_BEND)
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Sin presiones
+
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- theta1 = 0
+- theta2 = 0
+
+**Esperado:**
+```
+V1 = 10 m/s
+V2 = 10 m/s
+Mx = 0 N
+My = 0 N
+Rx = 0 N
+Ry = 0 N
+R  = 0 N
+```
 
 ---
 

@@ -85,52 +85,162 @@ BEGIN
 END;
 
 // ---- Reaccion en codo 2D ----
-// Codo que deflecta el flujo de theta1 a theta2 (angulos respecto al eje x, en grados)
-// Fx = mdot*(V2*cos(th2) - V1*cos(th1)) + P2*A2*cos(th2) - P1*A1*cos(th1)  [signo corregido]
-// Fy = mdot*(V2*sin(th2) - V1*sin(th1)) + P2*A2*sin(th2) - P1*A1*sin(th1)
-// Nota: Rx, Ry son las fuerzas que el fluido ejerce sobre el codo.
-// La fuerza de anclaje es -Rx, -Ry.
+// +x derecha, +y arriba. theta desde +x en grados.
+// P1 y P2 son manometricas. Rx,Ry = fluido sobre codo.
 MF_MOM_BEND()
 BEGIN
-  LOCAL rho, Q, A1, P1, th1, A2, P2, th2;
-  LOCAL V1, V2, mdot, c1, s1, c2, s2;
-  LOCAL Rx, Ry, Fanc, ang, res;
+  LOCAL mode, rho, Q, A1, A2, P1, P2, th1;
+  LOCAL th2, z1, z2, hL, g, V1, V2, mdot;
+  LOCAL rad1, rad2, c1, s1, c2, s2, V1x, V1y;
+  LOCAL V2x, V2y, Mx, My, Fpx, Fpy, Fwx, Fwy;
+  LOCAL Rx, Ry, R, ang, res, nota;
 
-  IF NOT INPUT({rho, Q, A1, P1, th1, A2, P2, th2},
-      "Codo 2D - Reaccion",
-      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "P1 (Pa)=", "th1 (grados)=", "A2 (m2)=", "P2 (Pa)=", "th2 (grados)="},
-      {"Densidad", "Caudal", "Area entrada", "Presion man. entrada", "Angulo direccion entrada (grados)", "Area salida", "Presion man. salida", "Angulo direccion salida (grados)"},
-      {1000.0, 0.01, 0.01, 40000.0, 0.0, 0.01, 20000.0, 90.0}) THEN RETURN; END;
+  mode := 0;
+  nota := "";
+  g := 9.81;
+  CHOOSE(mode,
+    "Reaccion en codo 2D",
+    "1. Datos completos",
+    "2. Sin presiones",
+    "3. P2 atmosferica",
+    "4. Calcular P2 Bernoulli",
+    "5. Volver");
+  IF mode == 0 OR mode == 5 THEN RETURN; END;
 
-  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
-  IF Q <= 0 THEN MSGBOX("Error: Q debe ser mayor que cero."); RETURN; END;
-  IF A1 <= 0 OR A2 <= 0 THEN MSGBOX("Error: areas deben ser positivas."); RETURN; END;
+  IF mode == 1 THEN
+    IF NOT INPUT({rho, Q, A1, A2, P1, P2, th1, th2},
+      "Codo 2D - Datos completos",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "A2 (m2)=", "P1 (Pa)=", "P2 (Pa)=", "theta1 (grados)=", "theta2 (grados)="},
+      {"Densidad", "Caudal", "Area entrada", "Area salida", "Presion manometrica entrada", "Presion manometrica salida", "Direccion velocidad entrada", "Direccion velocidad salida"},
+      {1000.0, 0.1, 0.01, 0.01, 0.0, 0.0, 0.0, 90.0}) THEN RETURN; END;
+  END;
+
+  IF mode == 2 THEN
+    IF NOT INPUT({rho, Q, A1, A2, th1, th2},
+      "Codo 2D - Sin presiones",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "A2 (m2)=", "theta1 (grados)=", "theta2 (grados)="},
+      {"Densidad", "Caudal", "Area entrada", "Area salida", "Direccion velocidad entrada", "Direccion velocidad salida"},
+      {1000.0, 0.1, 0.01, 0.01, 0.0, 90.0}) THEN RETURN; END;
+    P1 := 0;
+    P2 := 0;
+    nota := "Presiones tomadas como 0 manometrico";
+  END;
+
+  IF mode == 3 THEN
+    IF NOT INPUT({rho, Q, A1, A2, P1, th1, th2},
+      "Codo 2D - P2 atmosferica",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "A2 (m2)=", "P1 (Pa)=", "theta1 (grados)=", "theta2 (grados)="},
+      {"Densidad", "Caudal", "Area entrada", "Area salida", "Presion manometrica entrada", "Direccion velocidad entrada", "Direccion velocidad salida"},
+      {1000.0, 0.1, 0.01, 0.01, 200000.0, 0.0, 90.0}) THEN RETURN; END;
+    P2 := 0;
+    nota := "P2 = 0 manometrico (salida atmosferica)";
+  END;
+
+  IF mode == 4 THEN
+    IF NOT INPUT({rho, Q, A1, A2, P1, z1, z2, hL, th1, th2},
+      "Codo 2D - P2 Bernoulli",
+      {"rho (kg/m3)=", "Q (m3/s)=", "A1 (m2)=", "A2 (m2)=", "P1 (Pa)=", "z1 (m)=", "z2 (m)=", "hL (m)=", "theta1 (grados)=", "theta2 (grados)="},
+      {"Densidad", "Caudal", "Area entrada", "Area salida", "Presion manometrica entrada", "Cota entrada", "Cota salida", "Perdida de carga", "Direccion velocidad entrada", "Direccion velocidad salida"},
+      {1000.0, 0.1, 0.01, 0.01, 200000.0, 0.0, 0.0, 0.0, 0.0, 90.0}) THEN RETURN; END;
+  END;
+
+  IF rho <= 0 OR Q < 0 OR A1 <= 0 OR A2 <= 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  IF mode == 4 THEN
+    IF hL < 0 THEN
+      MSGBOX("Datos invalidos");
+      RETURN;
+    END;
+  END;
 
   V1 := Q / A1;
   V2 := Q / A2;
+  IF mode == 4 THEN
+    P2 := rho * g * (P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1 - hL - V2 ^ 2 / (2 * g) - z2);
+    nota := "P2 calculada con Bernoulli sin bomba/turbina";
+  END;
   mdot := rho * Q;
 
-  c1 := COS(th1 * 3.14159265358979 / 180);
-  s1 := SIN(th1 * 3.14159265358979 / 180);
-  c2 := COS(th2 * 3.14159265358979 / 180);
-  s2 := SIN(th2 * 3.14159265358979 / 180);
+  rad1 := th1 * PI / 180;
+  rad2 := th2 * PI / 180;
+  c1 := COS(rad1);
+  s1 := SIN(rad1);
+  c2 := COS(rad2);
+  s2 := SIN(rad2);
+  V1x := V1 * c1;
+  V1y := V1 * s1;
+  V2x := V2 * c2;
+  V2y := V2 * s2;
+  Mx := mdot * (V2x - V1x);
+  My := mdot * (V2y - V1y);
+  Fpx := P1 * A1 * c1 - P2 * A2 * c2;
+  Fpy := P1 * A1 * s1 - P2 * A2 * s2;
+  Fwx := Mx - Fpx;
+  Fwy := My - Fpy;
+  Rx := -Fwx;
+  Ry := -Fwy;
+  R := SQRT(Rx ^ 2 + Ry ^ 2);
 
-  // Fuerzas del fluido sobre el codo
-  Rx := mdot * (V2 * c2 - V1 * c1) - P1 * A1 * c1 + P2 * A2 * c2;
-  Ry := mdot * (V2 * s2 - V1 * s1) - P1 * A1 * s1 + P2 * A2 * s2;
+  IF Rx == 0 THEN
+    IF Ry > 0 THEN
+      ang := 90;
+    ELSE
+      IF Ry < 0 THEN
+        ang := -90;
+      ELSE
+        ang := 0;
+      END;
+    END;
+  ELSE
+    ang := ATAN(Ry / Rx) * 180 / PI;
+    IF Rx < 0 THEN
+      ang := ang + 180;
+    END;
+  END;
 
-  Fanc := SQRT(Rx ^ 2 + Ry ^ 2);
-  ang := angulo_(Rx, Ry);
+  res := "CODO 2D - CONVENCION" + CHAR(10);
+  res := res + "+x derecha, +y arriba" + CHAR(10);
+  res := res + "theta desde +x, grados" + CHAR(10);
+  res := res + "P1,P2 manometricas" + CHAR(10);
+  res := res + "Rx,Ry = fuerza del fluido sobre el codo";
+  IF nota <> "" THEN
+    res := res + CHAR(10) + nota;
+  END;
+  MSGBOX(res);
 
-  res := "=== REACCION EN CODO 2D ===" + CHAR(10);
-  res := res + "V1   = " + fmt_(V1) + " m/s  (th1=" + fmt_(th1) + " grados)" + CHAR(10);
-  res := res + "V2   = " + fmt_(V2) + " m/s  (th2=" + fmt_(th2) + " grados)" + CHAR(10);
-  res := res + "mdot = " + fmt_(mdot) + " kg/s" + CHAR(10);
-  res := res + "Rx   = " + fmt_(Rx) + " N" + CHAR(10);
-  res := res + "Ry   = " + fmt_(Ry) + " N" + CHAR(10);
-  res := res + "|R|  = " + fmt_(Fanc) + " N" + CHAR(10);
-  res := res + "ang  = " + fmt_(ang) + " grados (desde eje x)";
+  res := "DATOS Y VELOCIDADES" + CHAR(10);
+  res := res + "A1   = " + fmt_(A1) + " m2" + CHAR(10);
+  res := res + "A2   = " + fmt_(A2) + " m2" + CHAR(10);
+  res := res + "V1   = " + fmt_(V1) + " m/s" + CHAR(10);
+  res := res + "V2   = " + fmt_(V2) + " m/s" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s";
+  MSGBOX(res);
 
+  res := "COMPONENTES VELOCIDAD" + CHAR(10);
+  res := res + "V1x = " + fmt_(V1x) + " m/s" + CHAR(10);
+  res := res + "V1y = " + fmt_(V1y) + " m/s" + CHAR(10);
+  res := res + "V2x = " + fmt_(V2x) + " m/s" + CHAR(10);
+  res := res + "V2y = " + fmt_(V2y) + " m/s";
+  MSGBOX(res);
+
+  res := "BALANCE FUERZAS" + CHAR(10);
+  res := res + "Mx  = " + fmt_(Mx) + " N" + CHAR(10);
+  res := res + "My  = " + fmt_(My) + " N" + CHAR(10);
+  res := res + "Fpx = " + fmt_(Fpx) + " N" + CHAR(10);
+  res := res + "Fpy = " + fmt_(Fpy) + " N" + CHAR(10);
+  res := res + "Fwx = " + fmt_(Fwx) + " N" + CHAR(10);
+  res := res + "Fwy = " + fmt_(Fwy) + " N" + CHAR(10);
+  res := res + "Fwx,Fwy = fuerza de pared sobre fluido";
+  MSGBOX(res);
+
+  res := "REACCION DEL FLUIDO SOBRE CODO" + CHAR(10);
+  res := res + "Rx = " + fmt_(Rx) + " N" + CHAR(10);
+  res := res + "Ry = " + fmt_(Ry) + " N" + CHAR(10);
+  res := res + "R  = " + fmt_(R) + " N" + CHAR(10);
+  res := res + "ang aprox = " + fmt_(ang) + " grados" + CHAR(10);
+  res := res + "Rx,Ry = fuerza del fluido sobre el codo";
   MSGBOX(res);
 END;
 
