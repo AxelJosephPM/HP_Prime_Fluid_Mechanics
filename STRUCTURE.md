@@ -108,13 +108,20 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_PUMPS_OP()   Opcion 6: Punto de operación simple (bisección)
 │   └── MF_PUMPS_HELP() Opcion 7: Ayuda fórmulas
 │
-├── MF_COMP()     ← Módulo independiente
-│   ├── aAstar_()       (interna) A/A* = f(M,k)
-│   ├── solveMach_()    (interna) bisección M dado A/A*
-│   ├── MF_COMP_SONIDO() Velocidad del sonido
-│   ├── MF_COMP_IS()    Relaciones isentrópicas
-│   ├── MF_COMP_AREA()  Relación Área-Mach
-│   └── MF_COMP_SHOCK() Onda de choque normal
+├── MF_COMP()     ← Módulo independiente (v2.0)
+│   ├── fmt_()          Helper formato numérico
+│   ├── aAstar_(M,k)    (interna) A/A* = f(M, gamma)
+│   ├── solveMach_()    (interna) bisección M dado A/A* (50 iter.)
+│   ├── MF_COMP_SONIDO() Opcion 1: a = sqrt(gamma*R*T)
+│   ├── MF_COMP_MACH()  Opcion 2: M = V/a, clasificacion regimen
+│   ├── MF_COMP_IS()    Opcion 3: razones T0/T, P0/P, rho0/rho
+│   ├── MF_COMP_REMAN() Opcion 4: T0, P0, rho0 desde estaticas
+│   ├── MF_COMP_ASTAR() Opcion 5: A/A* dado M
+│   ├── MF_COMP_MINV()  Opcion 6: M desde A/A* (biseccion subsonica o supersonica)
+│   ├── MF_COMP_MDOT()  Opcion 7: caudal masico isentropico en tobera
+│   ├── MF_COMP_CHOKE() Opcion 8: flujo bloqueado mdot* y P*/P0
+│   ├── MF_COMP_SHOCK() Opcion 9: choque normal (M2, P2/P1, rho2/rho1, T2/T1, P02/P01)
+│   └── MF_COMP_HELP()  Opcion 10: ayuda formulas
 │
 ├── MF_CAS()      ← Módulo independiente
 │   ├── MF_CAS_SOLV()   Resolver ecuación simbólica

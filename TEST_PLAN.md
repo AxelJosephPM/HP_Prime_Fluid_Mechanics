@@ -530,10 +530,131 @@ RIESGO CAVITACION (NPSHa < NPSHr)
 
 ---
 
+---
+
+## TEST 24: Velocidad del sonido (MF_COMP opcion 1)
+
+**Menu:** Flujo Compresible → Velocidad sonido
+
+**Entrada:**
+- gamma = 1.4
+- R = 287
+- T = 288 K
+
+**Calculo:**
+```
+a = sqrt(1.4 * 287 * 288) = sqrt(115718.4) = 340.17 m/s  ~  340 m/s
+```
+
+**Esperado en pantalla:**
+```
+a = 340.17 m/s  ~  340 m/s
+```
+
+---
+
+## TEST 25: Numero Mach (MF_COMP opcion 2)
+
+**Menu:** Flujo Compresible → Numero Mach
+
+**Entrada:**
+- V = 170 m/s
+- gamma = 1.4, R = 287, T = 288 K
+
+**Calculo:**
+```
+a = 340.17 m/s
+M = 170 / 340.17 = 0.4997  ~  0.5
+Regimen: SUBSONICO
+```
+
+**Esperado en pantalla:**
+```
+a = 340.17 m/s
+M = 0.4997
+Regimen: SUBSONICO
+```
+
+---
+
+## TEST 26: Relaciones isentropicas M=2 (MF_COMP opcion 3)
+
+**Menu:** Flujo Compresible → Relaciones isentropicas
+
+**Entrada:**
+- M = 2
+- gamma = 1.4
+
+**Calculo:**
+```
+T0/T     = 1 + 0.4/2 * 4 = 1 + 0.8 = 1.8
+P0/P     = 1.8^(1.4/0.4) = 1.8^3.5 = 7.824
+rho0/rho = 1.8^(1/0.4)   = 1.8^2.5 = 4.347
+```
+
+**Esperado en pantalla:**
+```
+T0/T     = 1.8
+P0/P     = 7.824
+rho0/rho = 4.347
+```
+
+---
+
+## TEST 27: Area-Mach M=1 (MF_COMP opcion 5)
+
+**Menu:** Flujo Compresible → Area-Mach
+
+**Entrada:**
+- M = 1
+- gamma = 1.4
+
+**Calculo:**
+```
+A/A* = 1  (garganta sonica)
+```
+
+**Esperado en pantalla:**
+```
+A/A* = 1
+Nota: M=1, A=A* (garganta sonica)
+```
+
+---
+
+## TEST 28: Choque normal M1=2 (MF_COMP opcion 9)
+
+**Menu:** Flujo Compresible → Choque normal
+
+**Entrada:**
+- M1 = 2
+- gamma = 1.4
+
+**Calculo:**
+```
+M2sq = (1 + 0.2*4)/(1.4*4 - 0.2) = 1.8/5.4 = 0.3333
+M2   = 0.5774  ~  0.577
+P2/P1     = 1 + 2*1.4/2.4*(4-1) = 1 + 3.5 = 4.5
+rho2/rho1 = 2.4*4 / (2 + 0.4*4) = 9.6/3.6 = 2.667
+T2/T1     = 4.5 / 2.667 = 1.688
+P02/P01   ~ 0.7209
+```
+
+**Esperado en pantalla:**
+```
+M2        = 0.5774
+P2/P1     = 4.5
+rho2/rho1 = 2.6667
+T2/T1     = 1.688
+P02/P01   = 0.7209
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.
-- La biseccion (Area-Mach, punto de operacion, diseno diametro, Q max cavitacion) converge en < 70 iteraciones.
+- La biseccion (Area-Mach, punto de operacion, diseno diametro, Q max cavitacion) converge en <= 50 iteraciones.
 - El factor de Swamee-Jain difiere < 3% del factor de Colebrook en flujo turbulento desarrollado.
 - MF_CAS no fue modificado y no forma parte del plan de pruebas activo.
 - Los resultados del CAS dependen del motor simbolico de HP Prime; pueden variar en forma de representacion pero son equivalentes matematicamente.

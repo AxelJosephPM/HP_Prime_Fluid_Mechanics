@@ -168,12 +168,18 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Ayuda de fórmulas integrada
 - MF_CAS está pendiente para fase final (no modificado)
 
-### 10. Flujo Compresible (`MF_COMP`)
-- Velocidad del sonido: a = √(kRT)
-- Relaciones isentrópicas: T₀/T, P₀/P, ρ₀/ρ
-- Relación Área-Mach: A/A* para M dado, y M para A/A* dado (ramas subsónica y supersónica, bisección numérica)
-- Onda de choque normal: M₂, P₂/P₁, ρ₂/ρ₁, T₂/T₁, P₀₂/P₀₁
-- Aviso si M₁ ≤ 1 (choque no físico)
+### 10. Flujo Compresible (`MF_COMP`) — mejorado v2.0
+- Velocidad del sonido: a = sqrt(gamma*R*T)
+- Numero de Mach: M = V/a, con clasificacion subsonico/sonico/supersonico
+- Relaciones isentropicas: T0/T, P0/P, rho0/rho (solo razones)
+- Propiedades de remanso: T0, P0, rho0 desde condiciones estaticas y M
+- Area-Mach: A/A* dado M
+- Mach desde A/A*: biseccion rama subsonica o supersonica (50 iter.)
+- Caudal masico tobera: mdot = A*P0/sqrt(T0)*sqrt(gamma/R)*M*(...)
+- Flujo bloqueado: mdot* y P*/P0 para condicion choked (M=1)
+- Choque normal: M2, P2/P1, rho2/rho1, T2/T1, P02/P01
+- Ayuda de formulas integrada
+- MF_CAS permanece pendiente para fase final (no modificado)
 
 ### 11. Herramientas CAS (`MF_CAS`)
 - Resolver ecuación simbólica para variable

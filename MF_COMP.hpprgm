@@ -1,18 +1,20 @@
 // ============================================================
 // MF_COMP.hpprgm
-// FLUIDOS PRIME v1.0 - Flujo Compresible
+// FLUIDOS PRIME v2.0 - Flujo Compresible
 // HP Prime G2
 // ============================================================
-// Contenido:
-//   MF_COMP()       - Menu principal (EXPORT)
-//   MF_COMP_IS()    - Relaciones isentropicas (T0, P0, rho0)
-//   MF_COMP_AREA()  - Relacion Area-Mach (A/A*)
-//   MF_COMP_SHOCK() - Onda de choque normal
-//   MF_COMP_SONIDO()- Velocidad del sonido
-// ============================================================
-// Funciones internas (no exportadas):
-//   aAstar_(M, k)       - Calcula A/A* dado M y k
-//   solveMach_(tgt,lo,hi,k) - Biseccion para M dado A/A*
+// Opciones:
+//   1. Velocidad sonido
+//   2. Numero Mach
+//   3. Relaciones isentropicas
+//   4. Propiedades remanso
+//   5. Area-Mach
+//   6. Mach desde A/A*
+//   7. Caudal masico tobera
+//   8. Flujo bloqueado
+//   9. Choque normal
+//  10. Ayuda formulas
+//  11. Volver
 // ============================================================
 
 fmt_(x)
@@ -24,7 +26,7 @@ BEGIN
   RETURN STRING(ROUND(x, 4));
 END;
 
-// A/A* como funcion de M y k
+// A/A* as function of M and k (k = gamma)
 aAstar_(M, k)
 BEGIN
   LOCAL term;
@@ -33,11 +35,11 @@ BEGIN
   RETURN (1 / M) * term ^ ((k + 1) / (2 * (k - 1)));
 END;
 
-// Biseccion para hallar M dado A/A* en rango [lo, hi]
+// Bisection: find M in [lo, hi] such that aAstar_(M,k) = tgt
 solveMach_(tgt, lo, hi, k)
 BEGIN
   LOCAL mid, flo, fmid, i;
-  FOR i FROM 1 TO 70 DO
+  FOR i FROM 1 TO 50 DO
     mid := (lo + hi) / 2;
     flo := aAstar_(lo, k) - tgt;
     fmid := aAstar_(mid, k) - tgt;
@@ -53,204 +55,262 @@ BEGIN
   RETURN (lo + hi) / 2;
 END;
 
-// ---- Velocidad del sonido ----
+// ---- Option 1: Velocidad sonido ----
 MF_COMP_SONIDO()
 BEGIN
-  LOCAL k, R, T, a, res2;
-
-  IF NOT INPUT({k, R, T},
-      "Velocidad del Sonido",
-      {"k (-)=", "R (J/kg*K)=", "T (K)="},
-      {"Razon de calores especificos (aire=1.4)", "Constante del gas (aire=287 J/kg*K)", "Temperatura absoluta"},
-      {1.4, 287.0, 293.15}) THEN RETURN; END;
-
-  IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
-  IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
-  IF T <= 0 THEN MSGBOX("Error: T debe ser positiva (Kelvin)."); RETURN; END;
-
-  a := SQRT(k * R * T);
-
-  res2 := "=== VELOCIDAD DEL SONIDO ===" + CHAR(10);
-  res2 := res2 + "a = sqrt(k*R*T)" + CHAR(10);
-  res2 := res2 + "a = " + fmt_(a) + " m/s" + CHAR(10);
-  res2 := res2 + "k = " + fmt_(k) + CHAR(10);
-  res2 := res2 + "R = " + fmt_(R) + " J/(kg*K)" + CHAR(10);
-  res2 := res2 + "T = " + fmt_(T) + " K  (" + fmt_(T - 273.15) + " C)";
-
-  MSGBOX(res2);
-END;
-
-// ---- Relaciones isentropicas ----
-MF_COMP_IS()
-BEGIN
-  LOCAL M, k, R, T, P, rho_s;
-  LOCAL T0, P0, rho0, a, V, res2;
-  LOCAL TR, PR, rhoR;
-
-  IF NOT INPUT({M, k, R, T, P},
-      "Relaciones Isentropicas",
-      {"M (-)=", "k (-)=", "R (J/kg*K)=", "T (K)=", "P (Pa)="},
-      {"Numero de Mach local", "Razon de calores especificos", "Constante del gas (aire=287)", "Temperatura estatica local", "Presion estatica local"},
-      {0.8, 1.4, 287.0, 250.0, 50000.0}) THEN RETURN; END;
-
-  IF M < 0 THEN MSGBOX("Error: M no puede ser negativo."); RETURN; END;
-  IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
+  LOCAL gam, R, T, a, res;
+  IF NOT INPUT({gam, R, T},
+      "Velocidad sonido",
+      {"gamma (-)=", "R (J/kg*K)=", "T (K)="},
+      {"Razon calores especificos (aire=1.4)", "Constante del gas (aire=287)", "Temperatura absoluta"},
+      {1.4, 287.0, 288.0}) THEN RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
   IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
   IF T <= 0 THEN MSGBOX("Error: T debe ser positiva (K)."); RETURN; END;
-  IF P <= 0 THEN MSGBOX("Error: P debe ser positiva."); RETURN; END;
-
-  // Razones isentropicas
-  TR := 1 + (k - 1) / 2 * M ^ 2;       // T0/T
-  PR := TR ^ (k / (k - 1));              // P0/P
-  rhoR := TR ^ (1 / (k - 1));            // rho0/rho
-
-  T0 := T * TR;
-  P0 := P * PR;
-  rho_s := P / (R * T);
-  rho0 := rho_s * rhoR;
-  a := SQRT(k * R * T);
-  V := M * a;
-
-  res2 := "=== RELACIONES ISENTROPICAS ===" + CHAR(10);
-  res2 := res2 + "--- Condicion local ---" + CHAR(10);
-  res2 := res2 + "M    = " + fmt_(M) + CHAR(10);
-  res2 := res2 + "T    = " + fmt_(T) + " K" + CHAR(10);
-  res2 := res2 + "P    = " + fmt_(P) + " Pa" + CHAR(10);
-  res2 := res2 + "rho  = " + fmt_(rho_s) + " kg/m3" + CHAR(10);
-  res2 := res2 + "a    = " + fmt_(a) + " m/s" + CHAR(10);
-  res2 := res2 + "V    = " + fmt_(V) + " m/s" + CHAR(10);
-  res2 := res2 + "--- Condicion de remanso (0) ---" + CHAR(10);
-  res2 := res2 + "T0   = " + fmt_(T0) + " K" + CHAR(10);
-  res2 := res2 + "P0   = " + fmt_(P0) + " Pa  (" + fmt_(P0 / 1000) + " kPa)" + CHAR(10);
-  res2 := res2 + "rho0 = " + fmt_(rho0) + " kg/m3" + CHAR(10);
-  res2 := res2 + "--- Razones ---" + CHAR(10);
-  res2 := res2 + "T0/T = " + fmt_(TR) + CHAR(10);
-  res2 := res2 + "P0/P = " + fmt_(PR) + CHAR(10);
-  res2 := res2 + "r0/r = " + fmt_(rhoR);
-
-  MSGBOX(res2);
+  a := SQRT(gam * R * T);
+  res := "=== VELOCIDAD SONIDO ===" + CHAR(10);
+  res := res + "a = sqrt(gamma*R*T)" + CHAR(10);
+  res := res + "a = " + fmt_(a) + " m/s" + CHAR(10);
+  res := res + "gamma = " + fmt_(gam) + CHAR(10);
+  res := res + "R = " + fmt_(R) + " J/(kg*K)" + CHAR(10);
+  res := res + "T = " + fmt_(T) + " K";
+  MSGBOX(res);
 END;
 
-// ---- Relacion Area-Mach ----
-MF_COMP_AREA()
+// ---- Option 2: Numero Mach ----
+MF_COMP_MACH()
 BEGIN
-  LOCAL c;
-  LOCAL k, M, AA, res2, res3, res4, Msol;
-  CHOOSE(c, "Relacion Area-Mach (A/A*)",
-    "Calcular A/A* dado M",
-    "Calcular M dado A/A* (subsonico)",
-    "Calcular M dado A/A* (supersonico)",
-    "Volver");
-  IF c == 0 OR c == 4 THEN RETURN; END;
-
-  IF c == 1 THEN
-    IF NOT INPUT({M, k},
-        "A/A* dado M",
-        {"M (-)=", "k (-)="},
-        {"Numero de Mach (M>0)", "Razon de calores especificos"},
-        {0.5, 1.4}) THEN RETURN; END;
-
-    IF M <= 0 THEN MSGBOX("Error: M debe ser mayor que cero."); RETURN; END;
-    IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
-
-    AA := aAstar_(M, k);
-    res2 := "=== AREA-MACH ===" + CHAR(10);
-    res2 := res2 + "A/A* = " + fmt_(AA) + CHAR(10);
-    res2 := res2 + "M    = " + fmt_(M) + CHAR(10);
-    res2 := res2 + "k    = " + fmt_(k) + CHAR(10);
-    IF M < 1 THEN
-      res2 := res2 + "Regimen: SUBSONICO";
+  LOCAL V, gam, R, T, a, M, reg, res;
+  reg := "";
+  IF NOT INPUT({V, gam, R, T},
+      "Numero Mach",
+      {"V (m/s)=", "gamma (-)=", "R (J/kg*K)=", "T (K)="},
+      {"Velocidad del fluido", "Razon calores especificos", "Constante del gas", "Temperatura estatica"},
+      {170.0, 1.4, 287.0, 288.0}) THEN RETURN; END;
+  IF V < 0 THEN MSGBOX("Error: V no puede ser negativa."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
+  IF T <= 0 THEN MSGBOX("Error: T debe ser positiva (K)."); RETURN; END;
+  a := SQRT(gam * R * T);
+  M := V / a;
+  IF M < 0.99 THEN
+    reg := "SUBSONICO";
+  ELSE
+    IF M > 1.01 THEN
+      reg := "SUPERSONICO";
     ELSE
-      IF M > 1 THEN
-        res2 := res2 + "Regimen: SUPERSONICO";
-      ELSE
-        res2 := res2 + "Regimen: SONICO (garganta, A = A*)";
-      END;
+      reg := "SONICO";
     END;
-    MSGBOX(res2);
+  END;
+  res := "=== NUMERO MACH ===" + CHAR(10);
+  res := res + "a = " + fmt_(a) + " m/s" + CHAR(10);
+  res := res + "M = " + fmt_(M) + CHAR(10);
+  res := res + "Regimen: " + reg;
+  MSGBOX(res);
+END;
+
+// ---- Option 3: Relaciones isentropicas (razones) ----
+MF_COMP_IS()
+BEGIN
+  LOCAL M, gam, TR, PR, rhoR, res;
+  IF NOT INPUT({M, gam},
+      "Relaciones isentropicas",
+      {"M (-)=", "gamma (-)="},
+      {"Numero de Mach", "Razon calores especificos (aire=1.4)"},
+      {2.0, 1.4}) THEN RETURN; END;
+  IF M < 0 THEN MSGBOX("Error: M no puede ser negativo."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  TR := 1 + (gam - 1) / 2 * M ^ 2;
+  PR := TR ^ (gam / (gam - 1));
+  rhoR := TR ^ (1 / (gam - 1));
+  res := "=== RELACIONES ISENTROPICAS ===" + CHAR(10);
+  res := res + "T0/T     = 1+(gamma-1)/2*M^2" + CHAR(10);
+  res := res + "T0/T     = " + fmt_(TR) + CHAR(10);
+  res := res + "P0/P     = (T0/T)^(gamma/(gamma-1))" + CHAR(10);
+  res := res + "P0/P     = " + fmt_(PR) + CHAR(10);
+  res := res + "rho0/rho = (T0/T)^(1/(gamma-1))" + CHAR(10);
+  res := res + "rho0/rho = " + fmt_(rhoR);
+  MSGBOX(res);
+END;
+
+// ---- Option 4: Propiedades remanso ----
+MF_COMP_REMAN()
+BEGIN
+  LOCAL T, P, rho, M, gam;
+  LOCAL TR, T0, P0, rho0, res;
+  IF NOT INPUT({T, P, rho, M, gam},
+      "Propiedades remanso",
+      {"T (K)=", "P (Pa)=", "rho (kg/m3)=", "M (-)=", "gamma (-)="},
+      {"Temperatura estatica", "Presion estatica", "Densidad estatica", "Numero de Mach", "Razon calores especificos"},
+      {250.0, 50000.0, 0.7, 2.0, 1.4}) THEN RETURN; END;
+  IF T <= 0 THEN MSGBOX("Error: T debe ser positiva (K)."); RETURN; END;
+  IF P <= 0 THEN MSGBOX("Error: P debe ser positiva."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF M < 0 THEN MSGBOX("Error: M no puede ser negativo."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  TR := 1 + (gam - 1) / 2 * M ^ 2;
+  T0 := T * TR;
+  P0 := P * TR ^ (gam / (gam - 1));
+  rho0 := rho * TR ^ (1 / (gam - 1));
+  res := "=== PROPIEDADES REMANSO ===" + CHAR(10);
+  res := res + "T0   = " + fmt_(T0) + " K" + CHAR(10);
+  res := res + "P0   = " + fmt_(P0) + " Pa" + CHAR(10);
+  res := res + "P0   = " + fmt_(P0 / 1000) + " kPa" + CHAR(10);
+  res := res + "rho0 = " + fmt_(rho0) + " kg/m3" + CHAR(10);
+  res := res + "T0/T = " + fmt_(TR);
+  MSGBOX(res);
+END;
+
+// ---- Option 5: Area-Mach ----
+MF_COMP_ASTAR()
+BEGIN
+  LOCAL M, gam, AA, res;
+  IF NOT INPUT({M, gam},
+      "Area-Mach A/A*",
+      {"M (-)=", "gamma (-)="},
+      {"Numero de Mach (M > 0)", "Razon calores especificos"},
+      {2.0, 1.4}) THEN RETURN; END;
+  IF M <= 0 THEN MSGBOX("Error: M debe ser mayor que cero."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  AA := aAstar_(M, gam);
+  res := "=== AREA-MACH ===" + CHAR(10);
+  res := res + "A/A*=(1/M)*[(2/(g+1))*(1+(g-1)/2*M^2)]^((g+1)/(2*(g-1)))" + CHAR(10);
+  res := res + "A/A* = " + fmt_(AA) + CHAR(10);
+  res := res + "M    = " + fmt_(M);
+  IF ABS(M - 1) < 0.001 THEN
+    res := res + CHAR(10) + "M=1: A=A* (garganta sonica)";
+  END;
+  MSGBOX(res);
+END;
+
+// ---- Option 6: Mach desde A/A* (biseccion) ----
+MF_COMP_MINV()
+BEGIN
+  LOCAL A_Astar, gam, branch, Mmin, Mmax, Msol, res;
+  CHOOSE(branch, "Rama de la solucion",
+    "1. Subsonico (M < 1)",
+    "2. Supersonico (M > 1)");
+  IF branch == 0 THEN RETURN; END;
+  IF NOT INPUT({A_Astar, gam},
+      "Mach desde A/A*",
+      {"A/A* (-)=", "gamma (-)="},
+      {"Relacion de areas (A/A* >= 1)", "Razon calores especificos"},
+      {2.0, 1.4}) THEN RETURN; END;
+  IF A_Astar < 1 THEN MSGBOX("A/A* debe ser >= 1"); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  IF ABS(A_Astar - 1) < 1E-6 THEN
+    MSGBOX("A/A* = 1: M = 1 (garganta sonica)");
     RETURN;
   END;
-
-  IF c == 2 OR c == 3 THEN
-    IF NOT INPUT({AA, k},
-        "M dado A/A*",
-        {"A/A* (-)=", "k (-)="},
-        {"Relacion de areas (A/A* >= 1)", "Razon de calores especificos"},
-        {2.0, 1.4}) THEN RETURN; END;
-
-    IF AA < 1 THEN MSGBOX("Error: A/A* no puede ser menor que 1 (A* es la seccion minima)."); RETURN; END;
-    IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
-
-    IF c == 2 THEN
-      // Rama subsonica: M en (0, 1)
-      Msol := solveMach_(AA, 1E-6, 1.0, k);
-      res3 := "=== AREA-MACH (SUBSONICO) ===" + CHAR(10);
-      res3 := res3 + "M (sub) = " + fmt_(Msol) + CHAR(10);
-      res3 := res3 + "A/A*    = " + fmt_(AA) + CHAR(10);
-      res3 := res3 + "Verificacion: A/A*(M) = " + fmt_(aAstar_(Msol, k));
-      MSGBOX(res3);
-    ELSE
-      // Rama supersonica: M en (1, 10]
-      Msol := solveMach_(AA, 1.0 + 1E-6, 10.0, k);
-      res4 := "=== AREA-MACH (SUPERSONICO) ===" + CHAR(10);
-      res4 := res4 + "M (sup) = " + fmt_(Msol) + CHAR(10);
-      res4 := res4 + "A/A*    = " + fmt_(AA) + CHAR(10);
-      res4 := res4 + "Verificacion: A/A*(M) = " + fmt_(aAstar_(Msol, k));
-      IF Msol >= 9.9 THEN
-        res4 := res4 + CHAR(10) + "ATENCION: Solucion cerca del limite superior (M=10).";
-        res4 := res4 + CHAR(10) + "Si el Mach real es mayor, ajuste el rango manualmente.";
-      END;
-      MSGBOX(res4);
-    END;
+  IF branch == 1 THEN
+    Mmin := 0.01;
+    Mmax := 1.0;
+  ELSE
+    Mmin := 1.0 + 1E-6;
+    Mmax := 10.0;
   END;
+  Msol := solveMach_(A_Astar, Mmin, Mmax, gam);
+  res := "=== MACH DESDE A/A* ===" + CHAR(10);
+  res := res + "A/A*  = " + fmt_(A_Astar) + CHAR(10);
+  res := res + "M     = " + fmt_(Msol) + CHAR(10);
+  res := res + "Verif = A/A*(M) = " + fmt_(aAstar_(Msol, gam));
+  MSGBOX(res);
 END;
 
-// ---- Onda de choque normal ----
+// ---- Option 7: Caudal masico tobera ----
+MF_COMP_MDOT()
+BEGIN
+  LOCAL P0, T0, A, M, gam, R;
+  LOCAL mdot, expo, res;
+  IF NOT INPUT({P0, T0, A, M, gam, R},
+      "Caudal masico tobera",
+      {"P0 (Pa)=", "T0 (K)=", "A (m2)=", "M (-)=", "gamma (-)=", "R (J/kg*K)="},
+      {"Presion de remanso", "Temperatura de remanso", "Area de la seccion", "Numero de Mach local", "Razon calores especificos", "Constante del gas"},
+      {101325.0, 288.0, 0.01, 0.8, 1.4, 287.0}) THEN RETURN; END;
+  IF P0 <= 0 THEN MSGBOX("Error: P0 debe ser positiva."); RETURN; END;
+  IF T0 <= 0 THEN MSGBOX("Error: T0 debe ser positiva (K)."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF M < 0 THEN MSGBOX("Error: M no puede ser negativo."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
+  expo := -(gam + 1) / (2 * (gam - 1));
+  mdot := A * P0 / SQRT(T0) * SQRT(gam / R) * M * (1 + (gam - 1) / 2 * M ^ 2) ^ expo;
+  res := "=== CAUDAL MASICO TOBERA ===" + CHAR(10);
+  res := res + "mdot=A*P0/sqrt(T0)*sqrt(g/R)*M*(1+(g-1)/2*M^2)^(-(g+1)/(2(g-1)))" + CHAR(10);
+  res := res + "mdot = " + fmt_(mdot) + " kg/s";
+  MSGBOX(res);
+END;
+
+// ---- Option 8: Flujo bloqueado (M = 1) ----
+MF_COMP_CHOKE()
+BEGIN
+  LOCAL P0, T0, Astar, gam, R;
+  LOCAL mdot_star, Pstar_P0, expo, res;
+  IF NOT INPUT({P0, T0, Astar, gam, R},
+      "Flujo bloqueado (M=1)",
+      {"P0 (Pa)=", "T0 (K)=", "A* (m2)=", "gamma (-)=", "R (J/kg*K)="},
+      {"Presion de remanso", "Temperatura de remanso", "Area garganta A*", "Razon calores especificos", "Constante del gas"},
+      {101325.0, 288.0, 0.01, 1.4, 287.0}) THEN RETURN; END;
+  IF P0 <= 0 THEN MSGBOX("Error: P0 debe ser positiva."); RETURN; END;
+  IF T0 <= 0 THEN MSGBOX("Error: T0 debe ser positiva (K)."); RETURN; END;
+  IF Astar <= 0 THEN MSGBOX("Error: A* debe ser positiva."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  IF R <= 0 THEN MSGBOX("Error: R debe ser positivo."); RETURN; END;
+  expo := (gam + 1) / (2 * (gam - 1));
+  mdot_star := Astar * P0 / SQRT(T0) * SQRT(gam / R) * (2 / (gam + 1)) ^ expo;
+  Pstar_P0 := (2 / (gam + 1)) ^ (gam / (gam - 1));
+  res := "=== FLUJO BLOQUEADO ===" + CHAR(10);
+  res := res + "mdot* = A*P0/sqrt(T0)*sqrt(g/R)*(2/(g+1))^((g+1)/(2(g-1)))" + CHAR(10);
+  res := res + "mdot* = " + fmt_(mdot_star) + " kg/s" + CHAR(10);
+  res := res + "P*/P0 = (2/(gamma+1))^(gamma/(gamma-1))" + CHAR(10);
+  res := res + "P*/P0 = " + fmt_(Pstar_P0);
+  MSGBOX(res);
+END;
+
+// ---- Option 9: Choque normal ----
 MF_COMP_SHOCK()
 BEGIN
-  LOCAL M1, k, M2sq, M2, P21, rho21, T21;
-  LOCAL TR1, TR2, PR1, PR2, P02_P01, res2;
-
-  IF NOT INPUT({M1, k},
-      "Onda de Choque Normal",
-      {"M1 (-)=", "k (-)="},
-      {"Mach ANTES de la onda (debe ser > 1)", "Razon de calores especificos"},
+  LOCAL M1, gam, M2sq, M2, P21, rho21, T21;
+  LOCAL TR1, TR2, P02_P01, res;
+  IF NOT INPUT({M1, gam},
+      "Choque normal",
+      {"M1 (-)=", "gamma (-)="},
+      {"Mach antes del choque (M1 > 1)", "Razon calores especificos"},
       {2.0, 1.4}) THEN RETURN; END;
-
-  IF M1 <= 1 THEN
-    MSGBOX("Error: M1 debe ser mayor que 1 para que exista una onda de choque normal.");
-    RETURN;
-  END;
-  IF k <= 1 THEN MSGBOX("Error: k debe ser mayor que 1."); RETURN; END;
-
-  // Relaciones de Rankine-Hugoniot
-  M2sq := (1 + (k - 1) / 2 * M1 ^ 2) / (k * M1 ^ 2 - (k - 1) / 2);
+  IF M1 <= 1 THEN MSGBOX("Error: M1 debe ser mayor que 1."); RETURN; END;
+  IF gam <= 1 THEN MSGBOX("Error: gamma debe ser mayor que 1."); RETURN; END;
+  M2sq := (1 + (gam - 1) / 2 * M1 ^ 2) / (gam * M1 ^ 2 - (gam - 1) / 2);
   M2 := SQRT(M2sq);
+  P21 := 1 + 2 * gam / (gam + 1) * (M1 ^ 2 - 1);
+  rho21 := (gam + 1) * M1 ^ 2 / (2 + (gam - 1) * M1 ^ 2);
+  T21 := P21 / rho21;
+  TR1 := 1 + (gam - 1) / 2 * M1 ^ 2;
+  TR2 := 1 + (gam - 1) / 2 * M2 ^ 2;
+  P02_P01 := P21 * TR2 ^ (gam / (gam - 1)) / TR1 ^ (gam / (gam - 1));
+  res := "=== CHOQUE NORMAL ===" + CHAR(10);
+  res := res + "M1        = " + fmt_(M1) + CHAR(10);
+  res := res + "M2        = " + fmt_(M2) + CHAR(10);
+  res := res + "P2/P1     = " + fmt_(P21) + CHAR(10);
+  res := res + "rho2/rho1 = " + fmt_(rho21) + CHAR(10);
+  res := res + "T2/T1     = " + fmt_(T21) + CHAR(10);
+  res := res + "P02/P01   = " + fmt_(P02_P01);
+  MSGBOX(res);
+END;
 
-  P21 := 1 + 2 * k / (k + 1) * (M1 ^ 2 - 1);         // P2/P1
-  rho21 := (k + 1) * M1 ^ 2 / ((k - 1) * M1 ^ 2 + 2); // rho2/rho1
-  T21 := P21 / rho21;                                    // T2/T1
-
-  // Razon de presiones de remanso (medida de perdida total)
-  TR1 := 1 + (k - 1) / 2 * M1 ^ 2;
-  TR2 := 1 + (k - 1) / 2 * M2 ^ 2;
-  PR1 := TR1 ^ (k / (k - 1));
-  PR2 := TR2 ^ (k / (k - 1));
-  // mas directo: P02/P01 formula directa
-  P02_P01 := ((k + 1) * M1 ^ 2 / ((k - 1) * M1 ^ 2 + 2)) ^ (k / (k - 1)) *
-              ((k + 1) / (2 * k * M1 ^ 2 - (k - 1))) ^ (1 / (k - 1));
-
-  res2 := "=== ONDA DE CHOQUE NORMAL ===" + CHAR(10);
-  res2 := res2 + "--- Antes (1) -> Despues (2) ---" + CHAR(10);
-  res2 := res2 + "M1      = " + fmt_(M1) + CHAR(10);
-  res2 := res2 + "M2      = " + fmt_(M2) + CHAR(10);
-  res2 := res2 + "P2/P1   = " + fmt_(P21) + CHAR(10);
-  res2 := res2 + "rho2/rho1= " + fmt_(rho21) + CHAR(10);
-  res2 := res2 + "T2/T1   = " + fmt_(T21) + CHAR(10);
-  res2 := res2 + "P02/P01 = " + fmt_(P02_P01) + "  (perdida de presion total)" + CHAR(10);
-  res2 := res2 + CHAR(10) + "NOTA: M2 < 1 siempre (flujo subsonico despues)";
-
-  MSGBOX(res2);
+// ---- Option 10: Ayuda formulas ----
+MF_COMP_HELP()
+BEGIN
+  LOCAL res;
+  res := "=== FLUJO COMPRESIBLE ===" + CHAR(10);
+  res := res + "a=sqrt(gamma*R*T)  M=V/a" + CHAR(10);
+  res := res + "T0/T=1+(gamma-1)/2*M^2" + CHAR(10);
+  res := res + "P0/P=(T0/T)^(g/(g-1))" + CHAR(10);
+  res := res + "r0/r=(T0/T)^(1/(g-1))" + CHAR(10);
+  res := res + "A/A*=(1/M)*[(2/(g+1))*(T0/T)]^((g+1)/(2(g-1)))" + CHAR(10);
+  res := res + "Bloq: M=1, P*/P0=(2/(g+1))^(g/(g-1))" + CHAR(10);
+  res := res + "Choque: M1>1 -> M2<1" + CHAR(10);
+  res := res + "Aire: gamma=1.4, R=287 J/(kg*K)";
+  MSGBOX(res);
 END;
 
 // ---- Menu principal del modulo ----
@@ -260,16 +320,27 @@ BEGIN
   WHILE 1 DO
     CHOOSE(c,
       "FLUJO COMPRESIBLE",
-      "1. Velocidad del Sonido",
-      "2. Relaciones Isentropicas",
-      "3. Relacion Area-Mach (A/A*)",
-      "4. Onda de Choque Normal",
-      "0. Volver al menu principal");
-
-    IF c == 0 OR c == 5 THEN RETURN; END;
+      "1. Velocidad sonido",
+      "2. Numero Mach",
+      "3. Relaciones isentropicas",
+      "4. Propiedades remanso",
+      "5. Area-Mach",
+      "6. Mach desde A/A*",
+      "7. Caudal masico tobera",
+      "8. Flujo bloqueado",
+      "9. Choque normal",
+      "10. Ayuda formulas",
+      "11. Volver");
+    IF c == 0 OR c == 11 THEN RETURN; END;
     IF c == 1 THEN MF_COMP_SONIDO(); END;
-    IF c == 2 THEN MF_COMP_IS(); END;
-    IF c == 3 THEN MF_COMP_AREA(); END;
-    IF c == 4 THEN MF_COMP_SHOCK(); END;
+    IF c == 2 THEN MF_COMP_MACH(); END;
+    IF c == 3 THEN MF_COMP_IS(); END;
+    IF c == 4 THEN MF_COMP_REMAN(); END;
+    IF c == 5 THEN MF_COMP_ASTAR(); END;
+    IF c == 6 THEN MF_COMP_MINV(); END;
+    IF c == 7 THEN MF_COMP_MDOT(); END;
+    IF c == 8 THEN MF_COMP_CHOKE(); END;
+    IF c == 9 THEN MF_COMP_SHOCK(); END;
+    IF c == 10 THEN MF_COMP_HELP(); END;
   END;
 END;
