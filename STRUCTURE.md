@@ -68,12 +68,18 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_BUOY_CMAX()      Opcion 6: carga maxima de flotacion
 │   └── MF_BUOY_HELP()      Opcion 7: ayuda formulas
 │
-├── MF_BERN()     ← Módulo independiente
-│   ├── MF_BERN_P2()    Hallar P₂
-│   ├── MF_BERN_HL()    Hallar h_L
-│   ├── MF_BERN_HB()    Hallar h_bomba
-│   ├── MF_BERN_POT()   Potencia hidráulica
-│   └── MF_BERN_V2()    Velocidad de salida
+├── MF_BERN()     ← Módulo independiente (v2.0)
+│   ├── fmt_()              Helper formato numérico
+│   ├── MF_BERN_BAL()       Opcion 1: balance Bernoulli entre 2 puntos (comprueba equilibrio)
+│   ├── MF_BERN_P2()        Opcion 2: despejar P2 generalizado
+│   ├── MF_BERN_V2G()       Opcion 3: despejar V2 generalizado
+│   ├── MF_BERN_Z2()        Opcion 4: despejar z2 generalizado
+│   ├── MF_BERN_PITOT()     Opcion 5: tubo Pitot (desde DeltaP o manometro)
+│   ├── MF_BERN_VENT()      Opcion 6: Venturi ideal (Q desde D1, D2, DeltaP, rho)
+│   ├── MF_BERN_TORR()      Opcion 7: Torricelli V = sqrt(2*g*h), Q = A*V opcional
+│   ├── MF_BERN_ORIC()      Opcion 8: orificio con Cd: Q = Cd*A*sqrt(2*g*h)
+│   ├── MF_BERN_HEAD()      Opcion 9: alturas de energia hp, hv, H
+│   └── MF_BERN_HELP()      Opcion 10: ayuda formulas Bernoulli
 │
 ├── MF_CONT()     ← Módulo independiente
 │   ├── MF_CONT_Q()      Caudal volumetrico Q = A*V

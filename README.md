@@ -126,13 +126,17 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Carga máxima de flotación: m_payload = rho_fluid*Vmax − m_body
 - Ayuda integrada
 
-### 5. Ecuación de Bernoulli Generalizada (`MF_BERN`)
-- Hallar P₂ dado todo lo demás
-- Hallar pérdidas de carga h_L
-- Hallar altura de bomba h_bomba
-- Potencia hidráulica: P_h = ρgQH
-- Velocidad de salida (Torricelli)
-- Desglose completo en metros de columna de fluido
+### 5. Ecuación de Bernoulli y Energía (`MF_BERN`) — mejorado v2.0
+- Balance Bernoulli entre 2 puntos: E1 + hPump - hTurb - hL = E2 (comprueba equilibrio)
+- Despejar P2 generalizado: P2 = rho*g*(E1 + hPump - hTurb - hL - V2²/2g - z2)
+- Despejar V2 generalizado: V2 = sqrt(2*g*(E1 + hPump - hTurb - hL - P2/rho/g - z2))
+- Despejar z2 generalizado: z2 = E1 + hPump - hTurb - hL - P2/rho/g - V2²/2g
+- Tubo Pitot: V = sqrt(2*DeltaP/rho) o desde manómetro diferencial
+- Venturi ideal: Q desde D1, D2, DeltaP, rho (fórmula exacta con areas)
+- Torricelli: V = sqrt(2*g*h), Q = A*V opcional
+- Orificio con coeficiente de descarga Cd: Q = Cd*A*sqrt(2*g*h)
+- Alturas de energía: hp = P/rho/g, hv = V²/2g, H = hp + hv + z
+- Ayuda integrada con fórmulas y unidades
 
 ### 6. Continuidad y Conservación de Masa (`MF_CONT`)
 - Caudal volumétrico: Q = A·V (con conversiones L/s, m³/h)

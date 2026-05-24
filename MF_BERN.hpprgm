@@ -1,20 +1,4 @@
-// ============================================================
-// MF_BERN.hpprgm
-// FLUIDOS PRIME v1.0 - Ecuacion de Bernoulli Generalizada
-// HP Prime G2
-// ============================================================
-// Ecuacion:
-//   P1/(rho*g) + alpha1*V1^2/(2g) + z1 + h_bomba
-//   = P2/(rho*g) + alpha2*V2^2/(2g) + z2 + h_turbina + hL
-//
-// Contenido:
-//   MF_BERN()       - Menu principal (EXPORT)
-//   MF_BERN_P2()    - Hallar P2
-//   MF_BERN_HL()    - Hallar perdidas hL
-//   MF_BERN_HB()    - Hallar altura de bomba h_bomba
-//   MF_BERN_POT()   - Potencia hidraulica
-//   MF_BERN_V2()    - Hallar V2 (Torricelli / salida libre)
-// ============================================================
+// MF_BERN.hpprgm - Bernoulli y Ecuacion de Energia v2.0
 
 fmt_(x)
 BEGIN
@@ -25,226 +9,299 @@ BEGIN
   RETURN STRING(ROUND(x, 4));
 END;
 
-// ---- Hallar P2 ----
-// Conocidos: P1, V1, z1, V2, z2, hL, h_bomba, h_turb, rho, g, alpha1, alpha2
+MF_BERN_BAL()
+BEGIN
+  LOCAL P1, V1, z1, P2, V2, z2, rho, g, hPump, hTurb, hL, E1, E2, res;
+  P1 := 0; V1 := 0; z1 := 0; P2 := 0; V2 := 0; z2 := 0;
+  rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
+  IF NOT INPUT({P1, V1, z1, P2, V2, z2},
+    "Bernoulli - Puntos 1 y 2",
+    {"P1 (Pa)=", "V1 (m/s)=", "z1 (m)=", "P2 (Pa)=", "V2 (m/s)=", "z2 (m)="},
+    {"Presion en punto 1", "Velocidad en punto 1", "Cota en punto 1", "Presion en punto 2", "Velocidad en punto 2", "Cota en punto 2"},
+    {200000.0, 2.0, 0.0, 150000.0, 4.0, 0.0}) THEN RETURN; END;
+  IF NOT INPUT({rho, g, hPump, hTurb, hL},
+    "Bernoulli - Fluido y Maquinas",
+    {"rho (kg/m3)=", "g (m/s2)=", "hPump (m)=", "hTurb (m)=", "hL (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Altura bomba (0 si no hay)", "Altura turbina (0 si no hay)", "Perdidas de carga totales"},
+    {1000.0, 9.81, 0.0, 0.0, 0.0}) THEN RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF hL < 0 THEN MSGBOX("Error: hL no puede ser negativa."); RETURN; END;
+  E1 := P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1;
+  E2 := P2 / (rho * g) + V2 ^ 2 / (2 * g) + z2;
+  res := E1 + hPump - hTurb - hL - E2;
+  MSGBOX("BERNOULLI ENTRE 2 PUNTOS" + CHAR(10) +
+    "H1 + hPump - hTurb - hL = H2" + CHAR(10) +
+    "E1  = " + fmt_(E1) + " m" + CHAR(10) +
+    "E2  = " + fmt_(E2) + " m" + CHAR(10) +
+    "res = " + fmt_(res) + " m" + CHAR(10) +
+    "Si res ~ 0: balance correcto.");
+END;
+
 MF_BERN_P2()
 BEGIN
-  LOCAL P1, V1, z1, V2, z2, hL;
-  LOCAL hbomba, hturb, rho, g, a1, a2;
-  LOCAL H1, H2, P2, rhs, res;
-
-  IF NOT INPUT({P1, V1, z1, V2, z2, hL, hbomba, hturb, rho, g},
-      "Bernoulli: Hallar P2",
-      {"P1 (Pa)=", "V1 (m/s)=", "z1 (m)=", "V2 (m/s)=", "z2 (m)=", "hL (m)=", "h_bomba (m)=", "h_turb (m)=", "rho (kg/m3)=", "g (m/s2)="},
-      {"Presion en punto 1 (manometrica recomendada)", "Velocidad en punto 1", "Cota en punto 1", "Velocidad en punto 2", "Cota en punto 2", "Perdidas de carga totales", "Altura aportada por bomba (0 si no hay)", "Altura extraida por turbina (0 si no hay)", "Densidad del fluido", "Aceleracion gravitacional"},
-      {200000.0, 1.0, 5.0, 2.0, 0.0, 1.0, 0.0, 0.0, 1000.0, 9.81}) THEN RETURN; END;
-
+  LOCAL P1, V1, z1, V2, z2, rho, g, hPump, hTurb, hL, rhs, P2;
+  P1 := 0; V1 := 0; z1 := 0; V2 := 0; z2 := 0;
+  rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
+  IF NOT INPUT({P1, V1, z1, V2, z2},
+    "Despejar P2 - Puntos",
+    {"P1 (Pa)=", "V1 (m/s)=", "z1 (m)=", "V2 (m/s)=", "z2 (m)="},
+    {"Presion en punto 1", "Velocidad en punto 1", "Cota en punto 1", "Velocidad en punto 2", "Cota en punto 2"},
+    {200000.0, 2.0, 0.0, 5.0, 0.0}) THEN RETURN; END;
+  IF NOT INPUT({rho, g, hPump, hTurb, hL},
+    "Despejar P2 - Fluido",
+    {"rho (kg/m3)=", "g (m/s2)=", "hPump (m)=", "hTurb (m)=", "hL (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Altura bomba", "Altura turbina", "Perdidas de carga"},
+    {1000.0, 9.81, 0.0, 0.0, 0.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
   IF hL < 0 THEN MSGBOX("Error: hL no puede ser negativa."); RETURN; END;
-  IF hbomba < 0 THEN MSGBOX("Error: h_bomba no puede ser negativa."); RETURN; END;
-  IF hturb < 0 THEN MSGBOX("Error: h_turb no puede ser negativa."); RETURN; END;
-
-  // Coeficientes de energia cinetica (asumir alpha = 1 para flujo turbulento)
-  a1 := 1.0; a2 := 1.0;
-
-  // P1/(rho*g) + a1*V1^2/(2g) + z1 + hbomba
-  //  = P2/(rho*g) + a2*V2^2/(2g) + z2 + hturb + hL
-  //
-  // P2/(rho*g) = P1/(rho*g) + a1*V1^2/(2g) + z1 + hbomba - a2*V2^2/(2g) - z2 - hturb - hL
-
-  rhs := P1/(rho*g) + a1*V1^2/(2*g) + z1 + hbomba - a2*V2^2/(2*g) - z2 - hturb - hL;
+  rhs := P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1 + hPump - hTurb - hL - V2 ^ 2 / (2 * g) - z2;
   P2 := rhs * rho * g;
-
-  res := "=== BERNOULLI: P2 ===" + CHAR(10);
-  res := res + "P2  = " + fmt_(P2) + " Pa" + CHAR(10);
-  res := res + "P2  = " + fmt_(P2 / 1000) + " kPa" + CHAR(10);
-  res := res + "---------------------" + CHAR(10);
-  res := res + "Terminos en metros de columna:" + CHAR(10);
-  res := res + "P1/rg  = " + fmt_(P1/(rho*g)) + " m" + CHAR(10);
-  res := res + "V1^2/2g= " + fmt_(V1^2/(2*g)) + " m" + CHAR(10);
-  res := res + "z1     = " + fmt_(z1) + " m" + CHAR(10);
-  res := res + "h_bom  = " + fmt_(hbomba) + " m" + CHAR(10);
-  res := res + "V2^2/2g= " + fmt_(V2^2/(2*g)) + " m" + CHAR(10);
-  res := res + "z2     = " + fmt_(z2) + " m" + CHAR(10);
-  res := res + "h_turb = " + fmt_(hturb) + " m" + CHAR(10);
-  res := res + "hL     = " + fmt_(hL) + " m" + CHAR(10);
-  res := res + "P2/rg  = " + fmt_(rhs) + " m";
-
-  IF P2 < 0 THEN
-    res := res + CHAR(10) + CHAR(10) + "ADVERTENCIA: P2 negativa - no fisicamente valida si es presion absoluta.";
-  END;
-
-  MSGBOX(res);
+  MSGBOX("DESPEJAR P2" + CHAR(10) +
+    "P2 = " + fmt_(P2) + " Pa" + CHAR(10) +
+    "P2 = " + fmt_(P2 / 1000) + " kPa" + CHAR(10) +
+    "P2/rg = " + fmt_(rhs) + " m");
 END;
 
-// ---- Hallar perdidas de carga hL ----
-MF_BERN_HL()
+MF_BERN_V2G()
 BEGIN
-  LOCAL P1, V1, z1, P2, V2, z2;
-  LOCAL hbomba, hturb, rho, g, hL, res;
-
-  IF NOT INPUT({P1, V1, z1, P2, V2, z2, hbomba, hturb, rho, g},
-      "Bernoulli: Hallar hL",
-      {"P1 (Pa)=", "V1 (m/s)=", "z1 (m)=", "P2 (Pa)=", "V2 (m/s)=", "z2 (m)=", "h_bomba (m)=", "h_turb (m)=", "rho (kg/m3)=", "g (m/s2)="},
-      {"Presion en punto 1", "Velocidad en punto 1", "Cota en punto 1", "Presion en punto 2", "Velocidad en punto 2", "Cota en punto 2", "Altura de bomba (0 si no hay)", "Altura de turbina (0 si no hay)", "Densidad del fluido", "Aceleracion gravitacional"},
-      {300000.0, 1.0, 10.0, 200000.0, 2.0, 0.0, 0.0, 0.0, 1000.0, 9.81}) THEN RETURN; END;
-
-  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-
-  hL := P1/(rho*g) + V1^2/(2*g) + z1 + hbomba - P2/(rho*g) - V2^2/(2*g) - z2 - hturb;
-
-  IF hL < 0 THEN
-    MSGBOX("ATENCION: hL = " + fmt_(hL) + " m (negativo)." + CHAR(10) + "Posibles causas: datos inconsistentes, o hay una fuente de energia no contabilizada.");
-    RETURN;
-  END;
-
-  res := "=== BERNOULLI: PERDIDAS hL ===" + CHAR(10);
-  res := res + "hL  = " + fmt_(hL) + " m" + CHAR(10);
-  res := res + "DeltaP perdida = " + fmt_(hL * rho * g) + " Pa" + CHAR(10);
-  res := res + "DeltaP perdida = " + fmt_(hL * rho * g / 1000) + " kPa";
-
-  MSGBOX(res);
-END;
-
-// ---- Hallar altura de bomba ----
-MF_BERN_HB()
-BEGIN
-  LOCAL P1, V1, z1, P2, V2, z2;
-  LOCAL hturb, hL, rho, g, hbomba, res;
-
-  IF NOT INPUT({P1, V1, z1, P2, V2, z2, hturb, hL, rho, g},
-      "Bernoulli: Hallar h_bomba",
-      {"P1 (Pa)=", "V1 (m/s)=", "z1 (m)=", "P2 (Pa)=", "V2 (m/s)=", "z2 (m)=", "h_turb (m)=", "hL (m)=", "rho (kg/m3)=", "g (m/s2)="},
-      {"Presion en punto 1 (succion)", "Velocidad en punto 1", "Cota en punto 1", "Presion en punto 2 (descarga)", "Velocidad en punto 2", "Cota en punto 2", "Altura turbina (0 si no hay)", "Perdidas de carga totales", "Densidad del fluido", "Aceleracion gravitacional"},
-      {101325.0, 0.5, 0.0, 300000.0, 2.0, 10.0, 0.0, 2.0, 1000.0, 9.81}) THEN RETURN; END;
-
+  LOCAL P1, P2, V1, z1, z2, rho, g, hPump, hTurb, hL, term, V2;
+  P1 := 0; P2 := 0; V1 := 0; z1 := 0; z2 := 0;
+  rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
+  IF NOT INPUT({P1, P2, V1, z1, z2},
+    "Despejar V2 - Puntos",
+    {"P1 (Pa)=", "P2 (Pa)=", "V1 (m/s)=", "z1 (m)=", "z2 (m)="},
+    {"Presion en punto 1", "Presion en punto 2", "Velocidad en punto 1", "Cota en punto 1", "Cota en punto 2"},
+    {200000.0, 150000.0, 2.0, 0.0, 0.0}) THEN RETURN; END;
+  IF NOT INPUT({rho, g, hPump, hTurb, hL},
+    "Despejar V2 - Fluido",
+    {"rho (kg/m3)=", "g (m/s2)=", "hPump (m)=", "hTurb (m)=", "hL (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Altura bomba", "Altura turbina", "Perdidas de carga"},
+    {1000.0, 9.81, 0.0, 0.0, 0.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
   IF hL < 0 THEN MSGBOX("Error: hL no puede ser negativa."); RETURN; END;
-
-  hbomba := P2/(rho*g) + V2^2/(2*g) + z2 + hturb + hL - P1/(rho*g) - V1^2/(2*g) - z1;
-
-  IF hbomba < 0 THEN
-    MSGBOX("ATENCION: h_bomba = " + fmt_(hbomba) + " m (negativo)." + CHAR(10) + "El sistema no requiere bomba en este sentido de flujo.");
+  term := P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1 + hPump - hTurb - hL - P2 / (rho * g) - z2;
+  IF term < 0 THEN
+    MSGBOX("Error: term < 0 (" + fmt_(term) + " m)." + CHAR(10) + "No hay energia suficiente para V2 real.");
     RETURN;
   END;
-
-  res := "=== BERNOULLI: ALTURA DE BOMBA ===" + CHAR(10);
-  res := res + "h_bomba = " + fmt_(hbomba) + " m" + CHAR(10);
-  res := res + CHAR(10) + "Desglose en metros de columna:" + CHAR(10);
-  res := res + "  P2/rg   = " + fmt_(P2/(rho*g)) + " m" + CHAR(10);
-  res := res + "  V2^2/2g = " + fmt_(V2^2/(2*g)) + " m" + CHAR(10);
-  res := res + "  z2      = " + fmt_(z2) + " m" + CHAR(10);
-  res := res + "  hturb   = " + fmt_(hturb) + " m" + CHAR(10);
-  res := res + "  hL      = " + fmt_(hL) + " m" + CHAR(10);
-  res := res + "  -P1/rg  = " + fmt_(-P1/(rho*g)) + " m" + CHAR(10);
-  res := res + "  -V1^2/2g= " + fmt_(-V1^2/(2*g)) + " m" + CHAR(10);
-  res := res + "  -z1     = " + fmt_(-z1) + " m";
-
-  MSGBOX(res);
+  V2 := SQRT(2 * g * term);
+  MSGBOX("DESPEJAR V2" + CHAR(10) +
+    "V2 = sqrt(2*g*term)" + CHAR(10) +
+    "term = " + fmt_(term) + " m" + CHAR(10) +
+    "V2   = " + fmt_(V2) + " m/s");
 END;
 
-// ---- Potencia hidraulica de bomba ----
-MF_BERN_POT()
+MF_BERN_Z2()
 BEGIN
-  LOCAL rho, g, Q, hbomba, eta, Ph, Peje, res;
-
-  IF NOT INPUT({rho, g, Q, hbomba, eta},
-      "Potencia Hidraulica de Bomba",
-      {"rho (kg/m3)=", "g (m/s2)=", "Q (m3/s)=", "h_bomba (m)=", "eta (0-1)="},
-      {"Densidad del fluido", "Aceleracion gravitacional", "Caudal volumetrico", "Altura manometrica total de la bomba", "Eficiencia de la bomba (0 a 1, 0 si no se conoce)"},
-      {1000.0, 9.81, 0.01, 20.0, 0.75}) THEN RETURN; END;
-
+  LOCAL P1, P2, V1, V2, z1, rho, g, hPump, hTurb, hL, z2;
+  P1 := 0; P2 := 0; V1 := 0; V2 := 0; z1 := 0;
+  rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
+  IF NOT INPUT({P1, P2, V1, V2, z1},
+    "Despejar z2 - Puntos",
+    {"P1 (Pa)=", "P2 (Pa)=", "V1 (m/s)=", "V2 (m/s)=", "z1 (m)="},
+    {"Presion en punto 1", "Presion en punto 2", "Velocidad en punto 1", "Velocidad en punto 2", "Cota en punto 1"},
+    {200000.0, 150000.0, 2.0, 4.0, 0.0}) THEN RETURN; END;
+  IF NOT INPUT({rho, g, hPump, hTurb, hL},
+    "Despejar z2 - Fluido",
+    {"rho (kg/m3)=", "g (m/s2)=", "hPump (m)=", "hTurb (m)=", "hL (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Altura bomba", "Altura turbina", "Perdidas de carga"},
+    {1000.0, 9.81, 0.0, 0.0, 0.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
-  IF hbomba <= 0 THEN MSGBOX("Error: h_bomba debe ser positiva."); RETURN; END;
-  IF eta < 0 OR eta > 1 THEN MSGBOX("Error: eta debe estar entre 0 y 1."); RETURN; END;
-
-  Ph := rho * g * Q * hbomba;
-
-  res := "=== POTENCIA HIDRAULICA ===" + CHAR(10);
-  res := res + "P_h = rho*g*Q*h_bomba" + CHAR(10);
-  res := res + "P_h  = " + fmt_(Ph) + " W" + CHAR(10);
-  res := res + "P_h  = " + fmt_(Ph / 1000) + " kW" + CHAR(10);
-  res := res + "Q    = " + fmt_(Q) + " m3/s" + CHAR(10);
-  res := res + "     = " + fmt_(Q * 60000) + " L/min" + CHAR(10);
-  res := res + "h_b  = " + fmt_(hbomba) + " m";
-
-  IF eta > 0 THEN
-    Peje := Ph / eta;
-    res := res + CHAR(10) + "---------------------" + CHAR(10);
-    res := res + "P_eje= P_h / eta" + CHAR(10);
-    res := res + "P_eje= " + fmt_(Peje) + " W" + CHAR(10);
-    res := res + "P_eje= " + fmt_(Peje / 1000) + " kW" + CHAR(10);
-    res := res + "eta  = " + fmt_(eta * 100) + " %";
-  ELSE
-    res := res + CHAR(10) + "(eta no especificada: P_eje no calculada)";
-  END;
-
-  MSGBOX(res);
+  IF hL < 0 THEN MSGBOX("Error: hL no puede ser negativa."); RETURN; END;
+  z2 := P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1 + hPump - hTurb - hL - P2 / (rho * g) - V2 ^ 2 / (2 * g);
+  MSGBOX("DESPEJAR z2" + CHAR(10) +
+    "z2 = " + fmt_(z2) + " m");
 END;
 
-// ---- Velocidad de salida (Torricelli simplificado) ----
-// Para recipiente grande con superficie libre en z1, orificio en z2
-// V2 = sqrt(2*g*(z1-z2) + V1^2)  con V1~=0 para recipiente grande
-MF_BERN_V2()
+MF_BERN_PITOT()
 BEGIN
-  LOCAL z1, z2, P1, P2, rho, g;
-  LOCAL V2, dh, bajo_raiz, res;
+  LOCAL op, DeltaP, rho, V, rhoMano, rhoFluid, g, dh;
+  DeltaP := 0; rho := 0; V := 0;
+  rhoMano := 0; rhoFluid := 0; g := 0; dh := 0;
+  CHOOSE(op,
+    "Tubo Pitot",
+    "Desde DeltaP",
+    "Desde manometro");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN
+    IF NOT INPUT({DeltaP, rho},
+      "Pitot - DeltaP",
+      {"DeltaP (Pa)=", "rho (kg/m3)="},
+      {"Diferencia de presion total-estatica", "Densidad del fluido"},
+      {500.0, 1.25}) THEN RETURN; END;
+    IF DeltaP < 0 THEN MSGBOX("Error: DeltaP debe ser no negativa."); RETURN; END;
+    IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+    V := SQRT(2 * DeltaP / rho);
+    MSGBOX("TUBO PITOT" + CHAR(10) +
+      "V = sqrt(2*DeltaP/rho)" + CHAR(10) +
+      "V      = " + fmt_(V) + " m/s" + CHAR(10) +
+      "DeltaP = " + fmt_(DeltaP) + " Pa");
+  END;
+  IF op == 2 THEN
+    IF NOT INPUT({rhoMano, rhoFluid, g, dh},
+      "Pitot - Manometro",
+      {"rho_mano (kg/m3)=", "rho_fluid (kg/m3)=", "g (m/s2)=", "dh (m)="},
+      {"Densidad fluido manometrico", "Densidad fluido en tuberia", "Aceleracion gravitacional", "Diferencia de altura manometrica"},
+      {13600.0, 1000.0, 9.81, 0.05}) THEN RETURN; END;
+    IF rhoMano <= 0 THEN MSGBOX("Error: rho_mano debe ser positiva."); RETURN; END;
+    IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
+    IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+    IF dh < 0 THEN MSGBOX("Error: dh debe ser no negativa."); RETURN; END;
+    DeltaP := (rhoMano - rhoFluid) * g * dh;
+    V := SQRT(2 * DeltaP / rhoFluid);
+    MSGBOX("TUBO PITOT (manometro)" + CHAR(10) +
+      "DeltaP = (rho_m - rho_f)*g*dh" + CHAR(10) +
+      "V = sqrt(2*DeltaP/rho_f)" + CHAR(10) +
+      "DeltaP = " + fmt_(DeltaP) + " Pa" + CHAR(10) +
+      "V      = " + fmt_(V) + " m/s");
+  END;
+END;
 
-  IF NOT INPUT({z1, z2, P1, P2, rho, g},
-      "Velocidad de Salida",
-      {"z1 (m)=", "z2 (m)=", "P1 (Pa)=", "P2 (Pa)=", "rho (kg/m3)=", "g (m/s2)="},
-      {"Cota en punto 1 (sup. libre o entrada)", "Cota en punto 2 (salida o descarga)", "Presion en punto 1 (tipicamente P_atm)", "Presion en punto 2 (tipicamente P_atm si chorro libre)", "Densidad del fluido", "Aceleracion gravitacional"},
-      {5.0, 0.0, 101325.0, 101325.0, 1000.0, 9.81}) THEN RETURN; END;
+MF_BERN_VENT()
+BEGIN
+  LOCAL D1, D2, DeltaP, rho, A1, A2, Q, V1, V2;
+  D1 := 0; D2 := 0; DeltaP := 0; rho := 0;
+  IF NOT INPUT({D1, D2, DeltaP, rho},
+    "Venturi Ideal",
+    {"D1 (m)=", "D2 (m)=", "DeltaP (Pa)=", "rho (kg/m3)="},
+    {"Diametro seccion 1 (mayor)", "Diametro seccion 2 (garganta)", "Diferencia P1-P2", "Densidad del fluido"},
+    {0.1, 0.05, 5000.0, 1000.0}) THEN RETURN; END;
+  IF D1 <= 0 THEN MSGBOX("Error: D1 debe ser positivo."); RETURN; END;
+  IF D2 <= 0 THEN MSGBOX("Error: D2 debe ser positivo."); RETURN; END;
+  IF D1 <= D2 THEN MSGBOX("Error: D1 debe ser mayor que D2."); RETURN; END;
+  IF DeltaP <= 0 THEN MSGBOX("Error: DeltaP debe ser positiva."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  A1 := PI * D1 ^ 2 / 4;
+  A2 := PI * D2 ^ 2 / 4;
+  Q := A2 * SQRT(2 * DeltaP / (rho * (1 - (A2 / A1) ^ 2)));
+  V1 := Q / A1;
+  V2 := Q / A2;
+  MSGBOX("VENTURI IDEAL" + CHAR(10) +
+    "Q = A2*sqrt(2dP/(rho*(1-(A2/A1)^2)))" + CHAR(10) +
+    "A1 = " + fmt_(A1) + " m2" + CHAR(10) +
+    "A2 = " + fmt_(A2) + " m2" + CHAR(10) +
+    "Q  = " + fmt_(Q) + " m3/s" + CHAR(10) +
+    "Q  = " + fmt_(Q * 1000) + " L/s" + CHAR(10) +
+    "V1 = " + fmt_(V1) + " m/s" + CHAR(10) +
+    "V2 = " + fmt_(V2) + " m/s");
+END;
 
+MF_BERN_TORR()
+BEGIN
+  LOCAL h, g, A, V, Q;
+  h := 0; g := 0; A := 0; V := 0; Q := 0;
+  IF NOT INPUT({h, g, A},
+    "Torricelli",
+    {"h (m)=", "g (m/s2)=", "A (m2)="},
+    {"Altura lamina de agua sobre el orificio", "Aceleracion gravitacional", "Area del orificio (0 si no se calcula Q)"},
+    {2.0, 9.81, 0.0}) THEN RETURN; END;
+  IF h < 0 THEN MSGBOX("Error: h debe ser no negativa."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF A < 0 THEN MSGBOX("Error: A debe ser no negativa."); RETURN; END;
+  V := SQRT(2 * g * h);
+  IF A > 0 THEN
+    Q := A * V;
+    MSGBOX("TORRICELLI" + CHAR(10) +
+      "V = sqrt(2*g*h)" + CHAR(10) +
+      "V = " + fmt_(V) + " m/s" + CHAR(10) +
+      "Q = A*V = " + fmt_(Q) + " m3/s" + CHAR(10) +
+      "Q = " + fmt_(Q * 1000) + " L/s");
+  END;
+  IF A <= 0 THEN
+    MSGBOX("TORRICELLI" + CHAR(10) +
+      "V = sqrt(2*g*h)" + CHAR(10) +
+      "V = " + fmt_(V) + " m/s");
+  END;
+END;
+
+MF_BERN_ORIC()
+BEGIN
+  LOCAL Cd, A, h, g, Videal, Q;
+  Cd := 0; A := 0; h := 0; g := 0;
+  IF NOT INPUT({Cd, A, h, g},
+    "Orificio con Cd",
+    {"Cd=", "A (m2)=", "h (m)=", "g (m/s2)="},
+    {"Coeficiente de descarga (0 a 1)", "Area del orificio", "Carga sobre el orificio", "Aceleracion gravitacional"},
+    {0.62, 0.01, 2.0, 9.81}) THEN RETURN; END;
+  IF Cd <= 0 OR Cd > 1 THEN MSGBOX("Error: Cd debe estar entre 0 y 1."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF h < 0 THEN MSGBOX("Error: h debe ser no negativa."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  Videal := SQRT(2 * g * h);
+  Q := Cd * A * Videal;
+  MSGBOX("ORIFICIO CON Cd" + CHAR(10) +
+    "Videal = sqrt(2*g*h)" + CHAR(10) +
+    "Q = Cd*A*Videal" + CHAR(10) +
+    "Videal = " + fmt_(Videal) + " m/s" + CHAR(10) +
+    "Q      = " + fmt_(Q) + " m3/s" + CHAR(10) +
+    "Q      = " + fmt_(Q * 1000) + " L/s" + CHAR(10) +
+    "Cd     = " + fmt_(Cd));
+END;
+
+MF_BERN_HEAD()
+BEGIN
+  LOCAL P, V, z, rho, g, hp, hv, H;
+  P := 0; V := 0; z := 0; rho := 0; g := 0;
+  IF NOT INPUT({P, V, z, rho, g},
+    "Alturas de Energia",
+    {"P (Pa)=", "V (m/s)=", "z (m)=", "rho (kg/m3)=", "g (m/s2)="},
+    {"Presion en el punto", "Velocidad en el punto", "Cota del punto", "Densidad del fluido", "Aceleracion gravitacional"},
+    {98100.0, 2.0, 3.0, 1000.0, 9.81}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-
-  // V1 ~= 0 (recipiente grande), sin perdidas, alpha=1
-  // P1/(rg) + z1 = P2/(rg) + V2^2/(2g) + z2
-  // V2^2 = 2g*[ (P1-P2)/(rg) + (z1-z2) ]
-  bajo_raiz := 2*g * ((P1 - P2)/(rho*g) + (z1 - z2));
-
-  IF bajo_raiz < 0 THEN
-    MSGBOX("Error: La expresion bajo la raiz es negativa." + CHAR(10) + "Los datos no permiten flujo en la direccion indicada.");
-    RETURN;
-  END;
-
-  V2 := SQRT(bajo_raiz);
-
-  res := "=== VELOCIDAD DE SALIDA ===" + CHAR(10);
-  res := res + "V2 = sqrt(2g*[(P1-P2)/rg + (z1-z2)])" + CHAR(10);
-  res := res + "V2   = " + fmt_(V2) + " m/s" + CHAR(10);
-  res := res + "z1-z2= " + fmt_(z1 - z2) + " m" + CHAR(10);
-  res := res + "(P1-P2)/rg = " + fmt_((P1-P2)/(rho*g)) + " m";
-  res := res + CHAR(10) + CHAR(10) + "NOTA: Se asume V1 ~= 0 y sin perdidas.";
-
-  MSGBOX(res);
+  hp := P / (rho * g);
+  hv := V ^ 2 / (2 * g);
+  H := hp + hv + z;
+  MSGBOX("ALTURAS DE ENERGIA" + CHAR(10) +
+    "H = hp + hv + z" + CHAR(10) +
+    "hp = " + fmt_(hp) + " m  (altura presion)" + CHAR(10) +
+    "hv = " + fmt_(hv) + " m  (altura velocidad)" + CHAR(10) +
+    "z  = " + fmt_(z) + " m  (altura elevacion)" + CHAR(10) +
+    "H  = " + fmt_(H) + " m  (altura total)");
 END;
 
-// ---- Menu principal del modulo ----
+MF_BERN_HELP()
+BEGIN
+  MSGBOX("AYUDA: BERNOULLI" + CHAR(10) +
+    "H = P/(rg) + V^2/(2g) + z" + CHAR(10) +
+    "H1 + hPump - hTurb - hL = H2" + CHAR(10) +
+    "Pitot: V = sqrt(2*dP/rho)" + CHAR(10) +
+    "Venturi: Q = A2*sqrt(2dP/(rho*(1-b^2)))" + CHAR(10) +
+    "Torricelli: V = sqrt(2*g*h)" + CHAR(10) +
+    "Orificio: Q = Cd*A*sqrt(2*g*h)");
+END;
+
 EXPORT MF_BERN()
 BEGIN
   LOCAL c;
   WHILE 1 DO
     CHOOSE(c,
-      "ECUACION DE BERNOULLI",
-      "1. Hallar P2",
-      "2. Hallar Perdidas hL",
-      "3. Hallar Altura de Bomba",
-      "4. Potencia Hidraulica",
-      "5. Velocidad de Salida (Torricelli)",
-      "0. Volver al menu principal");
-
-    IF c == 0 OR c == 6 THEN RETURN; END;
-    IF c == 1 THEN MF_BERN_P2(); END;
-    IF c == 2 THEN MF_BERN_HL(); END;
-    IF c == 3 THEN MF_BERN_HB(); END;
-    IF c == 4 THEN MF_BERN_POT(); END;
-    IF c == 5 THEN MF_BERN_V2(); END;
+      "BERNOULLI Y ENERGIA",
+      "1. Bernoulli entre 2 puntos",
+      "2. Despejar P2",
+      "3. Despejar V2",
+      "4. Despejar z2",
+      "5. Pitot",
+      "6. Venturi ideal",
+      "7. Torricelli",
+      "8. Orificio con Cd",
+      "9. Alturas energia",
+      "10. Ayuda Bernoulli",
+      "11. Volver");
+    IF c == 0 OR c == 11 THEN RETURN; END;
+    IF c == 1 THEN MF_BERN_BAL(); END;
+    IF c == 2 THEN MF_BERN_P2(); END;
+    IF c == 3 THEN MF_BERN_V2G(); END;
+    IF c == 4 THEN MF_BERN_Z2(); END;
+    IF c == 5 THEN MF_BERN_PITOT(); END;
+    IF c == 6 THEN MF_BERN_VENT(); END;
+    IF c == 7 THEN MF_BERN_TORR(); END;
+    IF c == 8 THEN MF_BERN_ORIC(); END;
+    IF c == 9 THEN MF_BERN_HEAD(); END;
+    IF c == 10 THEN MF_BERN_HELP(); END;
   END;
 END;

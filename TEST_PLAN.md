@@ -1001,6 +1001,136 @@ Fuera:     40 %
 
 ---
 
+## TEST 45: Despejar P2 generalizado (MF_BERN opcion 2)
+
+**Menu:** Bernoulli → Despejar P2
+
+**Entrada (fluido agua, sin maquinas ni perdidas):**
+- P1 = 200000 Pa
+- V1 = 2 m/s
+- z1 = 0 m
+- rho = 1000 kg/m3
+- g = 9.81 m/s2
+- V2 = 5 m/s
+- z2 = 0 m
+- hPump = 0 m
+- hTurb = 0 m
+- hL = 0 m
+
+**Calculo:**
+```
+E1 = P1/(rho*g) + V1^2/(2*g) + z1
+   = 200000/(1000*9.81) + 4/(2*9.81) + 0
+   = 20.387 + 0.2039 = 20.591 m
+rhs = E1 + 0 - 0 - 0 - V2^2/(2*g) - z2
+    = 20.591 - 25/(2*9.81) - 0
+    = 20.591 - 1.2742 = 19.317 m
+P2  = rhs * rho * g = 19.317 * 1000 * 9.81 = 189500 Pa
+```
+
+**Esperado en pantalla:**
+```
+P2 = 189500 Pa
+P2 = 189.5 kPa
+```
+
+---
+
+## TEST 46: Tubo Pitot desde DeltaP (MF_BERN opcion 5)
+
+**Menu:** Bernoulli → Pitot → Desde DeltaP
+
+**Entrada (aire):**
+- DeltaP = 500 Pa
+- rho = 1.25 kg/m3
+
+**Calculo:**
+```
+V = sqrt(2 * 500 / 1.25) = sqrt(800) = 28.284 m/s
+```
+
+**Esperado en pantalla:**
+```
+V = 28.284 m/s  ~  28.28 m/s
+```
+
+---
+
+## TEST 47: Torricelli (MF_BERN opcion 7)
+
+**Menu:** Bernoulli → Torricelli
+
+**Entrada:**
+- h = 2 m
+- g = 9.81 m/s2
+- A = 0 m2 (no calcular Q)
+
+**Calculo:**
+```
+V = sqrt(2 * 9.81 * 2) = sqrt(39.24) = 6.264 m/s
+```
+
+**Esperado en pantalla:**
+```
+V = 6.264 m/s
+(sin Q porque A = 0)
+```
+
+---
+
+## TEST 48: Orificio con Cd (MF_BERN opcion 8)
+
+**Menu:** Bernoulli → Orificio con Cd
+
+**Entrada:**
+- Cd = 0.62
+- A  = 0.01 m2
+- h  = 2 m
+- g  = 9.81 m/s2
+
+**Calculo:**
+```
+Videal = sqrt(2 * 9.81 * 2) = 6.264 m/s
+Q      = 0.62 * 0.01 * 6.264 = 0.03884 m3/s  ~  0.0388 m3/s
+```
+
+**Esperado en pantalla:**
+```
+Videal = 6.264 m/s
+Q      = 0.0388 m3/s
+Q      = 38.84 L/s
+```
+
+---
+
+## TEST 49: Alturas de energia (MF_BERN opcion 9)
+
+**Menu:** Bernoulli → Alturas energia
+
+**Entrada:**
+- P   = 98100 Pa
+- V   = 2 m/s
+- z   = 3 m
+- rho = 1000 kg/m3
+- g   = 9.81 m/s2
+
+**Calculo:**
+```
+hp = 98100 / (1000 * 9.81) = 10 m
+hv = 4 / (2 * 9.81)        = 0.2039 m
+H  = 10 + 0.2039 + 3       = 13.2039 m  ~  13.204 m
+```
+
+**Esperado en pantalla:**
+```
+hp = 10.0 m
+hv = 0.2039 m
+z  = 3 m
+H  = 13.204 m
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.
