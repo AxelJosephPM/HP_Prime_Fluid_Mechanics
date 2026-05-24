@@ -12,7 +12,7 @@ The previous Bernoulli path also solved the opposite pressure direction for the 
 - `+y` is positive upward.
 - `theta1` and `theta2` are measured from `+x`.
 - Pressure forces use gauge pressures.
-- Main output is `Fx,Fy = soporte/anclaje sobre codo`.
+- Main output is `Rx,Ry = soporte/anclaje sobre codo`.
 
 ## Correct Formulas
 
@@ -26,9 +26,11 @@ The previous Bernoulli path also solved the opposite pressure direction for the 
 - `My = mdot*(V2y - V1y)`
 - `Fpx = P1g*A1*COS(rad1) - P2g*A2*COS(rad2)`
 - `Fpy = P1g*A1*SIN(rad1) - P2g*A2*SIN(rad2)`
-- `Fanch_x = Mx - Fpx`
-- `Fanch_y = My - Fpy + W`
-- `Fanch = SQRT(Fanch_x^2 + Fanch_y^2)`
+- `Wx = 0`
+- `Wy = -W`
+- `Rx = Mx - Fpx - Wx`
+- `Ry = My - Fpy - Wy`
+- `R = SQRT(Rx^2 + Ry^2)`
 
 For atmospheric outlet with Bernoulli and no losses:
 
@@ -61,9 +63,9 @@ Computed:
 - `Mx = -183.1 N`
 - `My = 338.3 N`
 - `W = 490.5 N`
-- `Fanch_x = -1292.0 N`
-- `Fanch_y = 828.8 N`
-- `Fanch = 1535 N`
+- `Rx = -1292.0 N`
+- `Ry = 828.8 N`
+- `R = 1535 N`
 
 This is within about 2 percent of the solved Tema 4 values `Fx about -1297 N` and `Fy about 0.834 kN`.
 
@@ -75,9 +77,9 @@ For the Tema 4 validation path:
 
 Compare the `REACCION ANCLAJE` screen:
 
-- `Fx` about `-1292 N`
-- `Fy` about `829 N`
-- `F` about `1535 N`
+- `Rx` about `-1292 N`
+- `Ry` about `829 N`
+- `R` about `1535 N`
 
 ## Files Changed
 

@@ -420,15 +420,15 @@ V2y = 11.276 aprox
 Mx = -183.1 N aprox
 My = 338.3 N aprox
 W = 490.5 N
-Fx = Fanch_x = Mx - Fpx = -1292 N aprox
-Fy = Fanch_y = My - Fpy + W = 828.8 N aprox
+Rx = Mx - Fpx - Wx = -1292 N aprox
+Ry = My - Fpy - Wy = 828.8 N aprox
 F = 1535 N aprox
 ```
 
 **Comparacion con Tema 4:**
 ```
-Fx esperado clase: about -1297 N
-Fy esperado clase: about 0.834 kN
+Rx equivale a Fx de clase: about -1297 N
+Ry equivale a Fy de clase: about 0.834 kN
 Tolerancia: 2 percent
 ```
 

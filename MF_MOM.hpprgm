@@ -86,15 +86,16 @@ END;
 
 // ---- Reaccion en codo 2D ----
 // +x derecha, +y arriba. theta desde +x en grados.
-// P1g y P2g son manometricas. Fx,Fy = anclaje sobre codo.
+// P1g y P2g son manometricas. Rx,Ry = anclaje sobre codo.
 MF_MOM_BEND()
 BEGIN
   LOCAL mode, fmode, wmode, ptype, rho, Q, mdot, D1;
   LOCAL D2, A1, A2, P1in, P2in, P1g, P2g, Patm;
   LOCAL th1, th2, dz, mtotal, Wtotal, W, g, res;
+  LOCAL VolCV, melbow, Wx, Wy, Rx, Ry, R, ang;
   LOCAL V1, V2, rad1, rad2, c1, s1, c2, s2;
   LOCAL V1x, V1y, V2x, V2y, Mx, My, Fpx, Fpy;
-  LOCAL Fanchx, Fanchy, Fanch;
+  LOCAL Oppx, Oppy, oldang;
 
   mode := 0;
   fmode := 0;
@@ -125,9 +126,9 @@ BEGIN
       "theta1,theta2 desde +x." + CHAR(10) +
       "Presiones de fuerza: manometricas.");
     MSGBOX("RESULTADO PRINCIPAL" + CHAR(10) +
-      "Fx,Fy = soporte/anclaje sobre codo." + CHAR(10) +
-      "Compare Fx,Fy con ejercicios Tema 4." + CHAR(10) +
-      "Peso total entra en Fy.");
+      "Rx,Ry = soporte/anclaje sobre codo." + CHAR(10) +
+      "Compare Rx,Ry con ejercicios Tema 4." + CHAR(10) +
+      "Peso total entra en Ry.");
     RETURN;
   END;
 
@@ -208,8 +209,9 @@ BEGIN
     "1. Ignorar peso",
     "2. Masa total",
     "3. Peso total",
-    "4. Volver");
-  IF wmode == 0 OR wmode == 4 THEN RETURN; END;
+    "4. VolCV + masa codo",
+    "5. Volver");
+  IF wmode == 0 OR wmode == 5 THEN RETURN; END;
   IF wmode == 1 THEN
     W := 0;
   END;
@@ -229,6 +231,14 @@ BEGIN
     END;
     W := Wtotal;
   END;
+  IF wmode == 4 THEN
+    IF NOT INPUT({VolCV, melbow}, "Volumen y masa", {"VolCV (m3)=", "m_codo (kg)="}, {"Volumen fluido", "Masa del codo"}, {0.0, 0.0}) THEN RETURN; END;
+    IF VolCV < 0 OR melbow < 0 THEN
+      MSGBOX("Datos invalidos");
+      RETURN;
+    END;
+    W := (rho * VolCV + melbow) * g;
+  END;
 
   V1 := Q / A1;
   V2 := Q / A2;
@@ -236,6 +246,8 @@ BEGIN
     P1g := P2g + rho * g * dz + 0.5 * rho * (V2 ^ 2 - V1 ^ 2);
   END;
 
+  oldang := HAngle;
+  HAngle := 0;
   rad1 := th1 * PI / 180;
   rad2 := th2 * PI / 180;
   c1 := COS(rad1);
@@ -250,9 +262,30 @@ BEGIN
   My := mdot * (V2y - V1y);
   Fpx := P1g * A1 * c1 - P2g * A2 * c2;
   Fpy := P1g * A1 * s1 - P2g * A2 * s2;
-  Fanchx := Mx - Fpx;
-  Fanchy := My - Fpy + W;
-  Fanch := SQRT(Fanchx ^ 2 + Fanchy ^ 2);
+  Wx := 0;
+  Wy := -W;
+  Rx := Mx - Fpx - Wx;
+  Ry := My - Fpy - Wy;
+  R := SQRT(Rx ^ 2 + Ry ^ 2);
+  IF Rx == 0 THEN
+    IF Ry > 0 THEN
+      ang := 90;
+    ELSE
+      IF Ry < 0 THEN
+        ang := -90;
+      ELSE
+        ang := 0;
+      END;
+    END;
+  ELSE
+    ang := ATAN(Ry / Rx) * 180 / PI;
+    IF Rx < 0 THEN
+      ang := ang + 180;
+    END;
+  END;
+  HAngle := oldang;
+  Oppx := -Rx;
+  Oppy := -Ry;
 
   res := "DATOS CALCULADOS" + CHAR(10);
   res := res + "Q    = " + fmt_(Q) + " m3/s" + CHAR(10);
@@ -278,18 +311,26 @@ BEGIN
   res := "CANTIDAD MOVIMIENTO" + CHAR(10);
   res := res + "Mx  = " + fmt_(Mx) + " N" + CHAR(10);
   res := res + "My  = " + fmt_(My) + " N" + CHAR(10);
-  res := res + "W   = " + fmt_(W) + " N";
+  res := res + "Wx  = " + fmt_(Wx) + " N" + CHAR(10);
+  res := res + "Wy  = " + fmt_(Wy) + " N";
   MSGBOX(res);
 
   res := "REACCION ANCLAJE" + CHAR(10);
-  res := res + "Fx = " + fmt_(Fanchx) + " N" + CHAR(10);
-  res := res + "Fy = " + fmt_(Fanchy) + " N" + CHAR(10);
-  res := res + "F  = " + fmt_(Fanch) + " N";
+  res := res + "Rx = " + fmt_(Rx) + " N" + CHAR(10);
+  res := res + "Ry = " + fmt_(Ry) + " N" + CHAR(10);
+  res := res + "R  = " + fmt_(R) + " N" + CHAR(10);
+  res := res + "ang = " + fmt_(ang) + " deg";
+  MSGBOX(res);
+
+  res := "REACCION OPUESTA" + CHAR(10);
+  res := res + "Fluido/codo sobre soporte" + CHAR(10);
+  res := res + "Fx_op = " + fmt_(Oppx) + " N" + CHAR(10);
+  res := res + "Fy_op = " + fmt_(Oppy) + " N";
   MSGBOX(res);
 
   res := "CONVENCION" + CHAR(10);
-  res := res + "Fx,Fy = soporte/anclaje sobre codo" + CHAR(10);
-  res := res + "Comparar estos con Tema 4" + CHAR(10);
+  res := res + "Rx,Ry = soporte/anclaje sobre codo" + CHAR(10);
+  res := res + "Comparar Rx,Ry con Tema 4" + CHAR(10);
   res := res + "Presiones usadas: manometricas";
   MSGBOX(res);
 END;
