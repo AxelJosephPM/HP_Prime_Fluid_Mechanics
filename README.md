@@ -151,10 +151,10 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 
 ### 7. Cantidad de Movimiento Lineal (`MF_MOM`)
 - Fuerza axial en tobera o difusor: Rx = P₁A₁ − P₂A₂ + ṁ(V₁ − V₂)
-- Reaccion en codo 2D corregida: usa volumen de control estacionario, presiones manometricas y modos flexibles de peso
-- Convenio del codo 2D: +x derecha, +y arriba, theta desde +x; Rx,Ry son la fuerza del fluido sobre el codo
-- Modos del codo 2D: diametros/areas, con o sin presiones, P2 atmosferica, P2 por Bernoulli y ayuda de signos
-- Peso en codo 2D: peso del fluido entra en cantidad de movimiento; peso total codo+fluido se usa solo para la reaccion del soporte Sx,Sy
+- Reaccion en codo 2D corregida para reportar la reaccion de anclaje/soporte estilo Tema 4
+- Convenio del codo 2D: +x derecha, +y arriba, theta desde +x; Fx,Fy son soporte/anclaje sobre el codo
+- Las fuerzas de presion usan presiones manometricas; si se ingresan absolutas, se convierten restando Patm
+- Modo Bernoulli: calcula P1g cuando la salida descarga a atmosfera; TEST_PLAN incluye el caso Tema 4 problema 5
 - Chorro contra placa fija: F = ρQV = ṁV
 - Chorro desviado por ángulo θ: Fx = ṁV(1−cosθ), Fy = ṁV·sinθ
 - Empuje tipo motor/cohete: T = ṁ(Ve − Vi) + (Pe − Pi)Ae, impulso específico

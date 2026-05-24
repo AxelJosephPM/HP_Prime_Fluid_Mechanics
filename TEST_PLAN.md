@@ -387,166 +387,49 @@ F    = 0.64 kN
 
 ---
 
-## TEST 17: Codo 90 grados, areas, sin presiones, sin peso (MF_MOM_BEND)
+## TEST 17: Tema 4 problema 5, codo reductor (MF_MOM_BEND)
 
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Areas + P1 Bern
 
 **Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- theta1 = 0
-- theta2 = 90
-- weight mode = Ignorar peso
+- rho = 1000 kg/m3
+- flujo = mdot masico
+- mdot = 30 kg/s
+- A1 = 0.0150 m2
+- A2 = 0.0025 m2
+- theta1 = 0 deg
+- theta2 = 110 deg
+- dz = z2-z1 = 0.40 m
+- peso conjunto = Masa total
+- mtotal = 50 kg
 
-**Esperado:**
+**Calculo esperado:**
 ```
-V1 = 10 m/s
-V2 = 10 m/s
-mdot = 100 kg/s
-V1x = 10
+Q = mdot/rho = 0.03 m3/s
+V1 = 2 m/s
+V2 = 12 m/s
+P2g = 0 Pa
+P1g = rho*g*dz + 0.5*rho*(V2^2 - V1^2)
+P1g = 73924 Pa aprox
+Fpx = P1g*A1 = 1108.9 N aprox
+Fpy = 0 N
+V1x = 2
 V1y = 0
-V2x = 0
-V2y = 10
-Mx = -1000 N
-My = 1000 N
-Fpx = 0 N
-Fpy = 0 N
-Wx = 0 N
-Wy = 0 N
-Fwx = -1000 N
-Fwy = 1000 N
-Rx = 1000 N
-Ry = -1000 N
-R  = 1414.2 N aprox
+V2x = -4.104 aprox
+V2y = 11.276 aprox
+Mx = -183.1 N aprox
+My = 338.3 N aprox
+W = 490.5 N
+Fx = Fanch_x = Mx - Fpx = -1292 N aprox
+Fy = Fanch_y = My - Fpy + W = 828.8 N aprox
+F = 1535 N aprox
 ```
 
----
-
-## TEST 17B: Codo 90 grados, peso fluido directo (MF_MOM_BEND)
-
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
-
-**Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- theta1 = 0
-- theta2 = 90
-- weight mode = Peso fluido directo
-- Wfluid = 196.2 N
-
-**Esperado:**
+**Comparacion con Tema 4:**
 ```
-Mx = -1000 N
-My = 1000 N
-Wy = -196.2 N
-Fwx = -1000 N
-Fwy = 1196.2 N
-Rx = 1000 N
-Ry = -1196.2 N
-R  = 1559.1 N aprox
-```
-
----
-
-## TEST 17C: Codo 90 grados, peso total conjunto (MF_MOM_BEND)
-
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
-
-**Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- theta1 = 0
-- theta2 = 90
-- weight mode = Peso conjunto codo+fluido
-- Wtotal = 500 N
-
-**Esperado reaccion fluido:**
-```
-Rx = 1000 N
-Ry = -1000 N
-R  = 1414.2 N aprox
-```
-
-**Esperado soporte:**
-```
-Sx = -1000 N
-Sy = 1500 N
-S  = 1802.8 N aprox
-```
-
----
-
-## TEST 17D: Codo 90 grados, presion entrada y peso total conjunto (MF_MOM_BEND)
-
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas y presiones
-
-**Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- P1 = 200000 Pa
-- P2 = 0 Pa
-- theta1 = 0
-- theta2 = 90
-- weight mode = Peso conjunto codo+fluido
-- Wtotal = 500 N
-
-**Esperado reaccion fluido:**
-```
-V1 = 10 m/s
-V2 = 10 m/s
-mdot = 100 kg/s
-Mx = -1000 N
-My = 1000 N
-Fpx = 2000 N
-Fpy = 0 N
-Wx = 0 N
-Wy = 0 N
-Fwx = -3000 N
-Fwy = 1000 N
-Rx = 3000 N
-Ry = -1000 N
-R  = 3162.3 N aprox
-```
-
-**Esperado soporte:**
-```
-Sx = -3000 N
-Sy = 1500 N
-S  = 3354.1 N aprox
-```
-
----
-
-## TEST 17E: Tuberia recta, sin presiones (MF_MOM_BEND)
-
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
-
-**Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- theta1 = 0
-- theta2 = 0
-- weight mode = Ignorar peso
-
-**Esperado:**
-```
-V1 = 10 m/s
-V2 = 10 m/s
-Mx = 0 N
-My = 0 N
-Rx = 0 N
-Ry = 0 N
-R = 0 N
+Fx esperado clase: about -1297 N
+Fy esperado clase: about 0.834 kN
+Tolerancia: 2 percent
 ```
 
 ---

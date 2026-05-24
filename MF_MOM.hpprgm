@@ -86,191 +86,155 @@ END;
 
 // ---- Reaccion en codo 2D ----
 // +x derecha, +y arriba. theta desde +x en grados.
-// P1 y P2 son manometricas. Rx,Ry = fluido sobre codo.
+// P1g y P2g son manometricas. Fx,Fy = anclaje sobre codo.
 MF_MOM_BEND()
 BEGIN
-  LOCAL mode, wmode, rho, Q, D1, D2, A1, A2;
-  LOCAL P1, P2, th1, th2, z1, z2, hL, VolCV;
-  LOCAL V1, V2, mdot, rad1, rad2, c1, s1, c2;
-  LOCAL s2, V1x, V1y, V2x, V2y, Mx, My, Fpx;
-  LOCAL Fpy, Wx, Wy, Fwx, Fwy, Rx, Ry, R;
-  LOCAL Wfluid, Wtotal, Sx, Sy, S, g, ang, res;
-  LOCAL nota, useWeightFluid, useSupportWeight;
+  LOCAL mode, fmode, wmode, ptype, rho, Q, mdot, D1;
+  LOCAL D2, A1, A2, P1in, P2in, P1g, P2g, Patm;
+  LOCAL th1, th2, dz, mtotal, Wtotal, W, g, res;
+  LOCAL V1, V2, rad1, rad2, c1, s1, c2, s2;
+  LOCAL V1x, V1y, V2x, V2y, Mx, My, Fpx, Fpy;
+  LOCAL Fanchx, Fanchy, Fanch;
 
   mode := 0;
+  fmode := 0;
   wmode := 0;
-  nota := "";
-  VolCV := 0;
-  Wfluid := 0;
-  Wtotal := 0;
-  useWeightFluid := 0;
-  useSupportWeight := 0;
+  ptype := 0;
+  Q := 0;
+  mdot := 0;
+  A1 := 0;
+  A2 := 0;
+  P1g := 0;
+  P2g := 0;
+  W := 0;
   g := 9.81;
+
   CHOOSE(mode,
     "Reaccion en codo 2D",
-    "1. Con diametros y presiones",
-    "2. Con diametros sin presiones",
-    "3. Con areas y presiones",
-    "4. Con areas sin presiones",
-    "5. P2 atmosferica",
-    "6. P2 por Bernoulli",
-    "7. Ayuda signos",
-    "8. Volver");
-  IF mode == 0 OR mode == 8 THEN RETURN; END;
+    "1. Areas + presiones",
+    "2. Areas + P1 Bern",
+    "3. Diametros + pres",
+    "4. Diametros + P1 Bern",
+    "5. Ayuda signos",
+    "6. Volver");
+  IF mode == 0 OR mode == 6 THEN RETURN; END;
 
-  IF mode == 7 THEN
-    MSGBOX("AYUDA SIGNOS CODO 2D" + CHAR(10) +
-      "theta1 y theta2 son direcciones absolutas desde +x." + CHAR(10) +
-      "Codo 90: theta1=0, theta2=90." + CHAR(10) +
-      "P1 y P2 son manometricas." + CHAR(10) +
-      "Rx,Ry = fluido sobre codo." + CHAR(10) +
-      "Fwx,Fwy = codo sobre fluido." + CHAR(10) +
-      "Peso fluido entra en cantidad de movimiento." + CHAR(10) +
-      "Peso conjunto se usa para soporte." + CHAR(10) +
-      "No mezclar reaccion fluido y soporte.");
-    MSGBOX("USO DEL PESO" + CHAR(10) +
-      "Si pide fuerza del fluido sobre codo, use Rx,Ry." + CHAR(10) +
-      "Si pide fuerza en anclajes o soporte, use Sx,Sy." + CHAR(10) +
-      "Sx,Sy solo se calculan con peso conjunto.");
+  IF mode == 5 THEN
+    MSGBOX("CONVENCION TEMA 4" + CHAR(10) +
+      "+x derecha, +y arriba." + CHAR(10) +
+      "theta1,theta2 desde +x." + CHAR(10) +
+      "Presiones de fuerza: manometricas.");
+    MSGBOX("RESULTADO PRINCIPAL" + CHAR(10) +
+      "Fx,Fy = soporte/anclaje sobre codo." + CHAR(10) +
+      "Compare Fx,Fy con ejercicios Tema 4." + CHAR(10) +
+      "Peso total entra en Fy.");
     RETURN;
   END;
 
-  IF mode == 1 THEN
-    IF NOT INPUT({rho, Q}, "Codo D y P - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({D1, D2}, "Codo D y P - Diametros", {"D1 (m)=", "D2 (m)="}, {"Diametro entrada", "Diametro salida"}, {0.11284, 0.11284}) THEN RETURN; END;
-    IF NOT INPUT({P1, P2}, "Codo D y P - Presiones", {"P1 (Pa)=", "P2 (Pa)="}, {"Presion manometrica entrada", "Presion manometrica salida"}, {200000.0, 0.0}) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo D y P - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-    IF D1 <= 0 OR D2 <= 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    A1 := PI * D1 ^ 2 / 4;
-    A2 := PI * D2 ^ 2 / 4;
-  END;
-
-  IF mode == 2 THEN
-    IF NOT INPUT({rho, Q}, "Codo D sin P - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({D1, D2}, "Codo D sin P - Diametros", {"D1 (m)=", "D2 (m)="}, {"Diametro entrada", "Diametro salida"}, {0.11284, 0.11284}) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo D sin P - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-    IF D1 <= 0 OR D2 <= 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    A1 := PI * D1 ^ 2 / 4;
-    A2 := PI * D2 ^ 2 / 4;
-    P1 := 0;
-    P2 := 0;
-    nota := "Presiones = 0 manometrico";
-  END;
-
-  IF mode == 3 THEN
-    IF NOT INPUT({rho, Q}, "Codo A y P - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({A1, A2}, "Codo A y P - Areas", {"A1 (m2)=", "A2 (m2)="}, {"Area entrada", "Area salida"}, {0.01, 0.01}) THEN RETURN; END;
-    IF NOT INPUT({P1, P2}, "Codo A y P - Presiones", {"P1 (Pa)=", "P2 (Pa)="}, {"Presion manometrica entrada", "Presion manometrica salida"}, {200000.0, 0.0}) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo A y P - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-  END;
-
-  IF mode == 4 THEN
-    IF NOT INPUT({rho, Q}, "Codo A sin P - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({A1, A2}, "Codo A sin P - Areas", {"A1 (m2)=", "A2 (m2)="}, {"Area entrada", "Area salida"}, {0.01, 0.01}) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo A sin P - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-    P1 := 0;
-    P2 := 0;
-    nota := "Presiones = 0 manometrico";
-  END;
-
-  IF mode == 5 THEN
-    IF NOT INPUT({rho, Q}, "Codo P2 atm - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({D1, D2}, "Codo P2 atm - Diametros", {"D1 (m)=", "D2 (m)="}, {"Diametro entrada", "Diametro salida"}, {0.11284, 0.11284}) THEN RETURN; END;
-    IF NOT INPUT(P1, "Codo P2 atm - P1", "P1 (Pa)=", "Presion manometrica entrada", 200000.0) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo P2 atm - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-    IF D1 <= 0 OR D2 <= 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    A1 := PI * D1 ^ 2 / 4;
-    A2 := PI * D2 ^ 2 / 4;
-    P2 := 0;
-    nota := "P2 = 0 manometrico";
-  END;
-
-  IF mode == 6 THEN
-    IF NOT INPUT({rho, Q}, "Codo Bern - Flujo", {"rho (kg/m3)=", "Q (m3/s)="}, {"Densidad", "Caudal"}, {1000.0, 0.1}) THEN RETURN; END;
-    IF NOT INPUT({D1, D2}, "Codo Bern - Diametros", {"D1 (m)=", "D2 (m)="}, {"Diametro entrada", "Diametro salida"}, {0.11284, 0.11284}) THEN RETURN; END;
-    IF NOT INPUT(P1, "Codo Bern - P1", "P1 (Pa)=", "Presion manometrica entrada", 200000.0) THEN RETURN; END;
-    IF NOT INPUT({z1, z2}, "Codo Bern - Cotas", {"z1 (m)=", "z2 (m)="}, {"Cota entrada", "Cota salida"}, {0.0, 0.0}) THEN RETURN; END;
-    IF NOT INPUT(hL, "Codo Bern - Perdida", "hL (m)=", "Perdida de carga", 0.0) THEN RETURN; END;
-    IF NOT INPUT({th1, th2}, "Codo Bern - Angulos", {"theta1 (grados)=", "theta2 (grados)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 90.0}) THEN RETURN; END;
-    IF D1 <= 0 OR D2 <= 0 OR hL < 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    A1 := PI * D1 ^ 2 / 4;
-    A2 := PI * D2 ^ 2 / 4;
-  END;
-
-  CHOOSE(wmode,
-    "Peso en codo 2D",
-    "1. Ignorar peso",
-    "2. Peso fluido desde volumen",
-    "3. Peso fluido directo",
-    "4. Peso conjunto codo+fluido",
-    "5. Volver");
-  IF wmode == 0 OR wmode == 5 THEN RETURN; END;
-  IF wmode == 1 THEN
-    Wfluid := 0;
-    Wtotal := 0;
-    useWeightFluid := 0;
-    useSupportWeight := 0;
-    nota := nota + " Peso ignorado.";
-  END;
-  IF wmode == 2 THEN
-    IF NOT INPUT(VolCV, "Peso desde volumen", "VolCV (m3)=", "Volumen de fluido en el codo", 0.0) THEN RETURN; END;
-    IF VolCV < 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    Wfluid := rho * g * VolCV;
-    Wtotal := 0;
-    useWeightFluid := 1;
-    useSupportWeight := 0;
-    nota := nota + " Peso fluido desde VolCV.";
-  END;
-  IF wmode == 3 THEN
-    IF NOT INPUT(Wfluid, "Peso fluido directo", "Wfluid (N)=", "Peso del fluido dentro del codo", 0.0) THEN RETURN; END;
-    IF Wfluid < 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    Wtotal := 0;
-    useWeightFluid := 1;
-    useSupportWeight := 0;
-    nota := nota + " Peso fluido directo.";
-  END;
-  IF wmode == 4 THEN
-    IF NOT INPUT(Wtotal, "Peso conjunto", "Wtotal (N)=", "Peso total codo mas fluido", 0.0) THEN RETURN; END;
-    IF Wtotal < 0 THEN
-      MSGBOX("Datos invalidos");
-      RETURN;
-    END;
-    Wfluid := 0;
-    useWeightFluid := 0;
-    useSupportWeight := 1;
-    nota := nota + " Peso conjunto solo para soporte.";
-  END;
-
-  IF rho <= 0 OR Q < 0 OR A1 <= 0 OR A2 <= 0 THEN
+  IF NOT INPUT(rho, "Codo 2D - Densidad", "rho (kg/m3)=", "Densidad", 1000.0) THEN RETURN; END;
+  IF rho <= 0 THEN
     MSGBOX("Datos invalidos");
     RETURN;
   END;
 
+  CHOOSE(fmode,
+    "Dato de flujo",
+    "1. Q volumetrico",
+    "2. mdot masico",
+    "3. Volver");
+  IF fmode == 0 OR fmode == 3 THEN RETURN; END;
+  IF fmode == 1 THEN
+    IF NOT INPUT(Q, "Caudal", "Q (m3/s)=", "Caudal volumetrico", 0.03) THEN RETURN; END;
+    mdot := rho * Q;
+  END;
+  IF fmode == 2 THEN
+    IF NOT INPUT(mdot, "Gasto masico", "mdot (kg/s)=", "Gasto masico", 30.0) THEN RETURN; END;
+    Q := mdot / rho;
+  END;
+  IF Q < 0 OR mdot < 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+
+  IF mode == 1 OR mode == 2 THEN
+    IF NOT INPUT({A1, A2}, "Areas", {"A1 (m2)=", "A2 (m2)="}, {"Area entrada", "Area salida"}, {0.015, 0.0025}) THEN RETURN; END;
+  END;
+  IF mode == 3 OR mode == 4 THEN
+    IF NOT INPUT({D1, D2}, "Diametros", {"D1 (m)=", "D2 (m)="}, {"Diametro entrada", "Diametro salida"}, {0.1382, 0.0564}) THEN RETURN; END;
+    IF D1 <= 0 OR D2 <= 0 THEN
+      MSGBOX("Datos invalidos");
+      RETURN;
+    END;
+    A1 := PI * D1 ^ 2 / 4;
+    A2 := PI * D2 ^ 2 / 4;
+  END;
+  IF A1 <= 0 OR A2 <= 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+
+  IF NOT INPUT({th1, th2}, "Angulos", {"theta1 (deg)=", "theta2 (deg)="}, {"Direccion entrada desde +x", "Direccion salida desde +x"}, {0.0, 110.0}) THEN RETURN; END;
+
+  IF mode == 1 OR mode == 3 THEN
+    CHOOSE(ptype,
+      "Tipo presion",
+      "1. Manometricas",
+      "2. Absolutas",
+      "3. Volver");
+    IF ptype == 0 OR ptype == 3 THEN RETURN; END;
+    IF NOT INPUT({P1in, P2in}, "Presiones", {"P1 (Pa)=", "P2 (Pa)="}, {"Presion entrada", "Presion salida"}, {73920.0, 0.0}) THEN RETURN; END;
+    IF ptype == 1 THEN
+      P1g := P1in;
+      P2g := P2in;
+    END;
+    IF ptype == 2 THEN
+      IF NOT INPUT(Patm, "Presion atmosferica", "Patm (Pa)=", "Presion atmosferica", 101325.0) THEN RETURN; END;
+      IF Patm < 0 THEN
+        MSGBOX("Datos invalidos");
+        RETURN;
+      END;
+      P1g := P1in - Patm;
+      P2g := P2in - Patm;
+    END;
+  END;
+
+  IF mode == 2 OR mode == 4 THEN
+    IF NOT INPUT(dz, "Bernoulli", "dz=z2-z1 (m)=", "Salida atmosferica, sin perdidas", 0.40) THEN RETURN; END;
+    P2g := 0;
+  END;
+
+  CHOOSE(wmode,
+    "Peso conjunto",
+    "1. Ignorar peso",
+    "2. Masa total",
+    "3. Peso total",
+    "4. Volver");
+  IF wmode == 0 OR wmode == 4 THEN RETURN; END;
+  IF wmode == 1 THEN
+    W := 0;
+  END;
+  IF wmode == 2 THEN
+    IF NOT INPUT(mtotal, "Masa total", "mtotal (kg)=", "Masa codo mas fluido", 50.0) THEN RETURN; END;
+    IF mtotal < 0 THEN
+      MSGBOX("Datos invalidos");
+      RETURN;
+    END;
+    W := mtotal * g;
+  END;
+  IF wmode == 3 THEN
+    IF NOT INPUT(Wtotal, "Peso total", "Wtotal (N)=", "Peso codo mas fluido", 490.5) THEN RETURN; END;
+    IF Wtotal < 0 THEN
+      MSGBOX("Datos invalidos");
+      RETURN;
+    END;
+    W := Wtotal;
+  END;
+
   V1 := Q / A1;
   V2 := Q / A2;
-  IF mode == 6 THEN
-    P2 := rho * g * (P1 / (rho * g) + V1 ^ 2 / (2 * g) + z1 - hL - V2 ^ 2 / (2 * g) - z2);
-    nota := "P2 por Bernoulli sin bomba/turbina";
+  IF mode == 2 OR mode == 4 THEN
+    P1g := P2g + rho * g * dz + 0.5 * rho * (V2 ^ 2 - V1 ^ 2);
   END;
-  mdot := rho * Q;
 
   rad1 := th1 * PI / 180;
   rad2 := th2 * PI / 180;
@@ -284,39 +248,14 @@ BEGIN
   V2y := V2 * s2;
   Mx := mdot * (V2x - V1x);
   My := mdot * (V2y - V1y);
-  Fpx := P1 * A1 * c1 - P2 * A2 * c2;
-  Fpy := P1 * A1 * s1 - P2 * A2 * s2;
-  Wx := 0;
-  Wy := -Wfluid;
-  Fwx := Mx - Fpx - Wx;
-  Fwy := My - Fpy - Wy;
-  Rx := -Fwx;
-  Ry := -Fwy;
-  R := SQRT(Rx ^ 2 + Ry ^ 2);
-  Sx := -Rx;
-  Sy := -Ry + Wtotal;
-  S := SQRT(Sx ^ 2 + Sy ^ 2);
+  Fpx := P1g * A1 * c1 - P2g * A2 * c2;
+  Fpy := P1g * A1 * s1 - P2g * A2 * s2;
+  Fanchx := Mx - Fpx;
+  Fanchy := My - Fpy + W;
+  Fanch := SQRT(Fanchx ^ 2 + Fanchy ^ 2);
 
-  IF Rx == 0 THEN
-    IF Ry > 0 THEN
-      ang := 90;
-    ELSE
-      IF Ry < 0 THEN
-        ang := -90;
-      ELSE
-        ang := 0;
-      END;
-    END;
-  ELSE
-    ang := ATAN(Ry / Rx) * 180 / PI;
-    IF Rx < 0 THEN
-      ang := ang + 180;
-    END;
-  END;
-
-  res := "DATOS Y VELOCIDADES" + CHAR(10);
-  res := res + "A1   = " + fmt_(A1) + " m2" + CHAR(10);
-  res := res + "A2   = " + fmt_(A2) + " m2" + CHAR(10);
+  res := "DATOS CALCULADOS" + CHAR(10);
+  res := res + "Q    = " + fmt_(Q) + " m3/s" + CHAR(10);
   res := res + "V1   = " + fmt_(V1) + " m/s" + CHAR(10);
   res := res + "V2   = " + fmt_(V2) + " m/s" + CHAR(10);
   res := res + "mdot = " + fmt_(mdot) + " kg/s";
@@ -329,45 +268,29 @@ BEGIN
   res := res + "V2y = " + fmt_(V2y) + " m/s";
   MSGBOX(res);
 
-  res := "BALANCE FUERZAS" + CHAR(10);
+  res := "PRESIONES Y FUERZAS P" + CHAR(10);
+  res := res + "P1g = " + fmt_(P1g) + " Pa" + CHAR(10);
+  res := res + "P2g = " + fmt_(P2g) + " Pa" + CHAR(10);
+  res := res + "Fpx = " + fmt_(Fpx) + " N" + CHAR(10);
+  res := res + "Fpy = " + fmt_(Fpy) + " N";
+  MSGBOX(res);
+
+  res := "CANTIDAD MOVIMIENTO" + CHAR(10);
   res := res + "Mx  = " + fmt_(Mx) + " N" + CHAR(10);
   res := res + "My  = " + fmt_(My) + " N" + CHAR(10);
-  res := res + "Fpx = " + fmt_(Fpx) + " N" + CHAR(10);
-  res := res + "Fpy = " + fmt_(Fpy) + " N" + CHAR(10);
-  res := res + "Wfluid = " + fmt_(Wfluid) + " N" + CHAR(10);
-  res := res + "Wy  = " + fmt_(Wy) + " N";
+  res := res + "W   = " + fmt_(W) + " N";
   MSGBOX(res);
 
-  res := "REACCION DEL FLUIDO SOBRE CODO" + CHAR(10);
-  res := res + "Fwx = " + fmt_(Fwx) + " N" + CHAR(10);
-  res := res + "Fwy = " + fmt_(Fwy) + " N" + CHAR(10);
-  res := res + "Rx = " + fmt_(Rx) + " N" + CHAR(10);
-  res := res + "Ry = " + fmt_(Ry) + " N" + CHAR(10);
-  res := res + "R  = " + fmt_(R) + " N" + CHAR(10);
-  res := res + "ang aprox = " + fmt_(ang) + " grados";
+  res := "REACCION ANCLAJE" + CHAR(10);
+  res := res + "Fx = " + fmt_(Fanchx) + " N" + CHAR(10);
+  res := res + "Fy = " + fmt_(Fanchy) + " N" + CHAR(10);
+  res := res + "F  = " + fmt_(Fanch) + " N";
   MSGBOX(res);
 
-  IF useSupportWeight == 1 THEN
-    res := "SOPORTE DEL CONJUNTO" + CHAR(10);
-    res := res + "Wtotal = " + fmt_(Wtotal) + " N" + CHAR(10);
-    res := res + "Sx = " + fmt_(Sx) + " N" + CHAR(10);
-    res := res + "Sy = " + fmt_(Sy) + " N" + CHAR(10);
-    res := res + "S  = " + fmt_(S) + " N";
-    MSGBOX(res);
-  END;
-
-  res := "CONVENCION CODO 2D" + CHAR(10);
-  res := res + "+x derecha, +y arriba" + CHAR(10);
-  res := res + "theta desde +x" + CHAR(10);
-  res := res + "P1,P2 manometricas" + CHAR(10);
-  res := res + "Rx,Ry = fluido sobre codo" + CHAR(10);
-  res := res + "Fwx,Fwy = codo sobre fluido";
-  IF useSupportWeight == 1 THEN
-    res := res + CHAR(10) + "Sx,Sy = soporte sobre conjunto";
-  END;
-  IF nota <> "" THEN
-    res := res + CHAR(10) + nota;
-  END;
+  res := "CONVENCION" + CHAR(10);
+  res := res + "Fx,Fy = soporte/anclaje sobre codo" + CHAR(10);
+  res := res + "Comparar estos con Tema 4" + CHAR(10);
+  res := res + "Presiones usadas: manometricas";
   MSGBOX(res);
 END;
 
