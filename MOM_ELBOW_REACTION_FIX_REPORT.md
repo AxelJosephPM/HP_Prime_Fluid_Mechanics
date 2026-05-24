@@ -1,56 +1,70 @@
 # MOM Elbow Reaction Fix Report
 
-## 1. Previous Issue
+## 1. Previous Input Bug
 
-The previous `MF_MOM_BEND()` implementation asked directly for both pressures and returned `Rx` and `Ry` from a compact expression. It did not show the pressure-force contribution, the wall/support force on the fluid, or the opposite reaction of the fluid on the bend. That made the sign convention easy to misread and caused results that did not match the standard control-volume momentum equation checks.
+The previous `MF_MOM_BEND()` version used large `INPUT` calls with many variables in one dialog. On HP Prime G2/Connectivity Kit this can become hidden multi-page input behavior, making navigation unreliable and cancellation confusing.
 
-## 2. Formulation Used
+## 2. Input Change
 
-The corrected calculation uses a steady control volume around the fluid in the elbow:
+The elbow option now uses several small `INPUT` screens, each with one or two variables. This avoids hidden input pages and returns safely to the `MF_MOM` menu if the user cancels any screen.
 
-- `V1x = V1*cos(theta1)`, `V1y = V1*sin(theta1)`
-- `V2x = V2*cos(theta2)`, `V2y = V2*sin(theta2)`
+## 3. Correct Formulation
+
+The calculation uses a steady control volume around the fluid in the elbow:
+
+- `V1x = V1*COS(rad1)`
+- `V1y = V1*SIN(rad1)`
+- `V2x = V2*COS(rad2)`
+- `V2y = V2*SIN(rad2)`
 - `mdot = rho*Q`
 - `Mx = mdot*(V2x - V1x)`
 - `My = mdot*(V2y - V1y)`
-- `Fpx = P1*A1*cos(theta1) - P2*A2*cos(theta2)`
-- `Fpy = P1*A1*sin(theta1) - P2*A2*sin(theta2)`
-- `Fwx = Mx - Fpx`
-- `Fwy = My - Fpy`
+- `Fpx = P1*A1*COS(rad1) - P2*A2*COS(rad2)`
+- `Fpy = P1*A1*SIN(rad1) - P2*A2*SIN(rad2)`
+- `Wx = 0`
+- `Wy = -rho*g*VolCV`
+- `Fwx = Mx - Fpx - Wx`
+- `Fwy = My - Fpy - Wy`
 - `Rx = -Fwx`
 - `Ry = -Fwy`
 
-## 3. Sign Convention
+## 4. Sign Convention
 
 - `+x` is positive to the right.
 - `+y` is positive upward.
-- `theta` is measured counterclockwise from `+x`.
+- `theta1` and `theta2` are absolute velocity directions measured from `+x`.
 - `P1` and `P2` are gauge pressures.
-- `Fwx,Fwy` are the force of the wall/support on the fluid.
-- `Rx,Ry` are the force of the fluid on the bend.
+- `Fwx,Fwy` are force of elbow/wall on fluid.
+- `Rx,Ry` are force of fluid on elbow.
+- `VolCV = 0` ignores weight of fluid in the control volume.
 
-## 4. Input Modes Added
+## 5. Input Modes
 
-- `Datos completos`: inputs `rho`, `Q`, `A1`, `A2`, `P1`, `P2`, `theta1`, `theta2`.
-- `Sin presiones`: sets `P1 = 0`, `P2 = 0`.
-- `P2 atmosferica`: inputs `P1` and sets `P2 = 0`.
-- `Calcular P2 Bernoulli`: estimates `P2` from Bernoulli without pump or turbine.
+- `Con diametros y presiones`
+- `Con diametros sin presiones`
+- `Con areas y presiones`
+- `Con areas sin presiones`
+- `P2 atmosferica`
+- `P2 por Bernoulli`
+- `Ayuda signos`
+- `Volver`
 
-## 5. Test Cases Added
+## 6. Test Cases
 
-Added three `MF_MOM_BEND()` tests to `TEST_PLAN.md`:
+Added or updated these `TEST_PLAN.md` cases:
 
-- 90 degree bend with no pressure.
-- 90 degree bend with inlet gauge pressure and atmospheric outlet.
-- Straight pipe with no pressure.
+- 90 degree elbow, areas, no pressure, no weight: `Rx=1000`, `Ry=-1000`, `R about 1414.2`.
+- 90 degree elbow, areas, inlet pressure, no weight: `Rx=3000`, `Ry=-1000`, `R about 3162.3`.
+- Straight pipe, no pressure: `Rx=0`, `Ry=0`, `R=0`.
+- 90 degree elbow with weight: `Wx=0`, `Wy=-196.2`, `Rx=1000`, `Ry=-1196.2`.
 
-## 6. Known Limitations
+## 7. Known Limitations
 
-- Areas are entered directly; diameters are not converted inside this option.
-- Weight of fluid inside the bend is not included.
-- Bernoulli mode assumes no pump or turbine and uses the supplied head loss `hL`.
-- The reaction angle is reported as approximate and depends on `ATAN`.
+- Diameter modes assume circular sections.
+- Bernoulli mode assumes no pump or turbine and uses the supplied `hL`.
+- The model is steady, one-dimensional at sections, and incompressible.
+- The angle is approximate; force components are the primary result.
 
-## 7. MF_CAS
+## 8. MF_CAS
 
 `MF_CAS.hpprgm` was not touched.

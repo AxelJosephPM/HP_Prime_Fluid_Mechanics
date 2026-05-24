@@ -387,9 +387,9 @@ F    = 0.64 kN
 
 ---
 
-## TEST 17: Reaccion en codo 90 grados, sin presiones (MF_MOM_BEND)
+## TEST 17: Codo 90 grados, areas, sin presiones, sin peso (MF_MOM_BEND)
 
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Sin presiones
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
 
 **Entrada:**
 - rho = 1000
@@ -398,16 +398,23 @@ F    = 0.64 kN
 - A2 = 0.01
 - theta1 = 0
 - theta2 = 90
+- VolCV = 0
 
 **Esperado:**
 ```
 V1 = 10 m/s
 V2 = 10 m/s
 mdot = 100 kg/s
+V1x = 10
+V1y = 0
+V2x = 0
+V2y = 10
 Mx = -1000 N
 My = 1000 N
 Fpx = 0 N
 Fpy = 0 N
+Wx = 0 N
+Wy = 0 N
 Fwx = -1000 N
 Fwy = 1000 N
 Rx = 1000 N
@@ -417,9 +424,9 @@ R  = 1414.2 N aprox
 
 ---
 
-## TEST 17B: Reaccion en codo 90 grados, presion de entrada (MF_MOM_BEND)
+## TEST 17B: Codo 90 grados, areas, presion de entrada, sin peso (MF_MOM_BEND)
 
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Datos completos
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas y presiones
 
 **Entrada:**
 - rho = 1000
@@ -430,6 +437,7 @@ R  = 1414.2 N aprox
 - P2 = 0 Pa
 - theta1 = 0
 - theta2 = 90
+- VolCV = 0
 
 **Esperado:**
 ```
@@ -440,6 +448,8 @@ Mx = -1000 N
 My = 1000 N
 Fpx = 2000 N
 Fpy = 0 N
+Wx = 0 N
+Wy = 0 N
 Fwx = -3000 N
 Fwy = 1000 N
 Rx = 3000 N
@@ -451,7 +461,7 @@ R  = 3162.3 N aprox
 
 ## TEST 17C: Tuberia recta, sin presiones (MF_MOM_BEND)
 
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Sin presiones
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
 
 **Entrada:**
 - rho = 1000
@@ -460,6 +470,7 @@ R  = 3162.3 N aprox
 - A2 = 0.01
 - theta1 = 0
 - theta2 = 0
+- VolCV = 0
 
 **Esperado:**
 ```
@@ -470,6 +481,34 @@ My = 0 N
 Rx = 0 N
 Ry = 0 N
 R  = 0 N
+```
+
+---
+
+## TEST 17D: Codo 90 grados con peso (MF_MOM_BEND)
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
+
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- theta1 = 0
+- theta2 = 90
+- VolCV = 0.02
+
+**Esperado:**
+```
+Wx = 0 N
+Wy = -196.2 N
+Mx = -1000 N
+My = 1000 N
+Fwx = -1000 N
+Fwy = 1196.2 N
+Rx = 1000 N
+Ry = -1196.2 N
+R  = 1559.1 N aprox
 ```
 
 ---
