@@ -2,11 +2,11 @@
 
 ## 1. Previous Input Bug
 
-The previous `MF_MOM_BEND()` version used large `INPUT` calls with many variables in one dialog. On HP Prime G2/Connectivity Kit this can become hidden multi-page input behavior, making navigation unreliable and cancellation confusing.
+The original `MF_MOM_BEND()` used large `INPUT` calls with many variables in one dialog. On HP Prime G2/Connectivity Kit this can become hidden multi-page input behavior, making navigation unreliable and cancellation confusing.
 
 ## 2. Input Change
 
-The elbow option now uses several small `INPUT` screens, each with one or two variables. This avoids hidden input pages and returns safely to the `MF_MOM` menu if the user cancels any screen.
+The elbow option now uses several small `INPUT` screens, normally one or two variables each. Hydraulic inputs are collected first. Weight handling is then selected from a separate menu, so the user does not need to know `VolCV` unless they choose the volume-based fluid-weight mode.
 
 ## 3. Correct Formulation
 
@@ -22,7 +22,7 @@ The calculation uses a steady control volume around the fluid in the elbow:
 - `Fpx = P1*A1*COS(rad1) - P2*A2*COS(rad2)`
 - `Fpy = P1*A1*SIN(rad1) - P2*A2*SIN(rad2)`
 - `Wx = 0`
-- `Wy = -rho*g*VolCV`
+- `Wy = -Wfluid`
 - `Fwx = Mx - Fpx - Wx`
 - `Fwy = My - Fpy - Wy`
 - `Rx = -Fwx`
@@ -36,7 +36,7 @@ The calculation uses a steady control volume around the fluid in the elbow:
 - `P1` and `P2` are gauge pressures.
 - `Fwx,Fwy` are force of elbow/wall on fluid.
 - `Rx,Ry` are force of fluid on elbow.
-- `VolCV = 0` ignores weight of fluid in the control volume.
+- `Sx,Sy` are support force on the elbow assembly when total assembly weight is used.
 
 ## 5. Input Modes
 
@@ -49,22 +49,36 @@ The calculation uses a steady control volume around the fluid in the elbow:
 - `Ayuda signos`
 - `Volver`
 
-## 6. Test Cases
+## 6. Weight Modes
 
-Added or updated these `TEST_PLAN.md` cases:
+- `Ignorar peso`: sets `Wfluid = 0` and does not compute support force.
+- `Peso fluido desde volumen`: asks `VolCV`, computes `Wfluid = rho*g*VolCV`, and includes it only in the fluid momentum equation.
+- `Peso fluido directo`: asks `Wfluid` directly and includes it only in the fluid momentum equation.
+- `Peso conjunto codo+fluido`: asks `Wtotal`, leaves `Wfluid = 0` in the fluid momentum equation, then computes support force for the physical assembly.
 
-- 90 degree elbow, areas, no pressure, no weight: `Rx=1000`, `Ry=-1000`, `R about 1414.2`.
-- 90 degree elbow, areas, inlet pressure, no weight: `Rx=3000`, `Ry=-1000`, `R about 3162.3`.
+Total elbow plus fluid weight is not inserted into the fluid momentum equation because it includes solid elbow weight. It is used after the fluid reaction is known:
+
+- `Sx = -Rx`
+- `Sy = -Ry + Wtotal`
+- `S = SQRT(Sx^2 + Sy^2)`
+
+## 7. Test Cases
+
+Updated `TEST_PLAN.md` with:
+
+- 90 degree elbow, no pressures, ignore weight: `Rx=1000`, `Ry=-1000`, `R about 1414.2`.
+- 90 degree elbow, direct fluid weight: `Rx=1000`, `Ry=-1196.2`, `R about 1559.1`.
+- 90 degree elbow, total assembly weight: support `Sx=-1000`, `Sy=1500`, `S about 1802.8`.
+- 90 degree elbow with inlet pressure and total assembly weight: support `Sx=-3000`, `Sy=1500`, `S about 3354.1`.
 - Straight pipe, no pressure: `Rx=0`, `Ry=0`, `R=0`.
-- 90 degree elbow with weight: `Wx=0`, `Wy=-196.2`, `Rx=1000`, `Ry=-1196.2`.
 
-## 7. Known Limitations
+## 8. Known Limitations
 
 - Diameter modes assume circular sections.
 - Bernoulli mode assumes no pump or turbine and uses the supplied `hL`.
 - The model is steady, one-dimensional at sections, and incompressible.
 - The angle is approximate; force components are the primary result.
 
-## 8. MF_CAS
+## 9. MF_CAS
 
 `MF_CAS.hpprgm` was not touched.

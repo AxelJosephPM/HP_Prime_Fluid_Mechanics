@@ -95,7 +95,7 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 ├── MF_MOM()      ← Módulo independiente
 │   ├── angulo_()        (interna) angulo desde componentes Fx, Fy
 │   ├── MF_MOM_NOZ()     Fuerza axial en tobera o difusor
-│   ├── MF_MOM_BEND()    Reaccion en codo 2D con diametros/areas, peso y balance M/Fp/W/Fw/R
+│   ├── MF_MOM_BEND()    Reaccion en codo 2D con peso fluido o soporte separado
 │   ├── MF_MOM_PLATE()   Chorro contra placa fija
 │   ├── MF_MOM_DEF()     Chorro desviado por angulo
 │   ├── MF_MOM_THRUST()  Empuje motor/cohete

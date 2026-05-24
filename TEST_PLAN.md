@@ -398,7 +398,7 @@ F    = 0.64 kN
 - A2 = 0.01
 - theta1 = 0
 - theta2 = 90
-- VolCV = 0
+- weight mode = Ignorar peso
 
 **Esperado:**
 ```
@@ -424,7 +424,65 @@ R  = 1414.2 N aprox
 
 ---
 
-## TEST 17B: Codo 90 grados, areas, presion de entrada, sin peso (MF_MOM_BEND)
+## TEST 17B: Codo 90 grados, peso fluido directo (MF_MOM_BEND)
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
+
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- theta1 = 0
+- theta2 = 90
+- weight mode = Peso fluido directo
+- Wfluid = 196.2 N
+
+**Esperado:**
+```
+Mx = -1000 N
+My = 1000 N
+Wy = -196.2 N
+Fwx = -1000 N
+Fwy = 1196.2 N
+Rx = 1000 N
+Ry = -1196.2 N
+R  = 1559.1 N aprox
+```
+
+---
+
+## TEST 17C: Codo 90 grados, peso total conjunto (MF_MOM_BEND)
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
+
+**Entrada:**
+- rho = 1000
+- Q = 0.1
+- A1 = 0.01
+- A2 = 0.01
+- theta1 = 0
+- theta2 = 90
+- weight mode = Peso conjunto codo+fluido
+- Wtotal = 500 N
+
+**Esperado reaccion fluido:**
+```
+Rx = 1000 N
+Ry = -1000 N
+R  = 1414.2 N aprox
+```
+
+**Esperado soporte:**
+```
+Sx = -1000 N
+Sy = 1500 N
+S  = 1802.8 N aprox
+```
+
+---
+
+## TEST 17D: Codo 90 grados, presion entrada y peso total conjunto (MF_MOM_BEND)
 
 **Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas y presiones
 
@@ -437,9 +495,10 @@ R  = 1414.2 N aprox
 - P2 = 0 Pa
 - theta1 = 0
 - theta2 = 90
-- VolCV = 0
+- weight mode = Peso conjunto codo+fluido
+- Wtotal = 500 N
 
-**Esperado:**
+**Esperado reaccion fluido:**
 ```
 V1 = 10 m/s
 V2 = 10 m/s
@@ -457,9 +516,16 @@ Ry = -1000 N
 R  = 3162.3 N aprox
 ```
 
+**Esperado soporte:**
+```
+Sx = -3000 N
+Sy = 1500 N
+S  = 3354.1 N aprox
+```
+
 ---
 
-## TEST 17C: Tuberia recta, sin presiones (MF_MOM_BEND)
+## TEST 17E: Tuberia recta, sin presiones (MF_MOM_BEND)
 
 **Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
 
@@ -470,7 +536,7 @@ R  = 3162.3 N aprox
 - A2 = 0.01
 - theta1 = 0
 - theta2 = 0
-- VolCV = 0
+- weight mode = Ignorar peso
 
 **Esperado:**
 ```
@@ -480,38 +546,8 @@ Mx = 0 N
 My = 0 N
 Rx = 0 N
 Ry = 0 N
-R  = 0 N
+R = 0 N
 ```
-
----
-
-## TEST 17D: Codo 90 grados con peso (MF_MOM_BEND)
-
-**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Con areas sin presiones
-
-**Entrada:**
-- rho = 1000
-- Q = 0.1
-- A1 = 0.01
-- A2 = 0.01
-- theta1 = 0
-- theta2 = 90
-- VolCV = 0.02
-
-**Esperado:**
-```
-Wx = 0 N
-Wy = -196.2 N
-Mx = -1000 N
-My = 1000 N
-Fwx = -1000 N
-Fwy = 1196.2 N
-Rx = 1000 N
-Ry = -1196.2 N
-R  = 1559.1 N aprox
-```
-
----
 
 ---
 
