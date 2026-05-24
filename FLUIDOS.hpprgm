@@ -4,19 +4,21 @@ BEGIN
   LOCAL op2;
   WHILE 1 DO
     CHOOSE(op2,
-      "FLUIDOS PRIME v1.0",
+      "FLUIDOS PRIME v2.0",
       "Tuberias",
       "Bombas",
       "Compresible",
+      "Diferencial",
       "CAS",
       "Utilidades",
       "Volver");
-    IF op2 == 0 OR op2 == 6 THEN RETURN; END;
+    IF op2 == 0 OR op2 == 7 THEN RETURN; END;
     IF op2 == 1 THEN MF_PIPES(); END;
     IF op2 == 2 THEN MF_PUMPS(); END;
     IF op2 == 3 THEN MF_COMP(); END;
-    IF op2 == 4 THEN MF_CAS(); END;
-    IF op2 == 5 THEN MF_UTILS(); END;
+    IF op2 == 4 THEN MF_DIFF(); END;
+    IF op2 == 5 THEN MF_CAS(); END;
+    IF op2 == 6 THEN MF_UTILS(); END;
   END;
 END;
 

@@ -1,4 +1,4 @@
-# FLUIDOS PRIME v1.0 — Estructura del Proyecto
+# FLUIDOS PRIME v2.0 — Estructura del Proyecto
 
 ## Árbol de archivos
 
@@ -15,6 +15,7 @@ HP_PRIME_FLUID_MECHANICS/
 ├── MF_PIPES.hpprgm       ← Módulo: Flujo en Tuberías
 ├── MF_PUMPS.hpprgm       ← Módulo: Bombas y Cavitación
 ├── MF_COMP.hpprgm        ← Módulo: Flujo Compresible
+├── MF_DIFF.hpprgm        ← Módulo: Flujo Diferencial y Viscoso
 ├── MF_CAS.hpprgm         ← Módulo: Herramientas CAS
 ├── MF_UTILS.hpprgm       ← Módulo: Unidades + Ayuda
 ├── README.md             ← Instrucciones de instalación y uso
@@ -122,6 +123,17 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_COMP_CHOKE() Opcion 8: flujo bloqueado mdot* y P*/P0
 │   ├── MF_COMP_SHOCK() Opcion 9: choque normal (M2, P2/P1, rho2/rho1, T2/T1, P02/P01)
 │   └── MF_COMP_HELP()  Opcion 10: ayuda formulas
+│
+├── MF_DIFF()     ← Módulo independiente (v2.0)
+│   ├── fmt_()          Helper formato numérico
+│   ├── MF_DIFF_TAU()   Opcion 1: tau = mu*(du/dy), modo calculo tau o du/dy
+│   ├── MF_DIFF_PUIS()  Opcion 2: Poiseuille tubo (Q, Vavg, Vmax, tau_w)
+│   ├── MF_DIFF_COUETTE() Opcion 3: Couette placas (u(y), tau)
+│   ├── MF_DIFF_PUIS2() Opcion 4: Poiseuille plano (Q, Vavg, Vmax, tau_w)
+│   ├── MF_DIFF_CAMP()  Opcion 5: Campo lineal 2D (div, rotz)
+│   ├── MF_DIFF_DEF()   Opcion 6: Deformacion 2D (exx, eyy, exy)
+│   ├── MF_DIFF_VORT()  Opcion 7: Vortice libre (vtheta = C/r)
+│   └── MF_DIFF_HELP()  Opcion 8: Ayuda formulas
 │
 ├── MF_CAS()      ← Módulo independiente
 │   ├── MF_CAS_SOLV()   Resolver ecuación simbólica

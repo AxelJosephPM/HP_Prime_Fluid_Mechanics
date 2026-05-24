@@ -651,6 +651,133 @@ P02/P01   = 0.7209
 
 ---
 
+---
+
+## TEST 29: Esfuerzo cortante Newton (MF_DIFF opcion 1 — modo du/dy)
+
+**Menu:** Diferencial → Esfuerzo cortante Newton → Calcular tau
+
+**Entrada:**
+- mu = 0.001 Pa*s (agua a 20 C)
+- du/dy = 100 1/s
+
+**Calculo:**
+```
+tau = mu * (du/dy) = 0.001 * 100 = 0.1 Pa
+```
+
+**Esperado en pantalla:**
+```
+tau = 0.1 Pa
+```
+
+---
+
+## TEST 30: Poiseuille tubo (MF_DIFF opcion 2)
+
+**Menu:** Diferencial → Poiseuille tubo
+
+**Entrada:**
+- D = 0.01 m  (radio R = 0.005 m)
+- L = 1.0 m
+- deltaP = 400 Pa
+- mu = 0.001 Pa*s
+
+**Calculo:**
+```
+R  = 0.005 m
+Q  = PI * R^4 * deltaP / (8 * mu * L)
+   = PI * (0.005)^4 * 400 / (8 * 0.001 * 1)
+   = PI * 6.25e-10 * 400 / 0.008
+   = PI * 3.125e-5
+   ~ 9.817e-5 m3/s  ~  9.82e-5 m3/s
+Vavg = Q / (PI*R^2) = 9.817e-5 / (PI*2.5e-5) = 1.25 m/s
+Vmax = 2 * Vavg = 2.50 m/s
+tau_w = 4*mu*Vavg/R = 4*0.001*1.25/0.005 = 1.0 Pa
+```
+
+**Esperado en pantalla:**
+```
+Q    ~ 9.82e-5 m3/s
+Vavg ~ 1.25 m/s
+Vmax ~ 2.5 m/s
+tau_w ~ 1.0 Pa
+```
+
+---
+
+## TEST 31: Couette placas (MF_DIFF opcion 3)
+
+**Menu:** Diferencial → Couette placas
+
+**Entrada:**
+- U = 1.0 m/s (velocidad placa superior)
+- h = 0.005 m (separacion entre placas)
+- mu = 0.001 Pa*s
+- y = 0.0025 m (mitad del canal)
+
+**Calculo:**
+```
+u(y) = U * y / h = 1.0 * 0.0025 / 0.005 = 0.5 m/s
+tau  = mu * U / h = 0.001 * 1.0 / 0.005 = 0.2 Pa
+```
+
+**Esperado en pantalla:**
+```
+u(y) = 0.5 m/s
+tau  = 0.2 Pa
+```
+
+---
+
+## TEST 32: Campo lineal 2D — divergencia y vorticidad (MF_DIFF opcion 5)
+
+**Menu:** Diferencial → Campo lineal 2D
+
+**Entrada:**
+- a = 1 (coef du/dx)
+- b = 2 (coef du/dy)
+- c = -1 (coef dv/dx, para flujo incompresible: dv/dy = -a = -1)
+- d = -1 (coef dv/dy, debe ser -a para continuidad)
+- x = 1.0, y = 1.0
+
+**Campo:** u = a*x + b*y = 1+2 = 3;  v = c*x + d*y = -1-1 = -2
+**Calculo:**
+```
+div = du/dx + dv/dy = a + d = 1 + (-1) = 0  (incompresible)
+rotz = dv/dx - du/dy = c - b = -1 - 2 = -3  (rotacion)
+```
+
+**Esperado en pantalla:**
+```
+u    = 3.0 m/s
+v    = -2.0 m/s
+div  = 0.0  (incompresible)
+rotz = -3.0 rad/s
+```
+
+---
+
+## TEST 33: Vortice libre (MF_DIFF opcion 7)
+
+**Menu:** Diferencial → Vortice libre
+
+**Entrada:**
+- C = 1.0 m2/s (constante de circulacion)
+- r = 1.0 m
+
+**Calculo:**
+```
+vtheta = C / r = 1.0 / 1.0 = 1.0 m/s
+```
+
+**Esperado en pantalla:**
+```
+vtheta = 1.0 m/s
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.
@@ -658,3 +785,4 @@ P02/P01   = 0.7209
 - El factor de Swamee-Jain difiere < 3% del factor de Colebrook en flujo turbulento desarrollado.
 - MF_CAS no fue modificado y no forma parte del plan de pruebas activo.
 - Los resultados del CAS dependen del motor simbolico de HP Prime; pueden variar en forma de representacion pero son equivalentes matematicamente.
+- TEST 30: deltaP = 400 Pa (no 1000 Pa) para obtener Q ~ 9.82e-5 m3/s segun Hagen-Poiseuille.

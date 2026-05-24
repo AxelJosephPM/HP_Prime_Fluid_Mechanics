@@ -1,0 +1,285 @@
+// ============================================================
+// MF_DIFF.hpprgm
+// FLUIDOS PRIME v2.0 - Flujo Diferencial y Viscoso
+// HP Prime G2
+// ============================================================
+// Opciones:
+//   1. Esfuerzo cortante Newton
+//   2. Poiseuille tubo
+//   3. Couette placas
+//   4. Poiseuille placas
+//   5. Campo lineal 2D
+//   6. Deformacion 2D
+//   7. Vortice libre
+//   8. Ayuda formulas
+//   9. Volver
+// ============================================================
+
+fmt_(x)
+BEGIN
+  IF x == 0 THEN RETURN "0"; END;
+  IF ABS(x) >= 1E5 OR (ABS(x) < 1E-4 AND x <> 0) THEN
+    RETURN STRING(x);
+  END;
+  RETURN STRING(ROUND(x, 4));
+END;
+
+// ---- Option 1: Esfuerzo cortante Newton ----
+MF_DIFF_TAU()
+BEGIN
+  LOCAL mode, mu, dudy, tau, u1, u2, y1, y2, res;
+  mode := 0;
+  CHOOSE(mode, "Esfuerzo cortante Newton",
+    "1. Dado du/dy directamente",
+    "2. Diferencias finitas (u1,u2,y1,y2)");
+  IF mode == 0 THEN RETURN; END;
+  IF mode == 1 THEN
+    IF NOT INPUT({mu, dudy},
+        "tau = mu * du/dy",
+        {"mu (Pa*s)=", "dudy (1/s)="},
+        {"Viscosidad dinamica del fluido", "Gradiente de velocidad du/dy"},
+        {0.001, 100.0}) THEN RETURN; END;
+    IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+    tau := mu * dudy;
+    res := "=== ESFUERZO CORTANTE ===" + CHAR(10);
+    res := res + "tau = mu * du/dy" + CHAR(10);
+    res := res + "tau  = " + fmt_(tau) + " Pa" + CHAR(10);
+    res := res + "mu   = " + fmt_(mu) + " Pa*s" + CHAR(10);
+    res := res + "dudy = " + fmt_(dudy) + " 1/s";
+    MSGBOX(res);
+    RETURN;
+  END;
+  IF mode == 2 THEN
+    IF NOT INPUT({mu, u1, u2, y1, y2},
+        "tau = mu*(u2-u1)/(y2-y1)",
+        {"mu (Pa*s)=", "u1 (m/s)=", "u2 (m/s)=", "y1 (m)=", "y2 (m)="},
+        {"Viscosidad dinamica", "Velocidad en punto 1", "Velocidad en punto 2", "Coord. y1", "Coord. y2"},
+        {0.001, 0.0, 2.0, 0.0, 0.01}) THEN RETURN; END;
+    IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+    IF y2 == y1 THEN MSGBOX("Error: y2 no puede ser igual a y1."); RETURN; END;
+    dudy := (u2 - u1) / (y2 - y1);
+    tau := mu * dudy;
+    res := "=== ESFUERZO CORTANTE (dif. finitas) ===" + CHAR(10);
+    res := res + "dudy = (u2-u1)/(y2-y1)" + CHAR(10);
+    res := res + "dudy = " + fmt_(dudy) + " 1/s" + CHAR(10);
+    res := res + "tau  = " + fmt_(tau) + " Pa";
+    MSGBOX(res);
+  END;
+END;
+
+// ---- Option 2: Poiseuille tubo ----
+MF_DIFF_PUIS()
+BEGIN
+  LOCAL D, L, deltaP, mu, rho;
+  LOCAL R, Q, A, Vavg, umax, tauw, Re, f, res;
+  IF NOT INPUT({D, L, deltaP, mu, rho},
+      "Poiseuille - Tubo circular",
+      {"D (m)=", "L (m)=", "deltaP (Pa)=", "mu (Pa*s)=", "rho (kg/m3)="},
+      {"Diametro interno", "Longitud del tubo", "Diferencia de presion P1-P2", "Viscosidad dinamica", "Densidad"},
+      {0.01, 1.0, 400.0, 0.001, 1000.0}) THEN RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF L <= 0 THEN MSGBOX("Error: L debe ser positivo."); RETURN; END;
+  IF deltaP <= 0 THEN MSGBOX("Error: deltaP debe ser positivo."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  R := D / 2;
+  A := PI * R ^ 2;
+  Q := PI * R ^ 4 * deltaP / (8 * mu * L);
+  Vavg := Q / A;
+  umax := 2 * Vavg;
+  tauw := deltaP * R / (2 * L);
+  Re := rho * Vavg * D / mu;
+  f := 64 / Re;
+  res := "=== POISEUILLE TUBO ===" + CHAR(10);
+  res := res + "Q=PI*R^4*dP/(8*mu*L)" + CHAR(10);
+  res := res + "Q     = " + fmt_(Q) + " m3/s" + CHAR(10);
+  res := res + "Vavg  = " + fmt_(Vavg) + " m/s" + CHAR(10);
+  res := res + "umax  = " + fmt_(umax) + " m/s" + CHAR(10);
+  res := res + "tauw  = " + fmt_(tauw) + " Pa" + CHAR(10);
+  res := res + "Re    = " + fmt_(Re) + CHAR(10);
+  res := res + "f     = " + fmt_(f);
+  IF Re > 2300 THEN
+    res := res + CHAR(10) + "AVISO: No laminar: revisar Poiseuille";
+  END;
+  MSGBOX(res);
+END;
+
+// ---- Option 3: Couette placas ----
+MF_DIFF_COUETTE()
+BEGIN
+  LOCAL U, h, mu, y;
+  LOCAL u, dudy, tau, res;
+  IF NOT INPUT({U, h, mu, y},
+      "Couette - Placas paralelas",
+      {"U (m/s)=", "h (m)=", "mu (Pa*s)=", "y (m)="},
+      {"Velocidad placa superior (placa inf. fija)", "Separacion entre placas", "Viscosidad dinamica", "Posicion y (entre 0 y h)"},
+      {2.0, 0.01, 0.001, 0.005}) THEN RETURN; END;
+  IF h <= 0 THEN MSGBOX("Error: h debe ser positivo."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF y < 0 OR y > h THEN MSGBOX("Error: y debe estar entre 0 y h."); RETURN; END;
+  u := U * y / h;
+  dudy := U / h;
+  tau := mu * U / h;
+  res := "=== COUETTE PLACAS ===" + CHAR(10);
+  res := res + "u(y) = U*y/h" + CHAR(10);
+  res := res + "u(y) = " + fmt_(u) + " m/s" + CHAR(10);
+  res := res + "dudy = U/h = " + fmt_(dudy) + " 1/s" + CHAR(10);
+  res := res + "tau  = mu*U/h = " + fmt_(tau) + " Pa";
+  MSGBOX(res);
+END;
+
+// ---- Option 4: Poiseuille placas ----
+// h = semigap; plates at y=-h and y=+h; y in [-h, h]
+MF_DIFF_PUIS2()
+BEGIN
+  LOCAL h, L, deltaP, mu, rho, y;
+  LOCAL u, umax, qwidth, Uavg, tauwall, Re, res;
+  IF NOT INPUT({h, L, deltaP, mu, rho, y},
+      "Poiseuille placas (semigap h)",
+      {"h (m)=", "L (m)=", "deltaP (Pa)=", "mu (Pa*s)=", "rho (kg/m3)=", "y (m)="},
+      {"Semigap: placas en -h y +h", "Longitud del canal", "Diferencia de presion", "Viscosidad dinamica", "Densidad", "Posicion y (-h a h)"},
+      {0.005, 1.0, 1000.0, 0.001, 1000.0, 0.0}) THEN RETURN; END;
+  IF h <= 0 THEN MSGBOX("Error: h debe ser positivo."); RETURN; END;
+  IF L <= 0 THEN MSGBOX("Error: L debe ser positivo."); RETURN; END;
+  IF deltaP <= 0 THEN MSGBOX("Error: deltaP debe ser positivo."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF ABS(y) > h THEN MSGBOX("Error: |y| debe ser <= h."); RETURN; END;
+  u := deltaP * (h ^ 2 - y ^ 2) / (2 * mu * L);
+  umax := deltaP * h ^ 2 / (2 * mu * L);
+  qwidth := 2 * deltaP * h ^ 3 / (3 * mu * L);
+  Uavg := qwidth / (2 * h);
+  tauwall := deltaP * h / L;
+  Re := rho * Uavg * (2 * h) / mu;
+  res := "=== POISEUILLE PLACAS ===" + CHAR(10);
+  res := res + "u(y)=dP*(h^2-y^2)/(2*mu*L)" + CHAR(10);
+  res := res + "u(y)    = " + fmt_(u) + " m/s" + CHAR(10);
+  res := res + "umax    = " + fmt_(umax) + " m/s" + CHAR(10);
+  res := res + "qwidth  = " + fmt_(qwidth) + " m2/s" + CHAR(10);
+  res := res + "Uavg    = " + fmt_(Uavg) + " m/s" + CHAR(10);
+  res := res + "tauwall = " + fmt_(tauwall) + " Pa" + CHAR(10);
+  res := res + "Re(2h)  = " + fmt_(Re);
+  MSGBOX(res);
+END;
+
+// ---- Option 5: Campo lineal 2D ----
+// u = a*x + b*y + c
+// v = d*x + e*y + f0
+MF_DIFF_CAMP()
+BEGIN
+  LOCAL a, b, c, d, e, f0, x, y;
+  LOCAL u, v, div, rotz, ax, ay, res;
+  IF NOT INPUT({a, b, c, d, e, f0, x, y},
+      "Campo lineal 2D",
+      {"a=", "b=", "c=", "d=", "e=", "f0=", "x (m)=", "y (m)="},
+      {"du/dx (u=a*x+b*y+c)", "du/dy", "cte en u", "dv/dx (v=d*x+e*y+f0)", "dv/dy", "cte en v", "Coord. x", "Coord. y"},
+      {1.0, 2.0, 0.0, 3.0, -1.0, 0.0, 1.0, 1.0}) THEN RETURN; END;
+  u := a * x + b * y + c;
+  v := d * x + e * y + f0;
+  div := a + e;
+  rotz := d - b;
+  ax := u * a + v * b;
+  ay := u * d + v * e;
+  res := "=== CAMPO LINEAL 2D ===" + CHAR(10);
+  res := res + "u    = " + fmt_(u) + " m/s" + CHAR(10);
+  res := res + "v    = " + fmt_(v) + " m/s" + CHAR(10);
+  res := res + "div  = du/dx+dv/dy = " + fmt_(div) + CHAR(10);
+  res := res + "rotz = dv/dx-du/dy = " + fmt_(rotz) + CHAR(10);
+  res := res + "ax   = " + fmt_(ax) + " m/s2" + CHAR(10);
+  res := res + "ay   = " + fmt_(ay) + " m/s2";
+  IF ABS(div) < 1E-9 THEN
+    res := res + CHAR(10) + "div=0: campo incompresible 2D";
+  END;
+  MSGBOX(res);
+END;
+
+// ---- Option 6: Deformacion 2D ----
+// From: u = a*x + b*y,  v = d*x + e*y
+MF_DIFF_DEF()
+BEGIN
+  LOCAL a, b, d, e;
+  LOCAL exx, eyy, exy, rotz, div, res;
+  IF NOT INPUT({a, b, d, e},
+      "Deformacion 2D",
+      {"a (du/dx)=", "b (du/dy)=", "d (dv/dx)=", "e (dv/dy)="},
+      {"Grad. u en x", "Grad. u en y", "Grad. v en x", "Grad. v en y"},
+      {1.0, 2.0, 3.0, -1.0}) THEN RETURN; END;
+  exx := a;
+  eyy := e;
+  exy := 0.5 * (b + d);
+  rotz := d - b;
+  div := a + e;
+  res := "=== DEFORMACION 2D ===" + CHAR(10);
+  res := res + "exx  = du/dx = " + fmt_(exx) + CHAR(10);
+  res := res + "eyy  = dv/dy = " + fmt_(eyy) + CHAR(10);
+  res := res + "exy  = 0.5*(du/dy+dv/dx) = " + fmt_(exy) + CHAR(10);
+  res := res + "rotz = dv/dx-du/dy = " + fmt_(rotz) + CHAR(10);
+  res := res + "div  = du/dx+dv/dy = " + fmt_(div);
+  IF ABS(div) < 1E-9 THEN
+    res := res + CHAR(10) + "div=0: campo incompresible";
+  END;
+  MSGBOX(res);
+END;
+
+// ---- Option 7: Vortice libre ----
+MF_DIFF_VORT()
+BEGIN
+  LOCAL Gamma, r, vtheta, res;
+  IF NOT INPUT({Gamma, r},
+      "Vortice libre",
+      {"Gamma (m2/s)=", "r (m)="},
+      {"Circulacion del vortice", "Radio desde el centro del vortice"},
+      {6.283185, 1.0}) THEN RETURN; END;
+  IF r <= 0 THEN MSGBOX("Error: r debe ser positivo."); RETURN; END;
+  vtheta := Gamma / (2 * PI * r);
+  res := "=== VORTICE LIBRE ===" + CHAR(10);
+  res := res + "vtheta = Gamma/(2*PI*r)" + CHAR(10);
+  res := res + "vtheta = " + fmt_(vtheta) + " m/s" + CHAR(10);
+  res := res + "Gamma  = " + fmt_(Gamma) + " m2/s" + CHAR(10);
+  res := res + "r      = " + fmt_(r) + " m";
+  MSGBOX(res);
+END;
+
+// ---- Option 8: Ayuda formulas ----
+MF_DIFF_HELP()
+BEGIN
+  LOCAL res;
+  res := "=== FLUJO DIFERENCIAL Y VISCOSO ===" + CHAR(10);
+  res := res + "tau=mu*du/dy (Newton)" + CHAR(10);
+  res := res + "Poiseuille tubo: Q=PI*R^4*dP/(8*mu*L)" + CHAR(10);
+  res := res + "Couette: u=U*y/h, tau=mu*U/h" + CHAR(10);
+  res := res + "Poiseuille placas: u=dP*(h^2-y^2)/(2*mu*L)" + CHAR(10);
+  res := res + "div=du/dx+dv/dy (incomp.:div=0)" + CHAR(10);
+  res := res + "rotz=dv/dx-du/dy (vorticidad z)" + CHAR(10);
+  res := res + "Acel. material: a=(V.grad)V" + CHAR(10);
+  res := res + "Vortice libre: vtheta=Gamma/(2*PI*r)";
+  MSGBOX(res);
+END;
+
+// ---- Menu principal del modulo ----
+EXPORT MF_DIFF()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "FLUJO DIFERENCIAL Y VISCOSO",
+      "1. Esfuerzo cortante Newton",
+      "2. Poiseuille tubo",
+      "3. Couette placas",
+      "4. Poiseuille placas",
+      "5. Campo lineal 2D",
+      "6. Deformacion 2D",
+      "7. Vortice libre",
+      "8. Ayuda formulas",
+      "9. Volver");
+    IF c == 0 OR c == 9 THEN RETURN; END;
+    IF c == 1 THEN MF_DIFF_TAU(); END;
+    IF c == 2 THEN MF_DIFF_PUIS(); END;
+    IF c == 3 THEN MF_DIFF_COUETTE(); END;
+    IF c == 4 THEN MF_DIFF_PUIS2(); END;
+    IF c == 5 THEN MF_DIFF_CAMP(); END;
+    IF c == 6 THEN MF_DIFF_DEF(); END;
+    IF c == 7 THEN MF_DIFF_VORT(); END;
+    IF c == 8 THEN MF_DIFF_HELP(); END;
+  END;
+END;

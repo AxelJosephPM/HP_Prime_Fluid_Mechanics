@@ -34,6 +34,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 | `MF_PIPES.hpprgm`     | Flujo incompresible en tuberías                  |
 | `MF_PUMPS.hpprgm`     | Bombas y cavitación                              |
 | `MF_COMP.hpprgm`      | Flujo compresible (isentrópico, A/A*, choque)    |
+| `MF_DIFF.hpprgm`      | Flujo diferencial y viscoso (Poiseuille, Couette)|
 | `MF_CAS.hpprgm`       | Herramientas CAS simbólicas                      |
 | `MF_UTILS.hpprgm`     | Convertidor de unidades y ayuda rápida           |
 | `README.md`           | Este archivo                                     |
@@ -181,7 +182,17 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Ayuda de formulas integrada
 - MF_CAS permanece pendiente para fase final (no modificado)
 
-### 11. Herramientas CAS (`MF_CAS`)
+### 11. Flujo Diferencial y Viscoso (`MF_DIFF`) — nuevo v2.0
+- Esfuerzo cortante Newton: tau = mu * du/dy (calcular tau o du/dy)
+- Perfil de Poiseuille en tubo: Q, Vavg, Vmax, tau_w (Hagen-Poiseuille)
+- Flujo de Couette entre placas: u(y) = U*y/h, tau = mu*U/h
+- Poiseuille plano entre placas: Q, Vavg, Vmax, tau_w con gradiente de presion
+- Campo de velocidades lineal 2D: u = ax+by, v = cx+dy — divergencia y vorticidad
+- Deformacion 2D: tasa de deformacion lineal y angular (exx, eyy, exy)
+- Vortice libre: vtheta = C/r, velocidad tangencial en radio r
+- Ayuda integrada con formulas de flujo viscoso
+
+### 12. Herramientas CAS (`MF_CAS`)
 - Resolver ecuación simbólica para variable
 - Simplificar expresión
 - Derivar expresión (orden n)
@@ -190,7 +201,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Caudal por integración de perfil u(r): Poiseuille, uniforme, personalizado
 - Ecuaciones predefinidas de fluidos para despejar variables
 
-### 12. Convertidor de Unidades (`MF_UNITS`)
+### 13. Convertidor de Unidades (`MF_UNITS`)
 - Presión: Pa, kPa, bar, atm, mmHg, psi
 - Caudal: m³/s, L/s, L/min, m³/h, GPM
 - Viscosidad dinámica: Pa·s, cP, P
@@ -199,7 +210,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Energía: J, kJ, Wh, kWh, kcal, BTU
 - Potencia: W, kW, CV, HP
 
-### 13. Ayuda Rápida (`MF_HELP`)
+### 14. Ayuda Rápida (`MF_HELP`)
 - Unidades SI del sistema
 - Tipos de presión y conversión
 - Regímenes de flujo
