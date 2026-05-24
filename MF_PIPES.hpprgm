@@ -1,16 +1,18 @@
 // ============================================================
 // MF_PIPES.hpprgm
-// FLUIDOS PRIME v1.0 - Flujo Incompresible en Tuberias
+// FLUIDOS PRIME v2.0 - Flujo Incompresible en Tuberias
 // HP Prime G2
 // ============================================================
-// Contenido:
-//   MF_PIPES()      - Menu principal (EXPORT)
-//   MF_PIPES_V()    - Velocidad media y caudal
-//   MF_PIPES_RE()   - Reynolds en tuberia
-//   MF_PIPES_FF()   - Factor de friccion (Darcy)
-//   MF_PIPES_HF()   - Perdida mayor (Darcy-Weisbach)
-//   MF_PIPES_HM()   - Perdidas menores
-//   MF_PIPES_TOT()  - Calculo completo de tuberia
+// Opciones:
+//   1. V, Re, f
+//   2. Perdida tramo
+//   3. Perdidas K
+//   4. Sistema simple
+//   5. Sistema 2 tramos serie
+//   6. Diseno diametro
+//   7. K valvula regulacion
+//   8. Ayuda formulas
+//   9. Volver
 // ============================================================
 
 fmt_(x)
@@ -22,293 +24,338 @@ BEGIN
   RETURN STRING(ROUND(x, 4));
 END;
 
-// Clasifica regimen por Reynolds
 regimenStr(reyn)
 BEGIN
-  IF reyn < 2300 THEN RETURN "LAMINAR (Re < 2300)"; END;
-  IF reyn <= 4000 THEN RETURN "TRANSICIONAL (2300-4000)"; END;
-  RETURN "TURBULENTO (Re > 4000)";
+  IF reyn < 2300 THEN RETURN "LAMINAR"; END;
+  IF reyn <= 4000 THEN RETURN "TRANSICION"; END;
+  RETURN "TURBULENTO";
 END;
 
-// Calcula factor de friccion de Darcy
-// Laminar: f = 64/Re
-// Turbulento: Swamee-Jain
+// Darcy friction factor: laminar f=64/Re, turbulent Swamee-Jain
 calcFF(reyn, eps, D)
 BEGIN
   LOCAL f, arg;
   IF reyn <= 0 THEN RETURN -1; END;
-  IF reyn < 2300 THEN
-    RETURN 64 / reyn;
-  END;
-  IF reyn <= 4000 THEN
-    // Zona transitoria: usar correlacion turbulenta (conservador)
-    // Advertencia mostrada externamente
-    f := 64 / reyn; // inicio con laminar como referencia
-  END;
-  // Swamee-Jain (turbulento y transicion)
+  IF reyn < 2300 THEN RETURN 64 / reyn; END;
   arg := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
   IF arg <= 0 THEN RETURN -1; END;
   f := 0.25 / (LOG(arg)) ^ 2;
   RETURN f;
 END;
 
-// ---- Velocidad media y caudal ----
-MF_PIPES_V()
+// Internal helper: total head loss for one pipe section
+calcHL_(Qv, Dv, Lv, Kv, rhov, muv, epsv)
 BEGIN
-  LOCAL D, Q, V, A, res;
-  LOCAL modo, ok;
-
-  CHOOSE(modo, "Velocidad Media / Caudal",
-    "Dado Q, calcular V",
-    "Dado V, calcular Q",
-    "Volver");
-  IF modo == 0 OR modo == 3 THEN RETURN; END;
-
-  IF modo == 1 THEN
-    IF NOT INPUT({D, Q},
-        "V = Q/A, A = pi*D^2/4",
-        {"D (m)=", "Q (m3/s)="},
-        {"Diametro interno de la tuberia", "Caudal volumetrico"},
-        {0.1, 0.005}) THEN RETURN; END;
-    IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-    IF Q < 0 THEN MSGBOX("Error: Q debe ser no negativo."); RETURN; END;
-    A := 3.14159265358979 * D ^ 2 / 4;
-    V := Q / A;
-  END;
-
-  IF modo == 2 THEN
-    IF NOT INPUT({D, V},
-        "Q = V*A, A = pi*D^2/4",
-        {"D (m)=", "V (m/s)="},
-        {"Diametro interno de la tuberia", "Velocidad media del fluido"},
-        {0.1, 1.0}) THEN RETURN; END;
-    IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-    IF V < 0 THEN MSGBOX("Error: V debe ser no negativa."); RETURN; END;
-    A := 3.14159265358979 * D ^ 2 / 4;
-    Q := V * A;
-  END;
-
-  res := "=== VELOCIDAD / CAUDAL ===" + CHAR(10);
-  res := res + "A  = pi*D^2/4 = " + fmt_(A) + " m2" + CHAR(10);
-  res := res + "D  = " + fmt_(D) + " m  (" + fmt_(D*1000) + " mm)" + CHAR(10);
-  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
-  res := res + "Q  = " + fmt_(Q) + " m3/s" + CHAR(10);
-  res := res + "Q  = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
-  res := res + "Q  = " + fmt_(Q * 60000) + " L/min";
-
-  MSGBOX(res);
+  LOCAL g, Av, Vv, reynv, fv, hfv, hmv;
+  g := 9.81;
+  Av := PI * Dv ^ 2 / 4;
+  Vv := Qv / Av;
+  reynv := rhov * Vv * Dv / muv;
+  fv := calcFF(reynv, epsv, Dv);
+  hfv := fv * (Lv / Dv) * Vv ^ 2 / (2 * g);
+  hmv := Kv * Vv ^ 2 / (2 * g);
+  RETURN hfv + hmv;
 END;
 
-// ---- Reynolds en tuberia ----
-MF_PIPES_RE()
+// ---- Option 1: V, Re, f ----
+MF_PIPES_VRF()
 BEGIN
-  LOCAL V, D, rho, mu, reyn, nu, reg, res;
-
-  IF NOT INPUT({V, D, rho, mu},
-      "Reynolds en Tuberia",
-      {"V (m/s)=", "D (m)=", "rho (kg/m3)=", "mu (Pa*s)="},
-      {"Velocidad media", "Diametro interno", "Densidad del fluido (agua=1000)", "Viscosidad dinamica (agua 20C=0.001)"},
-      {1.0, 0.1, 1000.0, 0.001}) THEN RETURN; END;
-
-  IF V <= 0 THEN MSGBOX("Error: V debe ser positivo."); RETURN; END;
-  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
-  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
-
-  reyn := rho * V * D / mu;
-  nu := mu / rho;
-  reg := regimenStr(reyn);
-
-  res := "=== REYNOLDS EN TUBERIA ===" + CHAR(10);
-  res := res + "Re = " + fmt_(reyn) + CHAR(10);
-  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
-  res := res + "D  = " + fmt_(D) + " m" + CHAR(10);
-  res := res + "rho= " + fmt_(rho) + " kg/m3" + CHAR(10);
-  res := res + "mu = " + fmt_(mu) + " Pa*s" + CHAR(10);
-  res := res + "nu = " + fmt_(nu) + " m2/s" + CHAR(10);
-  res := res + CHAR(10) + "Regimen: " + reg;
-
-  MSGBOX(res);
-END;
-
-// ---- Factor de friccion ----
-MF_PIPES_FF()
-BEGIN
-  LOCAL reyn, eps, D, f, reg, arg, res;
-
-  IF NOT INPUT({reyn, eps, D},
-      "Factor de Friccion (Darcy)",
-      {"Re (-)=", "eps (m)=", "D (m)="},
-      {"Numero de Reynolds", "Rugosidad absoluta (acero comercial~0.046mm, hierro fund.~0.26mm)", "Diametro interno de tuberia"},
-      {50000.0, 0.000046, 0.1}) THEN RETURN; END;
-
-  IF reyn <= 0 THEN MSGBOX("Error: Re debe ser positivo."); RETURN; END;
-  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
-  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-
-  reg := regimenStr(reyn);
-
-  res := "=== FACTOR DE FRICCION ===" + CHAR(10);
-  res := res + "Re   = " + fmt_(reyn) + CHAR(10);
-  res := res + "eps/D= " + fmt_(eps/D) + "  (rugosidad relativa)" + CHAR(10);
-  res := res + "Reg. = " + reg + CHAR(10);
-  res := res + "---------------------" + CHAR(10);
-
-  IF reyn < 2300 THEN
-    f := 64 / reyn;
-    res := res + "f = 64/Re (Hagen-Poiseuille)" + CHAR(10);
-    res := res + "f = " + fmt_(f);
-  ELSE
-    IF reyn <= 4000 THEN
-      res := res + "ZONA TRANSITORIA - resultado aproximado:" + CHAR(10);
-    END;
-    arg := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
-    IF arg <= 0 THEN
-      MSGBOX("Error en calculo: argumento del log invalido. Verifique eps y D.");
-      RETURN;
-    END;
-    f := 0.25 / (LOG(arg)) ^ 2;
-    res := res + "f = 0.25/[log10(eps/3.7D + 5.74/Re^0.9)]^2" + CHAR(10);
-    res := res + "f = " + fmt_(f) + "  (Swamee-Jain)";
-  END;
-
-  MSGBOX(res);
-END;
-
-// ---- Perdida mayor Darcy-Weisbach ----
-MF_PIPES_HF()
-BEGIN
-  LOCAL f, L, D, V, g, hf, DP, res;
-
-  IF NOT INPUT({f, L, D, V, g},
-      "Perdida Mayor - Darcy-Weisbach",
-      {"f (-)=", "L (m)=", "D (m)=", "V (m/s)=", "g (m/s2)="},
-      {"Factor de friccion de Darcy", "Longitud de la tuberia", "Diametro interno", "Velocidad media", "Aceleracion gravitacional"},
-      {0.02, 100.0, 0.1, 2.0, 9.81}) THEN RETURN; END;
-
-  IF f <= 0 THEN MSGBOX("Error: f debe ser positivo."); RETURN; END;
-  IF L < 0 THEN MSGBOX("Error: L debe ser no negativa."); RETURN; END;
-  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-  IF V < 0 THEN MSGBOX("Error: V debe ser no negativa."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-
-  hf := f * (L / D) * V ^ 2 / (2 * g);
-
-  res := "=== PERDIDA MAYOR (Darcy-Weisbach) ===" + CHAR(10);
-  res := res + "hf = f*(L/D)*V^2/(2g)" + CHAR(10);
-  res := res + "hf = " + fmt_(hf) + " m" + CHAR(10);
-  res := res + "f  = " + fmt_(f) + CHAR(10);
-  res := res + "L  = " + fmt_(L) + " m" + CHAR(10);
-  res := res + "D  = " + fmt_(D) + " m" + CHAR(10);
-  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
-  res := res + "V^2/2g = " + fmt_(V^2/(2*g)) + " m  (presion dinamica/rg)";
-
-  MSGBOX(res);
-END;
-
-// ---- Perdidas menores ----
-MF_PIPES_HM()
-BEGIN
-  LOCAL K, V, g, hm, n, i, hm_tot, res;
-
-  IF NOT INPUT({K, V, g},
-      "Perdida Menor - hm = K*V^2/(2g)",
-      {"K (-)=", "V (m/s)=", "g (m/s2)="},
-      {"Coeficiente de perdida menor total (sumar todos los K)", "Velocidad media", "Aceleracion gravitacional"},
-      {1.5, 2.0, 9.81}) THEN RETURN; END;
-
-  IF K < 0 THEN MSGBOX("Error: K debe ser no negativo."); RETURN; END;
-  IF V < 0 THEN MSGBOX("Error: V debe ser no negativa."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-
-  hm_tot := K * V ^ 2 / (2 * g);
-
-  res := "=== PERDIDAS MENORES ===" + CHAR(10);
-  res := res + "hm = K * V^2/(2g)" + CHAR(10);
-  res := res + "hm = " + fmt_(hm_tot) + " m" + CHAR(10);
-  res := res + "K  = " + fmt_(K) + CHAR(10);
-  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
-  res := res + CHAR(10) + "Valores tipicos de K:" + CHAR(10);
-  res := res + "Valvula plenamente abierta : 0.1" + CHAR(10);
-  res := res + "Codo 90 grados            : 0.9" + CHAR(10);
-  res := res + "Codo 45 grados            : 0.4" + CHAR(10);
-  res := res + "Te (paso directo)         : 0.6" + CHAR(10);
-  res := res + "Entrada brusca            : 0.5" + CHAR(10);
-  res := res + "Salida brusca             : 1.0";
-
-  MSGBOX(res);
-END;
-
-// ---- Calculo completo de tuberia ----
-MF_PIPES_TOT()
-BEGIN
-  LOCAL V, D, rho, mu, eps, L, K, g;
-  LOCAL reyn, A, Q, f, hf;
-  LOCAL hm, hL, DP, nu, reg, argF;
-  LOCAL res, aviso;
-
-  IF NOT INPUT({D, Q, rho, mu, eps, L, K, g},
-      "Calculo Completo de Tuberia",
-      {"D (m)=", "Q (m3/s)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)=", "L (m)=", "K_total (-)=", "g (m/s2)="},
-      {"Diametro interno", "Caudal volumetrico", "Densidad del fluido", "Viscosidad dinamica", "Rugosidad absoluta (0 para tubo liso)", "Longitud total de tuberia", "Suma de coeficientes K de perdidas menores", "Aceleracion gravitacional"},
-      {0.1, 0.01, 1000.0, 0.001, 0.000046, 100.0, 2.0, 9.81}) THEN RETURN; END;
-
-  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
-  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
-  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
-  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
-  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
-  IF L < 0 THEN MSGBOX("Error: L debe ser no negativa."); RETURN; END;
-  IF K < 0 THEN MSGBOX("Error: K debe ser no negativo."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-
-  A := 3.14159265358979 * D ^ 2 / 4;
-  V := Q / A;
-  nu := mu / rho;
-  reyn := rho * V * D / mu;
-  reg := regimenStr(reyn);
-
-  // Factor de friccion
+  LOCAL Q, D, rho, mu, eps;
+  LOCAL g, A, V, reyn, f, reg, aviso, res;
+  g := 9.81;
   aviso := "";
-  IF reyn < 2300 THEN
-    f := 64 / reyn;
-    aviso := "(Laminar: f = 64/Re)";
-  ELSE
-    IF reyn <= 4000 THEN
-      aviso := "ATENCION: Zona transitoria. f calculado con Swamee-Jain.";
-    END;
-    argF := eps / (3.7 * D) + 5.74 / reyn ^ 0.9;
-    IF argF <= 0 THEN
-      MSGBOX("Error en factor de friccion: argumento del log invalido.");
-      RETURN;
-    END;
-    f := 0.25 / (LOG(argF)) ^ 2;
+  IF NOT INPUT({Q, D, rho, mu, eps},
+      "V, Re, f",
+      {"Q (m3/s)=", "D (m)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)="},
+      {"Caudal volumetrico", "Diametro interno", "Densidad del fluido", "Viscosidad dinamica", "Rugosidad absoluta"},
+      {0.004, 0.05, 1000.0, 0.001, 0.000046}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  reg := regimenStr(reyn);
+  f := calcFF(reyn, eps, D);
+  IF reyn >= 2300 AND reyn <= 4000 THEN
+    aviso := CHAR(10) + "AVISO: Zona transicion: f aproximado";
   END;
+  res := "=== V, Re, f ===" + CHAR(10);
+  res := res + "A   = " + fmt_(A) + " m2" + CHAR(10);
+  res := res + "V   = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "Re  = " + fmt_(reyn) + CHAR(10);
+  res := res + "Reg = " + reg + CHAR(10);
+  res := res + "f   = " + fmt_(f) + aviso;
+  MSGBOX(res);
+END;
 
+// ---- Option 2: Perdida tramo ----
+MF_PIPES_TRAMO()
+BEGIN
+  LOCAL Q, D, L, rho, mu, eps;
+  LOCAL g, A, V, reyn, f, hf, dP, aviso, res;
+  g := 9.81;
+  aviso := "";
+  IF NOT INPUT({Q, D, L, rho, mu, eps},
+      "Perdida tramo",
+      {"Q (m3/s)=", "D (m)=", "L (m)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)="},
+      {"Caudal", "Diametro interno", "Longitud de tuberia", "Densidad", "Viscosidad dinamica", "Rugosidad absoluta"},
+      {0.004, 0.05, 100.0, 1000.0, 0.001, 0.000046}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF L < 0 THEN MSGBOX("Error: L no puede ser negativa."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  f := calcFF(reyn, eps, D);
   hf := f * (L / D) * V ^ 2 / (2 * g);
-  hm := K * V ^ 2 / (2 * g);
-  hL := hf + hm;
-  DP := rho * g * hL;
-
-  res := "=== TUBERIA: RESULTADOS ===" + CHAR(10);
-  res := res + "--- Condiciones de Flujo ---" + CHAR(10);
-  res := res + "A  = " + fmt_(A) + " m2" + CHAR(10);
-  res := res + "V  = " + fmt_(V) + " m/s" + CHAR(10);
-  res := res + "Q  = " + fmt_(Q * 1000) + " L/s" + CHAR(10);
-  res := res + "Re = " + fmt_(reyn) + CHAR(10);
-  res := res + "Reg: " + reg + CHAR(10);
-  res := res + "--- Perdidas ---" + CHAR(10);
-  res := res + "f  = " + fmt_(f) + "  " + aviso + CHAR(10);
-  res := res + "hf = " + fmt_(hf) + " m  (mayor)" + CHAR(10);
-  res := res + "hm = " + fmt_(hm) + " m  (menor)" + CHAR(10);
-  res := res + "hL = " + fmt_(hL) + " m  (total)" + CHAR(10);
-  res := res + "DP = " + fmt_(DP) + " Pa" + CHAR(10);
-  res := res + "DP = " + fmt_(DP / 1000) + " kPa";
-
-  IF reyn > 0 AND reyn <= 4000 AND reyn >= 2300 THEN
-    res := res + CHAR(10) + CHAR(10) + "ADVERTENCIA: Flujo transicional." + CHAR(10) + "Los resultados son aproximados.";
+  dP := rho * g * hf;
+  IF reyn >= 2300 AND reyn <= 4000 THEN
+    aviso := CHAR(10) + "AVISO: Zona transicion: f aproximado";
   END;
+  res := "=== PERDIDA TRAMO ===" + CHAR(10);
+  res := res + "V   = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "Re  = " + fmt_(reyn) + CHAR(10);
+  res := res + "f   = " + fmt_(f) + CHAR(10);
+  res := res + "hf  = " + fmt_(hf) + " m" + CHAR(10);
+  res := res + "dP  = " + fmt_(dP) + " Pa" + aviso;
+  MSGBOX(res);
+END;
 
+// ---- Option 3: Perdidas K ----
+MF_PIPES_K()
+BEGIN
+  LOCAL Q, D, Ktot, rho;
+  LOCAL g, A, V, hm, dP, res;
+  g := 9.81;
+  IF NOT INPUT({Q, D, Ktot, rho},
+      "Perdidas menores K",
+      {"Q (m3/s)=", "D (m)=", "Ktot (-)=", "rho (kg/m3)="},
+      {"Caudal volumetrico", "Diametro interno", "Suma de coeficientes K", "Densidad del fluido"},
+      {0.004, 0.05, 1.5, 1000.0}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF Ktot < 0 THEN MSGBOX("Error: Ktot no puede ser negativo."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  hm := Ktot * V ^ 2 / (2 * g);
+  dP := rho * g * hm;
+  res := "=== PERDIDAS MENORES K ===" + CHAR(10);
+  res := res + "V   = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "hm  = " + fmt_(hm) + " m" + CHAR(10);
+  res := res + "dP  = " + fmt_(dP) + " Pa";
+  MSGBOX(res);
+END;
+
+// ---- Option 4: Sistema simple ----
+MF_PIPES_SIM()
+BEGIN
+  LOCAL Q, D, L, Ktot, rho, mu, eps;
+  LOCAL g, A, V, reyn, f, hf, hm, hL, dP, aviso, res;
+  g := 9.81;
+  aviso := "";
+  IF NOT INPUT({Q, D, L, Ktot, rho, mu, eps},
+      "Sistema simple",
+      {"Q (m3/s)=", "D (m)=", "L (m)=", "Ktot (-)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)="},
+      {"Caudal", "Diametro", "Longitud", "Suma K menores", "Densidad", "Viscosidad", "Rugosidad"},
+      {0.004, 0.05, 100.0, 2.0, 1000.0, 0.001, 0.000046}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF L < 0 THEN MSGBOX("Error: L no puede ser negativa."); RETURN; END;
+  IF Ktot < 0 THEN MSGBOX("Error: Ktot no puede ser negativo."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  f := calcFF(reyn, eps, D);
+  hf := f * (L / D) * V ^ 2 / (2 * g);
+  hm := Ktot * V ^ 2 / (2 * g);
+  hL := hf + hm;
+  dP := rho * g * hL;
+  IF reyn >= 2300 AND reyn <= 4000 THEN
+    aviso := CHAR(10) + "AVISO: Zona transicion: f aproximado";
+  END;
+  res := "=== SISTEMA SIMPLE ===" + CHAR(10);
+  res := res + "V   = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "Re  = " + fmt_(reyn) + CHAR(10);
+  res := res + "f   = " + fmt_(f) + CHAR(10);
+  res := res + "hf  = " + fmt_(hf) + " m" + CHAR(10);
+  res := res + "hm  = " + fmt_(hm) + " m" + CHAR(10);
+  res := res + "hL  = " + fmt_(hL) + " m" + CHAR(10);
+  res := res + "dP  = " + fmt_(dP) + " Pa" + aviso;
+  MSGBOX(res);
+END;
+
+// ---- Option 5: Sistema 2 tramos serie ----
+MF_PIPES_2T()
+BEGIN
+  LOCAL Q, D1, L1, eps1, D2, L2, eps2, Ktot, rho, mu;
+  LOCAL g, A1, A2, V1, V2, Re1, Re2, f1, f2, h1, h2, hm, hL, dP, aviso, res;
+  g := 9.81;
+  aviso := "";
+  IF NOT INPUT({Q, D1, L1, eps1, D2, L2, eps2, Ktot, rho, mu},
+      "Sistema 2 tramos serie",
+      {"Q (m3/s)=", "D1 (m)=", "L1 (m)=", "eps1 (m)=", "D2 (m)=", "L2 (m)=", "eps2 (m)=", "Ktot (-)=", "rho (kg/m3)=", "mu (Pa*s)="},
+      {"Caudal (igual en ambos)", "Diametro tramo 1", "Longitud tramo 1", "Rugosidad tramo 1", "Diametro tramo 2", "Longitud tramo 2", "Rugosidad tramo 2", "Suma K ref. V1", "Densidad", "Viscosidad"},
+      {0.004, 0.05, 50.0, 0.000046, 0.04, 50.0, 0.000046, 2.0, 1000.0, 0.001}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D1 <= 0 OR D2 <= 0 THEN MSGBOX("Error: D1 y D2 deben ser positivos."); RETURN; END;
+  IF L1 < 0 OR L2 < 0 THEN MSGBOX("Error: L1 y L2 no pueden ser negativas."); RETURN; END;
+  IF eps1 < 0 OR eps2 < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  IF Ktot < 0 THEN MSGBOX("Error: Ktot no puede ser negativo."); RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF mu <= 0 THEN MSGBOX("Error: mu debe ser positiva."); RETURN; END;
+  A1 := PI * D1 ^ 2 / 4;
+  A2 := PI * D2 ^ 2 / 4;
+  V1 := Q / A1;
+  V2 := Q / A2;
+  Re1 := rho * V1 * D1 / mu;
+  Re2 := rho * V2 * D2 / mu;
+  f1 := calcFF(Re1, eps1, D1);
+  f2 := calcFF(Re2, eps2, D2);
+  h1 := f1 * (L1 / D1) * V1 ^ 2 / (2 * g);
+  h2 := f2 * (L2 / D2) * V2 ^ 2 / (2 * g);
+  hm := Ktot * V1 ^ 2 / (2 * g);
+  hL := h1 + h2 + hm;
+  dP := rho * g * hL;
+  IF (Re1 >= 2300 AND Re1 <= 4000) OR (Re2 >= 2300 AND Re2 <= 4000) THEN
+    aviso := CHAR(10) + "AVISO: Zona transicion en algun tramo";
+  END;
+  res := "=== 2 TRAMOS SERIE ===" + CHAR(10);
+  res := res + "V1  = " + fmt_(V1) + " m/s" + CHAR(10);
+  res := res + "V2  = " + fmt_(V2) + " m/s" + CHAR(10);
+  res := res + "Re1 = " + fmt_(Re1) + CHAR(10);
+  res := res + "Re2 = " + fmt_(Re2) + CHAR(10);
+  res := res + "f1  = " + fmt_(f1) + CHAR(10);
+  res := res + "f2  = " + fmt_(f2) + CHAR(10);
+  res := res + "h1  = " + fmt_(h1) + " m" + CHAR(10);
+  res := res + "h2  = " + fmt_(h2) + " m" + CHAR(10);
+  res := res + "hm  = " + fmt_(hm) + " m" + CHAR(10);
+  res := res + "hL  = " + fmt_(hL) + " m" + CHAR(10);
+  res := res + "dP  = " + fmt_(dP) + " Pa" + aviso;
+  MSGBOX(res);
+END;
+
+// ---- Option 6: Diseno diametro (biseccion) ----
+// Solve DeltaZ + hL(D) = Hav
+MF_PIPES_DIAM()
+BEGIN
+  LOCAL Q, rho, mu, eps, L, Ktot, DeltaZ, Hav, Dmin, Dmax;
+  LOCAL g, Dlo, Dhi, Dmid, Flo, Fhi, Fmid, i, hLv, V, reyn, f, A, Hreq, res;
+  g := 9.81;
+  IF NOT INPUT({Q, rho, mu, eps, L, Ktot, DeltaZ, Hav, Dmin, Dmax},
+      "Diseno de diametro",
+      {"Q (m3/s)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)=", "L (m)=", "Ktot (-)=", "DeltaZ (m)=", "Hav (m)=", "Dmin (m)=", "Dmax (m)="},
+      {"Caudal", "Densidad", "Viscosidad", "Rugosidad", "Longitud", "Suma K", "z2-z1 cota", "Carga disponible", "D min busqueda", "D max busqueda"},
+      {0.004, 1000.0, 0.001, 0.000046, 100.0, 2.0, 5.0, 20.0, 0.01, 0.5}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF rho <= 0 OR mu <= 0 THEN MSGBOX("Error: rho y mu deben ser positivos."); RETURN; END;
+  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  IF L < 0 THEN MSGBOX("Error: L no puede ser negativa."); RETURN; END;
+  IF Ktot < 0 THEN MSGBOX("Error: Ktot no puede ser negativo."); RETURN; END;
+  IF Dmin <= 0 OR Dmax <= Dmin THEN MSGBOX("Error: Dmin/Dmax invalidos."); RETURN; END;
+  Dlo := Dmin;
+  Dhi := Dmax;
+  Flo := DeltaZ + calcHL_(Q, Dlo, L, Ktot, rho, mu, eps) - Hav;
+  Fhi := DeltaZ + calcHL_(Q, Dhi, L, Ktot, rho, mu, eps) - Hav;
+  IF Flo * Fhi > 0 THEN
+    MSGBOX("Intervalo no valido: revisar Dmin, Dmax, Hav.");
+    RETURN;
+  END;
+  i := 1;
+  WHILE i <= 50 DO
+    Dmid := (Dlo + Dhi) / 2;
+    Fmid := DeltaZ + calcHL_(Q, Dmid, L, Ktot, rho, mu, eps) - Hav;
+    Flo := DeltaZ + calcHL_(Q, Dlo, L, Ktot, rho, mu, eps) - Hav;
+    IF Fmid * Flo < 0 THEN
+      Dhi := Dmid;
+    ELSE
+      Dlo := Dmid;
+    END;
+    IF ABS(Dhi - Dlo) < 1E-7 THEN
+      i := 51;
+    ELSE
+      i := i + 1;
+    END;
+  END;
+  Dmid := (Dlo + Dhi) / 2;
+  A := PI * Dmid ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * Dmid / mu;
+  f := calcFF(reyn, eps, Dmid);
+  hLv := calcHL_(Q, Dmid, L, Ktot, rho, mu, eps);
+  Hreq := DeltaZ + hLv;
+  res := "=== DISENO DIAMETRO ===" + CHAR(10);
+  res := res + "D    = " + fmt_(Dmid) + " m" + CHAR(10);
+  res := res + "D    = " + fmt_(Dmid * 1000) + " mm" + CHAR(10);
+  res := res + "V    = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "Re   = " + fmt_(reyn) + CHAR(10);
+  res := res + "f    = " + fmt_(f) + CHAR(10);
+  res := res + "hL   = " + fmt_(hLv) + " m" + CHAR(10);
+  res := res + "Hreq = " + fmt_(Hreq) + " m" + CHAR(10);
+  res := res + "Hav  = " + fmt_(Hav) + " m";
+  MSGBOX(res);
+END;
+
+// ---- Option 7: K valvula de regulacion ----
+MF_PIPES_KVAL()
+BEGIN
+  LOCAL Q, D, L, rho, mu, eps, DeltaZ, Hpump;
+  LOCAL g, A, V, reyn, f, hf, hvalve, Kvalve, res;
+  g := 9.81;
+  IF NOT INPUT({Q, D, L, rho, mu, eps, DeltaZ, Hpump},
+      "K valvula regulacion",
+      {"Q (m3/s)=", "D (m)=", "L (m)=", "rho (kg/m3)=", "mu (Pa*s)=", "eps (m)=", "DeltaZ (m)=", "Hpump (m)="},
+      {"Caudal", "Diametro", "Longitud", "Densidad", "Viscosidad", "Rugosidad", "z2-z1 cota", "Altura de bomba"},
+      {0.004, 0.05, 100.0, 1000.0, 0.001, 0.000046, 5.0, 20.0}) THEN RETURN; END;
+  IF Q <= 0 THEN MSGBOX("Error: Q debe ser positivo."); RETURN; END;
+  IF D <= 0 THEN MSGBOX("Error: D debe ser positivo."); RETURN; END;
+  IF L < 0 THEN MSGBOX("Error: L no puede ser negativa."); RETURN; END;
+  IF rho <= 0 OR mu <= 0 THEN MSGBOX("Error: rho y mu deben ser positivos."); RETURN; END;
+  IF eps < 0 THEN MSGBOX("Error: eps no puede ser negativa."); RETURN; END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  f := calcFF(reyn, eps, D);
+  hf := f * (L / D) * V ^ 2 / (2 * g);
+  hvalve := Hpump - DeltaZ - hf;
+  IF hvalve < 0 THEN
+    MSGBOX("Bomba insuficiente." + CHAR(10) + "hvalve = " + fmt_(hvalve) + " m");
+    RETURN;
+  END;
+  Kvalve := hvalve / (V ^ 2 / (2 * g));
+  res := "=== K VALVULA REGULACION ===" + CHAR(10);
+  res := res + "V      = " + fmt_(V) + " m/s" + CHAR(10);
+  res := res + "Re     = " + fmt_(reyn) + CHAR(10);
+  res := res + "f      = " + fmt_(f) + CHAR(10);
+  res := res + "hf     = " + fmt_(hf) + " m" + CHAR(10);
+  res := res + "hvalve = " + fmt_(hvalve) + " m" + CHAR(10);
+  res := res + "Kvalve = " + fmt_(Kvalve);
+  MSGBOX(res);
+END;
+
+// ---- Option 8: Ayuda formulas ----
+MF_PIPES_HELP()
+BEGIN
+  LOCAL res;
+  res := "=== FORMULAS TUBERIAS ===" + CHAR(10);
+  res := res + "A=PI*D^2/4  V=Q/A" + CHAR(10);
+  res := res + "Re=rho*V*D/mu" + CHAR(10);
+  res := res + "Re<2300: f=64/Re (Laminar)" + CHAR(10);
+  res := res + "Re>=2300: f=0.25/[log(e/3.7D+5.74/Re^0.9)]^2" + CHAR(10);
+  res := res + "hf=f*(L/D)*V^2/(2g)" + CHAR(10);
+  res := res + "hm=Ktot*V^2/(2g)" + CHAR(10);
+  res := res + "hL=hf+hm" + CHAR(10);
+  res := res + "dP=rho*g*hL" + CHAR(10);
+  res := res + "g=9.81 m/s2";
   MSGBOX(res);
 END;
 
@@ -319,20 +366,23 @@ BEGIN
   WHILE 1 DO
     CHOOSE(c,
       "FLUJO EN TUBERIAS",
-      "1. Velocidad Media / Caudal",
-      "2. Reynolds en Tuberia",
-      "3. Factor de Friccion",
-      "4. Perdida Mayor (Darcy-Weisbach)",
-      "5. Perdidas Menores",
-      "6. Calculo Completo de Tuberia",
-      "0. Volver al menu principal");
-
-    IF c == 0 OR c == 7 THEN RETURN; END;
-    IF c == 1 THEN MF_PIPES_V(); END;
-    IF c == 2 THEN MF_PIPES_RE(); END;
-    IF c == 3 THEN MF_PIPES_FF(); END;
-    IF c == 4 THEN MF_PIPES_HF(); END;
-    IF c == 5 THEN MF_PIPES_HM(); END;
-    IF c == 6 THEN MF_PIPES_TOT(); END;
+      "1. V, Re, f",
+      "2. Perdida tramo",
+      "3. Perdidas K",
+      "4. Sistema simple",
+      "5. Sistema 2 tramos serie",
+      "6. Diseno diametro",
+      "7. K valvula regulacion",
+      "8. Ayuda formulas",
+      "9. Volver");
+    IF c == 0 OR c == 9 THEN RETURN; END;
+    IF c == 1 THEN MF_PIPES_VRF(); END;
+    IF c == 2 THEN MF_PIPES_TRAMO(); END;
+    IF c == 3 THEN MF_PIPES_K(); END;
+    IF c == 4 THEN MF_PIPES_SIM(); END;
+    IF c == 5 THEN MF_PIPES_2T(); END;
+    IF c == 6 THEN MF_PIPES_DIAM(); END;
+    IF c == 7 THEN MF_PIPES_KVAL(); END;
+    IF c == 8 THEN MF_PIPES_HELP(); END;
   END;
 END;

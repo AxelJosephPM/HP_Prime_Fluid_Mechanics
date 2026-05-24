@@ -411,9 +411,129 @@ Ry = 20*(2.0*sin90 - 2.0*sin0) - 30000*0.01*sin0 + 15000*0.01*sin90
 
 ---
 
+---
+
+## TEST 18: Velocidad en tuberia (MF_PIPES opcion 1)
+
+**Menu:** Tuberias → V, Re, f
+
+**Entrada:**
+- Q = 0.004 m3/s
+- D = 0.05 m
+- rho = 1000 kg/m3
+- mu = 0.001 Pa*s
+- eps = 0.000046 m
+
+**Calculo:**
+```
+A = PI*(0.05)^2/4 = 0.001963 m2
+V = 0.004 / 0.001963 = 2.037 m/s  ~  2.04 m/s
+Re = 1000 * 2.037 * 0.05 / 0.001 = 101880  -> TURBULENTO
+```
+
+**Esperado en pantalla:**
+```
+V   ~ 2.037 m/s
+Re  ~ 101880
+Reg = TURBULENTO
+f   ~ 0.018x
+```
+
+---
+
+## TEST 19: Reynolds esperado ~101000
+
+**Mismo caso TEST 18.**
+
+**Verificacion:** Re = rho*V*D/mu = 1000*2.037*0.05/0.001 = 101850 aprox. 101000 ✓
+
+---
+
+## TEST 20: Potencia de bomba (MF_PUMPS opcion 1)
+
+**Menu:** Bombas → Potencia bomba
+
+**Entrada:**
+- rho = 1000 kg/m3
+- Q = 0.004 m3/s
+- H = 10 m
+- eta = 0.8
+
+**Calculo:**
+```
+Ph = 1000 * 9.81 * 0.004 * 10 = 392.4 W
+Pshaft = 392.4 / 0.8 = 490.5 W  ~  490 W
+```
+
+**Esperado en pantalla:**
+```
+Ph     = 392.4 W
+Pshaft = 490.5 W  ~  490 W
+```
+
+---
+
+## TEST 21: Perdida menor (MF_PIPES opcion 3)
+
+**Menu:** Tuberias → Perdidas K
+
+**Entrada:**
+- Q tal que V = 2 m/s (usar Q = V*A con D = 0.1 m → Q = 2*PI*0.01/4 = 0.01571 m3/s)
+- D = 0.1 m
+- Ktot = 1
+- rho = 1000 kg/m3
+
+**Calculo:**
+```
+V = 2.0 m/s
+hm = 1 * 2^2 / (2*9.81) = 4 / 19.62 = 0.2039 m  ~  0.204 m
+dP = 1000 * 9.81 * 0.2039 = 2000 Pa
+```
+
+**Esperado en pantalla:**
+```
+hm  = 0.2039 m  ~  0.204 m
+dP  = 2000 Pa
+```
+
+---
+
+## TEST 22: Check cavitacion - sin riesgo (MF_PUMPS opcion 4)
+
+**Menu:** Bombas → Check cavitacion
+
+**Entrada:**
+- NPSHa = 8.0 m
+- NPSHr = 3.5 m
+
+**Esperado:**
+```
+Margen = 4.5 m
+No cavitacion (NPSHa >= NPSHr)
+```
+
+---
+
+## TEST 23: Check cavitacion - con riesgo (MF_PUMPS opcion 4)
+
+**Menu:** Bombas → Check cavitacion
+
+**Entrada:**
+- NPSHa = 2.0 m
+- NPSHr = 3.5 m
+
+**Esperado:**
+```
+Margen = -1.5 m
+RIESGO CAVITACION (NPSHa < NPSHr)
+```
+
+---
+
 ## Notas sobre las pruebas
 
-- Todos los cálculos fueron verificados manualmente antes de la implementación.
-- La bisección (Area-Mach, punto de operación) converge en < 70 iteraciones.
+- Todos los calculos fueron verificados manualmente antes de la implementacion.
+- La biseccion (Area-Mach, punto de operacion, diseno diametro, Q max cavitacion) converge en < 70 iteraciones.
 - El factor de Swamee-Jain difiere < 3% del factor de Colebrook en flujo turbulento desarrollado.
-- Los resultados del CAS dependen del motor simbólico de HP Prime; pueden variar en forma de representación pero son equivalentes matemáticamente.
+- MF_CAS no fue modificado y no forma parte del plan de pruebas activo.
+- Los resultados del CAS dependen del motor simbolico de HP Prime; pueden variar en forma de representacion pero son equivalentes matematicamente.

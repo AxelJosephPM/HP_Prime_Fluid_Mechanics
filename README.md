@@ -145,20 +145,28 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Fuerza resultante 2D: magnitud, ángulo y fuerza de anclaje requerida
 - Ayuda integrada con ecuación de cantidad de movimiento para volumen de control
 
-### 8. Flujo en Tuberías (`MF_PIPES`)
-- Velocidad media V = Q/A y caudal Q = V·A
-- Reynolds en tubería
-- Factor de fricción: f = 64/Re (laminar) o Swamee-Jain (turbulento)
-- Pérdida mayor (Darcy-Weisbach): h_f = f·(L/D)·V²/2g
-- Pérdidas menores: h_m = K·V²/2g
-- Cálculo completo: Reynolds, f, h_f, h_m, h_L, ΔP
+### 8. Flujo en Tuberías (`MF_PIPES`) — mejorado v2.0
+- V, Re, f: velocidad, Reynolds y factor de fricción en un paso
+- Pérdida de tramo: hf y ΔP para una tubería directa
+- Pérdidas menores K: hm = Ktot·V²/2g
+- Sistema simple: hf + hm + hL + ΔP completo
+- Sistema 2 tramos en serie: V1, V2, Re1, Re2, f1, f2, h1, h2, hm, hL, ΔP
+- Diseño de diámetro: bisección para hallar D dado Q, L, Hav (DeltaZ + hL = Hav)
+- K válvula de regulación: hvalve y Kvalve para equilibrar un sistema con bomba
+- Ayuda de fórmulas integrada
+- Factor de fricción: f = 64/Re (laminar, Re < 2300) o Swamee-Jain (turbulento)
+- Aviso automático en zona de transición (2300 ≤ Re ≤ 4000)
 
-### 9. Bombas y Cavitación (`MF_PUMPS`)
-- Potencia hidráulica y en eje
-- Eficiencia η = P_h / P_eje
-- NPSHa desde brida de succión o desde depósito
-- Comparación NPSHa vs NPSHr con diagnóstico de cavitación
-- Punto de operación bomba-sistema (curvas cuadráticas, bisección numérica)
+### 9. Bombas y Cavitación (`MF_PUMPS`) — mejorado v2.0
+- Potencia hidráulica Ph = ρgQH y en eje Pshaft = Ph/η
+- Carga de bomba por Bernoulli generalizada
+- NPSHa con cálculo completo de pérdidas en tubería de succión (hf + hm)
+- Check de cavitación: margen = NPSHa − NPSHr, con diagnóstico
+- Q máximo sin cavitación: bisección de NPSHa(Q) = NPSHr (40 iteraciones)
+- Punto de operación simple: bisección de Hpump(Q) = Hsystem(Q)
+  con Hpump = H0 − c·Q² y Hsystem = Hstatic + R·Q²
+- Ayuda de fórmulas integrada
+- MF_CAS está pendiente para fase final (no modificado)
 
 ### 10. Flujo Compresible (`MF_COMP`)
 - Velocidad del sonido: a = √(kRT)
@@ -198,6 +206,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 
 ## Funciones pendientes (fases futuras)
 
+- MF_CAS: herramientas CAS simbólicas — pendiente para fase final (archivo presente pero no activo)
 - CAS avanzado: resolver y simplificar ecuaciones de fluidos simbólicamente
 - Perfil de Couette (flujo entre placas)
 - Flujo en canales abiertos (tirante normal, curva de energía)

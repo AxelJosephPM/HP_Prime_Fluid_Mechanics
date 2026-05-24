@@ -82,20 +82,31 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_MOM_2D()      Fuerza resultante 2D
 │   └── MF_MOM_HELP()    Ayuda cantidad de movimiento
 │
-├── MF_PIPES()    ← Módulo independiente
-│   ├── MF_PIPES_V()    Velocidad media / caudal
-│   ├── MF_PIPES_RE()   Reynolds en tubería
-│   ├── MF_PIPES_FF()   Factor de fricción
-│   ├── MF_PIPES_HF()   Pérdida mayor (Darcy-Weisbach)
-│   ├── MF_PIPES_HM()   Pérdidas menores
-│   └── MF_PIPES_TOT()  Cálculo completo
+├── MF_PIPES()    ← Módulo independiente (v2.0)
+│   ├── fmt_()          Helper formato numérico
+│   ├── regimenStr()    Clasificación régimen por Re
+│   ├── calcFF()        Factor de fricción Darcy (laminar/Swamee-Jain)
+│   ├── calcHL_()       Helper: hL total de un tramo (interno)
+│   ├── MF_PIPES_VRF()  Opcion 1: V, Re, f
+│   ├── MF_PIPES_TRAMO() Opcion 2: Perdida de tramo (hf, dP)
+│   ├── MF_PIPES_K()    Opcion 3: Perdidas menores K
+│   ├── MF_PIPES_SIM()  Opcion 4: Sistema simple completo
+│   ├── MF_PIPES_2T()   Opcion 5: Sistema 2 tramos en serie
+│   ├── MF_PIPES_DIAM() Opcion 6: Diseño de diámetro (bisección)
+│   ├── MF_PIPES_KVAL() Opcion 7: K válvula de regulación
+│   └── MF_PIPES_HELP() Opcion 8: Ayuda fórmulas
 │
-├── MF_PUMPS()    ← Módulo independiente
-│   ├── MF_PUMPS_POT()  Potencia de bomba
-│   ├── MF_PUMPS_ETA()  Eficiencia
-│   ├── MF_PUMPS_NPSHA() NPSHa disponible
-│   ├── MF_PUMPS_CAVI() Evaluación cavitación
-│   └── MF_PUMPS_OP()   Punto de operación bomba-sistema
+├── MF_PUMPS()    ← Módulo independiente (v2.0)
+│   ├── fmt_()          Helper formato numérico
+│   ├── calcFFp_()      Factor de fricción (local, evita conflicto)
+│   ├── calcNPSHa_()    Helper: NPSHa dado Q (interno para bisección)
+│   ├── MF_PUMPS_POT()  Opcion 1: Potencia bomba (Ph, Pshaft)
+│   ├── MF_PUMPS_BERN() Opcion 2: Carga bomba Bernoulli
+│   ├── MF_PUMPS_NPSHA() Opcion 3: NPSHa con pérdidas de tubería
+│   ├── MF_PUMPS_CAVI() Opcion 4: Check cavitación (margen)
+│   ├── MF_PUMPS_QMAX() Opcion 5: Q max sin cavitación (bisección)
+│   ├── MF_PUMPS_OP()   Opcion 6: Punto de operación simple (bisección)
+│   └── MF_PUMPS_HELP() Opcion 7: Ayuda fórmulas
 │
 ├── MF_COMP()     ← Módulo independiente
 │   ├── aAstar_()       (interna) A/A* = f(M,k)
