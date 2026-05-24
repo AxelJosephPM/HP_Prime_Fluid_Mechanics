@@ -778,6 +778,79 @@ vtheta = 1.0 m/s
 
 ---
 
+---
+
+## TEST 34: Agua a 20 C (MF_TABLES opcion 1)
+
+**Menu:** Tablas → Agua por temperatura → 20 C
+
+**Esperado en pantalla:**
+```
+rho = 998.2 kg/m3
+mu  = 1.0E-3 Pa*s
+nu  = 1.0E-6 m2/s
+Valores aproximados
+```
+
+---
+
+## TEST 35: Aire a 15 C (MF_TABLES opcion 2)
+
+**Menu:** Tablas → Aire por temperatura → 15 C
+
+**Esperado en pantalla:**
+```
+rho = 1.225 kg/m3
+mu  = 1.79E-5 Pa*s
+nu  = 1.46E-5 m2/s
+Valores aproximados a 1 atm
+```
+
+---
+
+## TEST 36: Presion vapor agua a 20 C (MF_TABLES opcion 3)
+
+**Menu:** Tablas → Presion vapor agua → 20 C
+
+**Calculo:**
+```
+Pv = 2339 Pa = 2.339 kPa
+```
+
+**Esperado en pantalla:**
+```
+Pv = 2339 Pa
+Pv = 2.339 kPa
+```
+
+---
+
+## TEST 37: Rugosidad acero comercial (MF_TABLES opcion 4)
+
+**Menu:** Tablas → Rugosidad tuberias → Acero comercial
+
+**Esperado en pantalla:**
+```
+eps = 4.5E-5 m
+eps = 0.045 mm
+Usar como estimacion
+```
+
+---
+
+## TEST 38: Perdida menor entrada brusca (MF_TABLES opcion 5)
+
+**Menu:** Tablas → Perdidas menores K → Entrada brusca
+
+**Esperado en pantalla:**
+```
+K = 0.5
+hm = K*V^2/(2*g)
+Valor orientativo
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.
@@ -786,3 +859,4 @@ vtheta = 1.0 m/s
 - MF_CAS no fue modificado y no forma parte del plan de pruebas activo.
 - Los resultados del CAS dependen del motor simbolico de HP Prime; pueden variar en forma de representacion pero son equivalentes matematicamente.
 - TEST 30: deltaP = 400 Pa (no 1000 Pa) para obtener Q ~ 9.82e-5 m3/s segun Hagen-Poiseuille.
+- MF_TABLES proporciona valores tabulados fijos; los resultados son exactamente los valores almacenados.

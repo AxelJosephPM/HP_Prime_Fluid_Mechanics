@@ -16,6 +16,7 @@ HP_PRIME_FLUID_MECHANICS/
 ├── MF_PUMPS.hpprgm       ← Módulo: Bombas y Cavitación
 ├── MF_COMP.hpprgm        ← Módulo: Flujo Compresible
 ├── MF_DIFF.hpprgm        ← Módulo: Flujo Diferencial y Viscoso
+├── MF_TABLES.hpprgm      ← Módulo: Tablas de Propiedades
 ├── MF_CAS.hpprgm         ← Módulo: Herramientas CAS
 ├── MF_UTILS.hpprgm       ← Módulo: Unidades + Ayuda
 ├── README.md             ← Instrucciones de instalación y uso
@@ -134,6 +135,16 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_DIFF_DEF()   Opcion 6: Deformacion 2D (exx, eyy, exy)
 │   ├── MF_DIFF_VORT()  Opcion 7: Vortice libre (vtheta = C/r)
 │   └── MF_DIFF_HELP()  Opcion 8: Ayuda formulas
+│
+├── MF_TABLES()   ← Módulo independiente (v2.0)
+│   ├── fmt_()              Helper formato numérico
+│   ├── MF_TABLES_AGUA()    Opcion 1: propiedades agua por T (0-100 C)
+│   ├── MF_TABLES_AIRE()    Opcion 2: propiedades aire por T (0-40 C, 1 atm)
+│   ├── MF_TABLES_PV()      Opcion 3: presion vapor agua por T
+│   ├── MF_TABLES_EPS()     Opcion 4: rugosidad absoluta tuberias
+│   ├── MF_TABLES_K()       Opcion 5: coeficiente K perdidas menores
+│   ├── MF_TABLES_CST()     Opcion 6: constantes utiles de referencia
+│   └── MF_TABLES_HELP()    Opcion 7: ayuda uso tablas
 │
 ├── MF_CAS()      ← Módulo independiente
 │   ├── MF_CAS_SOLV()   Resolver ecuación simbólica

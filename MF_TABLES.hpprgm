@@ -1,0 +1,197 @@
+// MF_TABLES - Tablas de propiedades para fluidos
+// Water, air, vapor pressure, roughness, K, constants
+
+fmt_(x)
+BEGIN
+  RETURN STRING(x);
+END;
+
+MF_TABLES_AGUA()
+BEGIN
+  LOCAL op, rho, mu, nu;
+  rho := 0; mu := 0; nu := 0;
+  CHOOSE(op,
+    "AGUA - TEMPERATURA",
+    "0 C",
+    "10 C",
+    "20 C",
+    "30 C",
+    "40 C",
+    "60 C",
+    "80 C",
+    "100 C");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN rho := 999.8; mu := 1.79E-3; nu := 1.79E-6; END;
+  IF op == 2 THEN rho := 999.7; mu := 1.31E-3; nu := 1.31E-6; END;
+  IF op == 3 THEN rho := 998.2; mu := 1.00E-3; nu := 1.00E-6; END;
+  IF op == 4 THEN rho := 995.7; mu := 7.98E-4; nu := 8.01E-7; END;
+  IF op == 5 THEN rho := 992.2; mu := 6.53E-4; nu := 6.58E-7; END;
+  IF op == 6 THEN rho := 983.2; mu := 4.67E-4; nu := 4.75E-7; END;
+  IF op == 7 THEN rho := 971.8; mu := 3.55E-4; nu := 3.65E-7; END;
+  IF op == 8 THEN rho := 958.4; mu := 2.82E-4; nu := 2.94E-7; END;
+  MSGBOX("AGUA (aprox.)" + CHAR(10) +
+    "rho = " + STRING(rho) + " kg/m3" + CHAR(10) +
+    "mu  = " + STRING(mu) + " Pa*s" + CHAR(10) +
+    "nu  = " + STRING(nu) + " m2/s" + CHAR(10) +
+    "Valores aproximados");
+END;
+
+MF_TABLES_AIRE()
+BEGIN
+  LOCAL op, rho, mu, nu;
+  rho := 0; mu := 0; nu := 0;
+  CHOOSE(op,
+    "AIRE - TEMPERATURA (1 atm)",
+    "0 C",
+    "10 C",
+    "15 C",
+    "20 C",
+    "25 C",
+    "30 C",
+    "40 C");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN rho := 1.293; mu := 1.72E-5; nu := 1.33E-5; END;
+  IF op == 2 THEN rho := 1.247; mu := 1.76E-5; nu := 1.41E-5; END;
+  IF op == 3 THEN rho := 1.225; mu := 1.79E-5; nu := 1.46E-5; END;
+  IF op == 4 THEN rho := 1.204; mu := 1.81E-5; nu := 1.50E-5; END;
+  IF op == 5 THEN rho := 1.184; mu := 1.84E-5; nu := 1.55E-5; END;
+  IF op == 6 THEN rho := 1.165; mu := 1.86E-5; nu := 1.60E-5; END;
+  IF op == 7 THEN rho := 1.127; mu := 1.91E-5; nu := 1.69E-5; END;
+  MSGBOX("AIRE aprox. a 1 atm" + CHAR(10) +
+    "rho = " + STRING(rho) + " kg/m3" + CHAR(10) +
+    "mu  = " + STRING(mu) + " Pa*s" + CHAR(10) +
+    "nu  = " + STRING(nu) + " m2/s" + CHAR(10) +
+    "Valores aproximados a 1 atm");
+END;
+
+MF_TABLES_PV()
+BEGIN
+  LOCAL op, Pv;
+  Pv := 0;
+  CHOOSE(op,
+    "PRESION VAPOR AGUA",
+    "0 C",
+    "10 C",
+    "20 C",
+    "30 C",
+    "40 C",
+    "60 C",
+    "80 C",
+    "100 C");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN Pv := 611; END;
+  IF op == 2 THEN Pv := 1228; END;
+  IF op == 3 THEN Pv := 2339; END;
+  IF op == 4 THEN Pv := 4246; END;
+  IF op == 5 THEN Pv := 7384; END;
+  IF op == 6 THEN Pv := 19946; END;
+  IF op == 7 THEN Pv := 47414; END;
+  IF op == 8 THEN Pv := 101325; END;
+  MSGBOX("PRESION DE VAPOR" + CHAR(10) +
+    "Pv = " + STRING(Pv) + " Pa" + CHAR(10) +
+    "Pv = " + STRING(Pv / 1000) + " kPa");
+END;
+
+MF_TABLES_EPS()
+BEGIN
+  LOCAL op, eps;
+  eps := 0;
+  CHOOSE(op,
+    "RUGOSIDAD TUBERIAS",
+    "Vidrio/plastico liso",
+    "Cobre/laton",
+    "Acero comercial",
+    "Hierro galvanizado",
+    "Hierro fundido",
+    "Hormigon",
+    "Acero remachado");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN eps := 1.5E-6; END;
+  IF op == 2 THEN eps := 1.5E-6; END;
+  IF op == 3 THEN eps := 4.5E-5; END;
+  IF op == 4 THEN eps := 1.5E-4; END;
+  IF op == 5 THEN eps := 2.6E-4; END;
+  IF op == 6 THEN eps := 3.0E-4; END;
+  IF op == 7 THEN eps := 3.0E-3; END;
+  MSGBOX("RUGOSIDAD ABSOLUTA" + CHAR(10) +
+    "eps = " + STRING(eps) + " m" + CHAR(10) +
+    "eps = " + STRING(eps * 1000) + " mm" + CHAR(10) +
+    "Usar como estimacion");
+END;
+
+MF_TABLES_K()
+BEGIN
+  LOCAL op, K;
+  K := 0;
+  CHOOSE(op,
+    "PERDIDAS MENORES K",
+    "Entrada brusca",
+    "Entrada redondeada",
+    "Salida deposito",
+    "Codo 90 suave",
+    "Codo 90 brusco",
+    "Valvula compuerta abierta",
+    "Valvula globo abierta",
+    "Valvula antirretorno");
+  IF op == 0 THEN RETURN; END;
+  IF op == 1 THEN K := 0.5; END;
+  IF op == 2 THEN K := 0.04; END;
+  IF op == 3 THEN K := 1.0; END;
+  IF op == 4 THEN K := 0.3; END;
+  IF op == 5 THEN K := 0.9; END;
+  IF op == 6 THEN K := 0.2; END;
+  IF op == 7 THEN K := 10; END;
+  IF op == 8 THEN K := 2; END;
+  MSGBOX("PERDIDA MENOR" + CHAR(10) +
+    "K = " + STRING(K) + CHAR(10) +
+    "hm = K*V^2/(2*g)" + CHAR(10) +
+    "Valor orientativo");
+END;
+
+MF_TABLES_CST()
+BEGIN
+  MSGBOX("CONSTANTES UTILES" + CHAR(10) +
+    "g     = 9.81 m/s2" + CHAR(10) +
+    "R_air = 287 J/(kg*K)" + CHAR(10) +
+    "k_air = 1.4" + CHAR(10) +
+    "rho_w = 998 kg/m3 (20C)" + CHAR(10) +
+    "mu_w  = 0.001 Pa*s (20C)" + CHAR(10) +
+    "rho_a = 1.225 kg/m3 (15C)" + CHAR(10) +
+    "Patm  = 101325 Pa");
+END;
+
+MF_TABLES_HELP()
+BEGIN
+  MSGBOX("AYUDA: USO DE TABLAS" + CHAR(10) +
+    "- Usar como estimacion rapida." + CHAR(10) +
+    "- En examen, usar datos del enunciado." + CHAR(10) +
+    "- Para Re: usar rho y mu del fluido." + CHAR(10) +
+    "- Para cavitacion: usar Pv del agua." + CHAR(10) +
+    "- Para Darcy: usar eps de tuberia." + CHAR(10) +
+    "- Para menores: sumar todos los K.");
+END;
+
+EXPORT MF_TABLES()
+BEGIN
+  LOCAL c;
+  WHILE 1 DO
+    CHOOSE(c,
+      "TABLAS Y PROPIEDADES",
+      "1. Agua por temperatura",
+      "2. Aire por temperatura",
+      "3. Presion vapor agua",
+      "4. Rugosidad tuberias",
+      "5. Perdidas menores K",
+      "6. Constantes utiles",
+      "7. Ayuda uso tablas",
+      "8. Volver");
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_TABLES_AGUA(); END;
+    IF c == 2 THEN MF_TABLES_AIRE(); END;
+    IF c == 3 THEN MF_TABLES_PV(); END;
+    IF c == 4 THEN MF_TABLES_EPS(); END;
+    IF c == 5 THEN MF_TABLES_K(); END;
+    IF c == 6 THEN MF_TABLES_CST(); END;
+    IF c == 7 THEN MF_TABLES_HELP(); END;
+  END;
+END;

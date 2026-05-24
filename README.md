@@ -35,6 +35,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 | `MF_PUMPS.hpprgm`     | Bombas y cavitación                              |
 | `MF_COMP.hpprgm`      | Flujo compresible (isentrópico, A/A*, choque)    |
 | `MF_DIFF.hpprgm`      | Flujo diferencial y viscoso (Poiseuille, Couette)|
+| `MF_TABLES.hpprgm`    | Tablas de propiedades: agua, aire, Pv, eps, K    |
 | `MF_CAS.hpprgm`       | Herramientas CAS simbólicas                      |
 | `MF_UTILS.hpprgm`     | Convertidor de unidades y ayuda rápida           |
 | `README.md`           | Este archivo                                     |
@@ -192,7 +193,17 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Vortice libre: vtheta = C/r, velocidad tangencial en radio r
 - Ayuda integrada con formulas de flujo viscoso
 
-### 12. Herramientas CAS (`MF_CAS`)
+### 12. Tablas de Propiedades (`MF_TABLES`) — nuevo v2.0
+- Agua por temperatura (0–100 C): rho, mu, nu
+- Aire por temperatura (0–40 C, 1 atm): rho, mu, nu
+- Presion de vapor del agua (0–100 C): Pv en Pa y kPa
+- Rugosidad absoluta de tuberias: vidrio, cobre, acero, hierro, hormigon
+- Perdidas menores K: entradas, codos, valvulas
+- Constantes utiles de referencia: g, R_air, k_air, rho_w, mu_w, Patm
+- Ayuda de uso integrada
+- MF_CAS permanece pendiente para fase final (no modificado)
+
+### 13. Herramientas CAS (`MF_CAS`)
 - Resolver ecuación simbólica para variable
 - Simplificar expresión
 - Derivar expresión (orden n)
@@ -201,7 +212,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Caudal por integración de perfil u(r): Poiseuille, uniforme, personalizado
 - Ecuaciones predefinidas de fluidos para despejar variables
 
-### 13. Convertidor de Unidades (`MF_UNITS`)
+### 14. Convertidor de Unidades (`MF_UNITS`)
 - Presión: Pa, kPa, bar, atm, mmHg, psi
 - Caudal: m³/s, L/s, L/min, m³/h, GPM
 - Viscosidad dinámica: Pa·s, cP, P
@@ -210,7 +221,7 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Energía: J, kJ, Wh, kWh, kcal, BTU
 - Potencia: W, kW, CV, HP
 
-### 14. Ayuda Rápida (`MF_HELP`)
+### 15. Ayuda Rápida (`MF_HELP`)
 - Unidades SI del sistema
 - Tipos de presión y conversión
 - Regímenes de flujo
