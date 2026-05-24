@@ -1,14 +1,4 @@
-// ============================================================
-// MF_BUOY.hpprgm
-// FLUIDOS PRIME v1.0 - Flotabilidad y Empuje
-// HP Prime G2
-// ============================================================
-// Contenido:
-//   MF_BUOY()       - Menu principal (EXPORT)
-//   MF_BUOY_FE()    - Fuerza de empuje (Arquimedes)
-//   MF_BUOY_FL()    - Analisis de flotabilidad (flota/hunde/neutro)
-//   MF_BUOY_FR()    - Fraccion sumergida de cuerpo flotante
-// ============================================================
+// MF_BUOY.hpprgm - Flotabilidad y Empuje v2.0
 
 fmt_(x)
 BEGIN
@@ -19,130 +9,164 @@ BEGIN
   RETURN STRING(ROUND(x, 4));
 END;
 
-// ---- Fuerza de empuje (Principio de Arquimedes) ----
-MF_BUOY_FE()
+MF_BUOY_FB()
 BEGIN
-  LOCAL rho_f, g, Vsub, E, res;
-
-  IF NOT INPUT({rho_f, g, Vsub},
-      "Fuerza de Empuje",
-      {"rho_f (kg/m3)=", "g (m/s2)=", "V_sub (m3)="},
-      {"Densidad del fluido donde esta sumergido", "Aceleracion gravitacional", "Volumen desplazado (sumergido)"},
-      {1000.0, 9.81, 0.01}) THEN RETURN; END;
-
-  IF rho_f <= 0 THEN MSGBOX("Error: rho_f debe ser positiva."); RETURN; END;
+  LOCAL rhoFluid, g, Vdisp, Fb;
+  rhoFluid := 0; g := 0; Vdisp := 0; Fb := 0;
+  IF NOT INPUT({rhoFluid, g, Vdisp},
+    "Empuje Arquimedes",
+    {"rho_fluid (kg/m3)=", "g (m/s2)=", "Vdisp (m3)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Volumen desplazado"},
+    {1000.0, 9.81, 0.1}) THEN RETURN; END;
+  IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF Vsub < 0 THEN MSGBOX("Error: V_sub debe ser no negativo."); RETURN; END;
-
-  E := rho_f * g * Vsub;
-
-  res := "=== FUERZA DE EMPUJE ===" + CHAR(10);
-  res := res + "E = rho_f * g * V_sub" + CHAR(10);
-  res := res + "E      = " + fmt_(E) + " N" + CHAR(10);
-  res := res + "E      = " + fmt_(E / 1000) + " kN" + CHAR(10);
-  res := res + "rho_f  = " + fmt_(rho_f) + " kg/m3" + CHAR(10);
-  res := res + "V_sub  = " + fmt_(Vsub) + " m3" + CHAR(10);
-  res := res + CHAR(10) + "El empuje actua hacia arriba sobre el cuerpo.";
-
-  MSGBOX(res);
+  IF Vdisp < 0 THEN MSGBOX("Error: Vdisp debe ser no negativo."); RETURN; END;
+  Fb := rhoFluid * g * Vdisp;
+  MSGBOX("EMPUJE ARQUIMEDES" + CHAR(10) +
+    "Fb = rho_fluid*g*Vdisp" + CHAR(10) +
+    "Fb = " + fmt_(Fb) + " N" + CHAR(10) +
+    "Fb = " + fmt_(Fb / 1000) + " kN");
 END;
 
-// ---- Analisis completo de flotabilidad ----
 MF_BUOY_FL()
 BEGIN
-  LOCAL rho_f, rho_b, g, Vb, W;
-  LOCAL E, Wap, estado, res;
-
-  IF NOT INPUT({rho_f, rho_b, g, Vb},
-      "Analisis de Flotabilidad",
-      {"rho_f (kg/m3)=", "rho_b (kg/m3)=", "g (m/s2)=", "V_b (m3)="},
-      {"Densidad del fluido", "Densidad del cuerpo", "Aceleracion gravitacional", "Volumen total del cuerpo"},
-      {1000.0, 800.0, 9.81, 0.1}) THEN RETURN; END;
-
-  IF rho_f <= 0 THEN MSGBOX("Error: rho_f debe ser positiva."); RETURN; END;
-  IF rho_b <= 0 THEN MSGBOX("Error: rho_b debe ser positiva."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF Vb <= 0 THEN MSGBOX("Error: V_b debe ser positivo."); RETURN; END;
-
-  // Peso del cuerpo
-  W := rho_b * g * Vb;
-  // Empuje si esta completamente sumergido
-  E := rho_f * g * Vb;
-  // Peso aparente
-  Wap := W - E;
-
-  IF rho_b < rho_f THEN
-    estado := "FLOTA (rho_b < rho_f)";
-  ELSE
-    IF rho_b == rho_f THEN
-      estado := "FLOTACION NEUTRA (rho_b = rho_f)";
-    ELSE
-      estado := "SE HUNDE (rho_b > rho_f)";
-    END;
-  END;
-
-  res := "=== ANALISIS DE FLOTABILIDAD ===" + CHAR(10);
-  res := res + "W     = " + fmt_(W) + " N  (peso en aire)" + CHAR(10);
-  res := res + "E     = " + fmt_(E) + " N  (empuje total si sum.)" + CHAR(10);
-  res := res + "W_ap  = " + fmt_(Wap) + " N  (peso aparente)" + CHAR(10);
-  res := res + "rho_f = " + fmt_(rho_f) + " kg/m3" + CHAR(10);
-  res := res + "rho_b = " + fmt_(rho_b) + " kg/m3" + CHAR(10);
-  res := res + "V_b   = " + fmt_(Vb) + " m3" + CHAR(10);
-  res := res + CHAR(10) + "Estado: " + estado;
-
-  MSGBOX(res);
+  LOCAL rhoObj, rhoFluid, estado;
+  rhoObj := 0; rhoFluid := 0; estado := "";
+  IF NOT INPUT({rhoObj, rhoFluid},
+    "Flota / Hunde / Neutro",
+    {"rho_obj (kg/m3)=", "rho_fluid (kg/m3)="},
+    {"Densidad del objeto", "Densidad del fluido"},
+    {800.0, 1000.0}) THEN RETURN; END;
+  IF rhoObj <= 0 THEN MSGBOX("Error: rho_obj debe ser positiva."); RETURN; END;
+  IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
+  estado := "NEUTRO";
+  IF rhoObj < rhoFluid THEN estado := "FLOTA"; END;
+  IF rhoObj > rhoFluid THEN estado := "HUNDE"; END;
+  MSGBOX("ANALISIS DE FLOTABILIDAD" + CHAR(10) +
+    "rho_obj   = " + fmt_(rhoObj) + " kg/m3" + CHAR(10) +
+    "rho_fluid = " + fmt_(rhoFluid) + " kg/m3" + CHAR(10) +
+    "Estado: " + estado);
 END;
 
-// ---- Fraccion sumergida de un cuerpo flotante ----
-MF_BUOY_FR()
+MF_BUOY_FRAC()
 BEGIN
-  LOCAL rho_f, rho_b, frac, Vsub_pct, res;
-
-  IF NOT INPUT({rho_f, rho_b},
-      "Fraccion Sumergida",
-      {"rho_f (kg/m3)=", "rho_b (kg/m3)="},
-      {"Densidad del fluido (agua=1000)", "Densidad del cuerpo flotante (debe ser < rho_f)"},
-      {1000.0, 700.0}) THEN RETURN; END;
-
-  IF rho_f <= 0 THEN MSGBOX("Error: rho_f debe ser positiva."); RETURN; END;
-  IF rho_b <= 0 THEN MSGBOX("Error: rho_b debe ser positiva."); RETURN; END;
-
-  IF rho_b >= rho_f THEN
-    MSGBOX("ATENCION: rho_b >= rho_f." + CHAR(10) + "El cuerpo no flota (se hunde)." + CHAR(10) + "Fraccion sumergida = 1 (completamente sumergido al hundirse).");
+  LOCAL rhoObj, rhoFluid, frac;
+  rhoObj := 0; rhoFluid := 0; frac := 0;
+  IF NOT INPUT({rhoObj, rhoFluid},
+    "Fraccion Sumergida",
+    {"rho_obj (kg/m3)=", "rho_fluid (kg/m3)="},
+    {"Densidad del objeto flotante", "Densidad del fluido"},
+    {600.0, 1000.0}) THEN RETURN; END;
+  IF rhoObj <= 0 THEN MSGBOX("Error: rho_obj debe ser positiva."); RETURN; END;
+  IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
+  frac := rhoObj / rhoFluid;
+  IF frac >= 1 THEN
+    MSGBOX("rho_obj >= rho_fluid: el objeto se hunde." + CHAR(10) +
+      "frac = " + fmt_(frac));
     RETURN;
   END;
-
-  // Condicion de equilibrio: rho_b * V_total = rho_f * V_sub
-  // => V_sub / V_total = rho_b / rho_f
-  frac := rho_b / rho_f;
-  Vsub_pct := frac * 100;
-
-  res := "=== FRACCION SUMERGIDA ===" + CHAR(10);
-  res := res + "V_sub/V_total = rho_b/rho_f" + CHAR(10);
-  res := res + "Fraccion sumergida = " + fmt_(frac) + CHAR(10);
-  res := res + "Porcentaje sumergido = " + fmt_(Vsub_pct) + " %" + CHAR(10);
-  res := res + "Porcentaje fuera = " + fmt_(100 - Vsub_pct) + " %" + CHAR(10);
-  res := res + "rho_f = " + fmt_(rho_f) + " kg/m3" + CHAR(10);
-  res := res + "rho_b = " + fmt_(rho_b) + " kg/m3";
-
-  MSGBOX(res);
+  MSGBOX("FRACCION SUMERGIDA" + CHAR(10) +
+    "frac = rho_obj/rho_fluid" + CHAR(10) +
+    "frac     = " + fmt_(frac) + CHAR(10) +
+    "Sumergido: " + fmt_(frac * 100) + " %" + CHAR(10) +
+    "Fuera:     " + fmt_((1 - frac) * 100) + " %");
 END;
 
-// ---- Menu principal del modulo ----
+MF_BUOY_VSUB()
+BEGIN
+  LOCAL m, rhoFluid, Vsub;
+  m := 0; rhoFluid := 0; Vsub := 0;
+  IF NOT INPUT({m, rhoFluid},
+    "Volumen Sumergido",
+    {"m (kg)=", "rho_fluid (kg/m3)="},
+    {"Masa del objeto flotante", "Densidad del fluido"},
+    {50.0, 1000.0}) THEN RETURN; END;
+  IF m <= 0 THEN MSGBOX("Error: m debe ser positiva."); RETURN; END;
+  IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
+  Vsub := m / rhoFluid;
+  MSGBOX("VOLUMEN SUMERGIDO" + CHAR(10) +
+    "Vsub = m/rho_fluid" + CHAR(10) +
+    "Vsub = " + fmt_(Vsub) + " m3" + CHAR(10) +
+    "m    = " + fmt_(m) + " kg");
+END;
+
+MF_BUOY_RHOOBJ()
+BEGIN
+  LOCAL m, V, rhoObj;
+  m := 0; V := 0; rhoObj := 0;
+  IF NOT INPUT({m, V},
+    "Densidad del Objeto",
+    {"m (kg)=", "V (m3)="},
+    {"Masa del objeto", "Volumen del objeto"},
+    {10.0, 0.01}) THEN RETURN; END;
+  IF m <= 0 THEN MSGBOX("Error: m debe ser positiva."); RETURN; END;
+  IF V <= 0 THEN MSGBOX("Error: V debe ser positivo."); RETURN; END;
+  rhoObj := m / V;
+  MSGBOX("DENSIDAD DEL OBJETO" + CHAR(10) +
+    "rho_obj = m/V" + CHAR(10) +
+    "rho_obj = " + fmt_(rhoObj) + " kg/m3");
+END;
+
+MF_BUOY_CMAX()
+BEGIN
+  LOCAL rhoFluid, g, Vmax, mBody, mTotal, mPayload, Wpayload;
+  rhoFluid := 0; g := 0; Vmax := 0; mBody := 0;
+  IF NOT INPUT({rhoFluid, g, Vmax, mBody},
+    "Carga Maxima Flotacion",
+    {"rho_fluid (kg/m3)=", "g (m/s2)=", "Vmax (m3)=", "m_body (kg)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Volumen maximo desplazado", "Masa del cuerpo flotante"},
+    {1000.0, 9.81, 1.0, 200.0}) THEN RETURN; END;
+  IF rhoFluid <= 0 THEN MSGBOX("Error: rho_fluid debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF Vmax <= 0 THEN MSGBOX("Error: Vmax debe ser positivo."); RETURN; END;
+  IF mBody < 0 THEN MSGBOX("Error: m_body debe ser no negativa."); RETURN; END;
+  mTotal := rhoFluid * Vmax;
+  mPayload := mTotal - mBody;
+  IF mPayload < 0 THEN
+    MSGBOX("No flota sin carga" + CHAR(10) +
+      "m_total = " + fmt_(mTotal) + " kg" + CHAR(10) +
+      "m_body  = " + fmt_(mBody) + " kg" + CHAR(10) +
+      "m_body > m_total: no flota");
+    RETURN;
+  END;
+  Wpayload := mPayload * g;
+  MSGBOX("CARGA MAXIMA FLOTACION" + CHAR(10) +
+    "m_total   = " + fmt_(mTotal) + " kg" + CHAR(10) +
+    "m_payload = " + fmt_(mPayload) + " kg" + CHAR(10) +
+    "W_payload = " + fmt_(Wpayload) + " N" + CHAR(10) +
+    "W_payload = " + fmt_(Wpayload / 1000) + " kN");
+END;
+
+MF_BUOY_HELP()
+BEGIN
+  MSGBOX("AYUDA: FLOTABILIDAD" + CHAR(10) +
+    "Fb = rho_fluid*g*Vdisp" + CHAR(10) +
+    "Equilibrio: peso = empuje" + CHAR(10) +
+    "Fraccion sumergida = rho_obj/rho_fluid" + CHAR(10) +
+    "Si rho_obj > rho_fluid: se hunde.");
+END;
+
 EXPORT MF_BUOY()
 BEGIN
   LOCAL c;
   WHILE 1 DO
     CHOOSE(c,
       "FLOTABILIDAD Y EMPUJE",
-      "1. Fuerza de Empuje (Arquimedes)",
-      "2. Analisis de Flotabilidad",
-      "3. Fraccion Sumergida (Cuerpo Flotante)",
-      "0. Volver al menu principal");
-
-    IF c == 0 OR c == 4 THEN RETURN; END;
-    IF c == 1 THEN MF_BUOY_FE(); END;
+      "1. Empuje Arquimedes",
+      "2. Flota/hunde/neutro",
+      "3. Fraccion sumergida",
+      "4. Volumen sumergido",
+      "5. Densidad objeto",
+      "6. Carga maxima flotacion",
+      "7. Ayuda flotabilidad",
+      "8. Volver");
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_BUOY_FB(); END;
     IF c == 2 THEN MF_BUOY_FL(); END;
-    IF c == 3 THEN MF_BUOY_FR(); END;
+    IF c == 3 THEN MF_BUOY_FRAC(); END;
+    IF c == 4 THEN MF_BUOY_VSUB(); END;
+    IF c == 5 THEN MF_BUOY_RHOOBJ(); END;
+    IF c == 6 THEN MF_BUOY_CMAX(); END;
+    IF c == 7 THEN MF_BUOY_HELP(); END;
   END;
 END;

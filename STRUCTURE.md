@@ -38,23 +38,35 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_VC()         Viscosidad cinemática
 │   └── MF_PD()         Presión dinámica
 │
-├── MF_MANO()     ← Módulo independiente
-│   ├── MF_MANO_PC()    Conversión Abs/Man/Vacío
-│   ├── MF_MANO_SIM()   Manómetro simple U
-│   ├── MF_MANO_DIF()   Manómetro diferencial
-│   ├── MF_MANO_INC()   Manómetro inclinado
-│   └── MF_MANO_DP()    ΔP = ρgh directo
+├── MF_MANO()     ← Módulo independiente (v2.0)
+│   ├── fmt_()              Helper formato numérico
+│   ├── MF_MANO_HIDRO()     Opcion 1: P = P0 + rho*g*h
+│   ├── MF_MANO_SIM()       Opcion 2: manometro U simple
+│   ├── MF_MANO_DIF()       Opcion 3: manometro diferencial
+│   ├── MF_MANO_INC()       Opcion 4: manometro inclinado (dos fluidos)
+│   ├── MF_MANO_ABS()       Opcion 5: presion absoluta/manometrica/vacio
+│   ├── MF_MANO_HEQV()      Opcion 6: altura equivalente h = DeltaP/(rho*g)
+│   └── MF_MANO_HELP()      Opcion 7: ayuda formulas
 │
-├── MF_HYDRO()    ← Módulo independiente
-│   ├── MF_HYDRO_P()    Presión hidrostática
-│   ├── MF_HYDRO_FV()   Fuerza en placa vertical
-│   ├── MF_HYDRO_FI()   Fuerza en placa inclinada
-│   └── MF_HYDRO_FH()   Fuerza en superficie horizontal
+├── MF_HYDRO()    ← Módulo independiente (v2.0)
+│   ├── fmt_()              Helper formato numérico
+│   ├── MF_HYDRO_FV()       Opcion 1: fuerza placa vertical F = rho*g*yc*A
+│   ├── MF_HYDRO_FI()       Opcion 2: fuerza placa inclinada F = rho*g*yc*A
+│   ├── MF_HYDRO_CPV()      Opcion 3: centro de presion placa vertical
+│   ├── MF_HYDRO_CPI()      Opcion 4: centro de presion placa inclinada
+│   ├── MF_HYDRO_RECT()     Opcion 5: compuerta rectangular (A, yc, F, yp)
+│   ├── MF_HYDRO_FH()       Opcion 6: fuerza superficie horizontal
+│   └── MF_HYDRO_HELP()     Opcion 7: ayuda formulas
 │
-├── MF_BUOY()     ← Módulo independiente
-│   ├── MF_BUOY_FE()    Fuerza de empuje
-│   ├── MF_BUOY_FL()    Análisis de flotabilidad
-│   └── MF_BUOY_FR()    Fracción sumergida
+├── MF_BUOY()     ← Módulo independiente (v2.0)
+│   ├── fmt_()              Helper formato numérico
+│   ├── MF_BUOY_FB()        Opcion 1: empuje Arquimedes Fb = rho*g*Vdisp
+│   ├── MF_BUOY_FL()        Opcion 2: flota/hunde/neutro por densidades
+│   ├── MF_BUOY_FRAC()      Opcion 3: fraccion sumergida = rho_obj/rho_fluid
+│   ├── MF_BUOY_VSUB()      Opcion 4: volumen sumergido Vsub = m/rho_fluid
+│   ├── MF_BUOY_RHOOBJ()    Opcion 5: densidad objeto rho = m/V
+│   ├── MF_BUOY_CMAX()      Opcion 6: carga maxima de flotacion
+│   └── MF_BUOY_HELP()      Opcion 7: ayuda formulas
 │
 ├── MF_BERN()     ← Módulo independiente
 │   ├── MF_BERN_P2()    Hallar P₂

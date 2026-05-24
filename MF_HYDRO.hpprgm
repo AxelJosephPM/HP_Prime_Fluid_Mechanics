@@ -1,15 +1,4 @@
-// ============================================================
-// MF_HYDRO.hpprgm
-// FLUIDOS PRIME v1.0 - Hidrostatica
-// HP Prime G2
-// ============================================================
-// Contenido:
-//   MF_HYDRO()      - Menu principal (EXPORT)
-//   MF_HYDRO_P()    - Presion hidrostatica P = P0 + rho*g*h
-//   MF_HYDRO_FV()   - Fuerza sobre placa vertical
-//   MF_HYDRO_FI()   - Fuerza sobre placa inclinada
-//   MF_HYDRO_FH()   - Fuerza sobre superficie horizontal
-// ============================================================
+// MF_HYDRO.hpprgm - Hidrostatica v2.0
 
 fmt_(x)
 BEGIN
@@ -20,193 +9,176 @@ BEGIN
   RETURN STRING(ROUND(x, 4));
 END;
 
-// ---- Presion hidrostatica ----
-MF_HYDRO_P()
-BEGIN
-  LOCAL P0, rho, g, h, P, res;
-
-  IF NOT INPUT({P0, rho, g, h},
-      "Presion Hidrostatica",
-      {"P0 (Pa)=", "rho (kg/m3)=", "g (m/s2)=", "h (m)="},
-      {"Presion en la superficie libre (man. o abs.)", "Densidad del fluido", "Aceleracion gravitacional", "Profundidad (positiva hacia abajo)"},
-      {101325.0, 1000.0, 9.81, 2.0}) THEN RETURN; END;
-
-  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
-  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF h < 0 THEN MSGBOX("Error: h debe ser no negativa."); RETURN; END;
-
-  P := P0 + rho * g * h;
-
-  IF P < 0 THEN
-    MSGBOX("ATENCION: La presion absoluta calculada es negativa (" + fmt_(P) + " Pa)." + CHAR(10) + "Fisicamente imposible. Verifique los datos de entrada.");
-    RETURN;
-  END;
-
-  res := "=== PRESION HIDROSTATICA ===" + CHAR(10);
-  res := res + "P = P0 + rho*g*h" + CHAR(10);
-  res := res + "P  = " + fmt_(P) + " Pa" + CHAR(10);
-  res := res + "P  = " + fmt_(P / 1000) + " kPa" + CHAR(10);
-  res := res + "P0 = " + fmt_(P0) + " Pa" + CHAR(10);
-  res := res + "rho= " + fmt_(rho) + " kg/m3" + CHAR(10);
-  res := res + "h  = " + fmt_(h) + " m" + CHAR(10);
-  res := res + "rho*g*h = " + fmt_(rho*g*h) + " Pa  (presion manometrica)";
-
-  MSGBOX(res);
-END;
-
-// ---- Fuerza sobre placa plana vertical rectangular ----
-// Placa sumergida, borde superior a h1, borde inferior a h2
-// Centroide: h_c = (h1+h2)/2
-// Area:     A = ancho * (h2-h1)
-// Fuerza:   F = rho*g*h_c*A
-// Centro de presion: y_cp = y_c + I_G/(y_c*A)
-//   donde y_c = h_c (placa vertical)
-//   I_G = ancho*(h2-h1)^3/12 (eje centroidal horizontal)
 MF_HYDRO_FV()
 BEGIN
-  LOCAL rho, g, h1, h2, b, hc;
-  LOCAL A, F, IG, ycp, ecp, res;
-
-  IF NOT INPUT({rho, g, h1, h2, b},
-      "Fuerza - Placa Vertical",
-      {"rho (kg/m3)=", "g (m/s2)=", "h1 (m)=", "h2 (m)=", "ancho b (m)="},
-      {"Densidad del fluido", "Aceleracion gravitacional", "Profundidad del borde superior", "Profundidad del borde inferior (h2>h1)", "Ancho de la placa"},
-      {1000.0, 9.81, 0.5, 2.0, 1.0}) THEN RETURN; END;
-
+  LOCAL rho, g, A, yc, F;
+  rho := 0; g := 0; A := 0; yc := 0; F := 0;
+  IF NOT INPUT({rho, g, A, yc},
+    "Fuerza Placa Vertical",
+    {"rho (kg/m3)=", "g (m/s2)=", "A (m2)=", "yc (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Area de la placa", "Profundidad vertical del centroide"},
+    {1000.0, 9.81, 2.0, 3.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF h1 < 0 THEN MSGBOX("Error: h1 debe ser no negativa."); RETURN; END;
-  IF h2 <= h1 THEN MSGBOX("Error: h2 debe ser mayor que h1."); RETURN; END;
-  IF b <= 0 THEN MSGBOX("Error: b (ancho) debe ser positivo."); RETURN; END;
-
-  hc := (h1 + h2) / 2;
-  A := b * (h2 - h1);
-  F := rho * g * hc * A;
-
-  // Segundo momento de area respecto al centroide (rect.)
-  IG := b * (h2 - h1) ^ 3 / 12;
-  // Centro de presion (desde la superficie libre)
-  ycp := hc + IG / (hc * A);
-  // Excentricidad: distancia del centroide al centro de presion
-  ecp := ycp - hc;
-
-  res := "=== FUERZA EN PLACA VERTICAL ===" + CHAR(10);
-  res := res + "F = rho*g*hc*A" + CHAR(10);
-  res := res + "F    = " + fmt_(F) + " N" + CHAR(10);
-  res := res + "F    = " + fmt_(F / 1000) + " kN" + CHAR(10);
-  res := res + "hc   = " + fmt_(hc) + " m  (profundidad del centroide)" + CHAR(10);
-  res := res + "A    = " + fmt_(A) + " m2" + CHAR(10);
-  res := res + "ycp  = " + fmt_(ycp) + " m  (centro de presion)" + CHAR(10);
-  res := res + "ecp  = " + fmt_(ecp) + " m  (excentricidad)";
-
-  MSGBOX(res);
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF yc <= 0 THEN MSGBOX("Error: yc debe ser positiva."); RETURN; END;
+  F := rho * g * yc * A;
+  MSGBOX("FUERZA PLACA VERTICAL" + CHAR(10) +
+    "F = rho*g*yc*A" + CHAR(10) +
+    "F  = " + fmt_(F) + " N" + CHAR(10) +
+    "F  = " + fmt_(F / 1000) + " kN" + CHAR(10) +
+    "yc = " + fmt_(yc) + " m" + CHAR(10) +
+    "A  = " + fmt_(A) + " m2");
 END;
 
-// ---- Fuerza sobre placa inclinada rectangular ----
-// theta: angulo con la horizontal (grados)
-// h_c = profundidad del centroide
-// y_c = h_c / sin(theta)  [coordenada inclinada]
-// A = b * L
-// I_G = b*L^3/12  (respecto al centroide, eje normal a inclinacion)
-// y_cp = y_c + I_G/(y_c*A)
-// h_cp = y_cp * sin(theta)
 MF_HYDRO_FI()
 BEGIN
-  LOCAL rho, g, hc, b, L, theta;
-  LOCAL F, A, yc, IG, ycp, hcp;
-  LOCAL ecp, res, sinT;
-
-  IF NOT INPUT({rho, g, hc, b, L, theta},
-      "Fuerza - Placa Inclinada",
-      {"rho (kg/m3)=", "g (m/s2)=", "hc (m)=", "b (m)=", "L (m)=", "theta (grados)="},
-      {"Densidad del fluido", "Aceleracion gravitacional", "Profundidad del centroide de la placa", "Ancho de la placa (perpendicular a inclinacion)", "Longitud de la placa (a lo largo de la inclinacion)", "Angulo con la horizontal"},
-      {1000.0, 9.81, 1.5, 1.0, 2.0, 45.0}) THEN RETURN; END;
-
+  LOCAL rho, g, A, yc, F;
+  rho := 0; g := 0; A := 0; yc := 0; F := 0;
+  IF NOT INPUT({rho, g, A, yc},
+    "Fuerza Placa Inclinada",
+    {"rho (kg/m3)=", "g (m/s2)=", "A (m2)=", "yc (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Area de la placa", "Profundidad vertical del centroide"},
+    {1000.0, 9.81, 2.0, 3.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
-  IF hc <= 0 THEN MSGBOX("Error: hc debe ser positiva."); RETURN; END;
-  IF b <= 0 THEN MSGBOX("Error: b debe ser positivo."); RETURN; END;
-  IF L <= 0 THEN MSGBOX("Error: L debe ser positivo."); RETURN; END;
-  IF theta <= 0 OR theta > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
-
-  sinT := SIN(theta * 3.14159265358979 / 180);
-  IF sinT <= 0 THEN MSGBOX("Error: sin(theta) = 0, angulo invalido."); RETURN; END;
-
-  A := b * L;
-  F := rho * g * hc * A;
-
-  // Coordenada inclinada del centroide desde la interseccion con la superficie libre
-  yc := hc / sinT;
-  // Segundo momento de area centroidal (rectangulo)
-  IG := b * L ^ 3 / 12;
-  // Centro de presion en coordenada inclinada
-  ycp := yc + IG / (yc * A);
-  // Profundidad del centro de presion
-  hcp := ycp * sinT;
-  ecp := (ycp - yc) * sinT;  // excentricidad en metros verticales
-
-  res := "=== FUERZA EN PLACA INCLINADA ===" + CHAR(10);
-  res := res + "F = rho*g*hc*A" + CHAR(10);
-  res := res + "F    = " + fmt_(F) + " N" + CHAR(10);
-  res := res + "F    = " + fmt_(F / 1000) + " kN" + CHAR(10);
-  res := res + "hc   = " + fmt_(hc) + " m  (centroide - profundidad)" + CHAR(10);
-  res := res + "A    = " + fmt_(A) + " m2" + CHAR(10);
-  res := res + "theta= " + fmt_(theta) + " grados" + CHAR(10);
-  res := res + "hcp  = " + fmt_(hcp) + " m  (centro de presion - profund.)" + CHAR(10);
-  res := res + "ecp  = " + fmt_(ecp) + " m  (excentricidad vertical)";
-
-  MSGBOX(res);
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF yc <= 0 THEN MSGBOX("Error: yc debe ser positiva."); RETURN; END;
+  F := rho * g * yc * A;
+  MSGBOX("FUERZA PLACA INCLINADA" + CHAR(10) +
+    "F = rho*g*yc*A" + CHAR(10) +
+    "F  = " + fmt_(F) + " N" + CHAR(10) +
+    "F  = " + fmt_(F / 1000) + " kN" + CHAR(10) +
+    "yc = " + fmt_(yc) + " m  (profundidad vertical)" + CHAR(10) +
+    "A  = " + fmt_(A) + " m2");
 END;
 
-// ---- Fuerza sobre superficie horizontal ----
+MF_HYDRO_CPV()
+BEGIN
+  LOCAL yc, A, Ixc, yp;
+  yc := 0; A := 0; Ixc := 0; yp := 0;
+  IF NOT INPUT({yc, A, Ixc},
+    "Centro Presion Vertical",
+    {"yc (m)=", "A (m2)=", "Ixc (m4)="},
+    {"Profundidad del centroide", "Area de la placa", "2do momento de area centroidal"},
+    {3.0, 2.0, 0.1667}) THEN RETURN; END;
+  IF yc <= 0 THEN MSGBOX("Error: yc debe ser positiva."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF Ixc < 0 THEN MSGBOX("Error: Ixc debe ser no negativo."); RETURN; END;
+  yp := yc + Ixc / (yc * A);
+  MSGBOX("CENTRO PRESION VERTICAL" + CHAR(10) +
+    "yp = yc + Ixc/(yc*A)" + CHAR(10) +
+    "yp    = " + fmt_(yp) + " m" + CHAR(10) +
+    "yc    = " + fmt_(yc) + " m" + CHAR(10) +
+    "e     = " + fmt_(yp - yc) + " m  (excentricidad)");
+END;
+
+MF_HYDRO_CPI()
+BEGIN
+  LOCAL yc, A, Ixc, thetaDeg, thetaRad, sinT, yp;
+  yc := 0; A := 0; Ixc := 0; thetaDeg := 0;
+  IF NOT INPUT({yc, A, Ixc, thetaDeg},
+    "Centro Presion Inclinada",
+    {"yc (m)=", "A (m2)=", "Ixc (m4)=", "theta (grados)="},
+    {"Profundidad vertical del centroide", "Area de la placa", "2do momento de area centroidal", "Angulo con la horizontal"},
+    {3.0, 2.0, 0.1667, 45.0}) THEN RETURN; END;
+  IF yc <= 0 THEN MSGBOX("Error: yc debe ser positiva."); RETURN; END;
+  IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
+  IF Ixc < 0 THEN MSGBOX("Error: Ixc debe ser no negativo."); RETURN; END;
+  IF thetaDeg <= 0 OR thetaDeg > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
+  thetaRad := thetaDeg * PI / 180;
+  sinT := SIN(thetaRad);
+  yp := yc + Ixc * sinT * sinT / (yc * A);
+  MSGBOX("CENTRO PRESION INCLINADA" + CHAR(10) +
+    "yp = yc + Ixc*sin2(t)/(yc*A)" + CHAR(10) +
+    "yp    = " + fmt_(yp) + " m" + CHAR(10) +
+    "yc    = " + fmt_(yc) + " m" + CHAR(10) +
+    "theta = " + fmt_(thetaDeg) + " grados" + CHAR(10) +
+    "e     = " + fmt_(yp - yc) + " m  (excentricidad)");
+END;
+
+MF_HYDRO_RECT()
+BEGIN
+  LOCAL rho, g, b, h, yTop, A, yc, Ixc, F, yp;
+  rho := 0; g := 0; b := 0; h := 0; yTop := 0;
+  IF NOT INPUT({rho, g, b, h, yTop},
+    "Compuerta Rectangular",
+    {"rho (kg/m3)=", "g (m/s2)=", "b (m)=", "h (m)=", "y_top (m)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Ancho de la compuerta", "Altura de la compuerta", "Profundidad del borde superior"},
+    {1000.0, 9.81, 2.0, 3.0, 1.0}) THEN RETURN; END;
+  IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
+  IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
+  IF b <= 0 THEN MSGBOX("Error: b debe ser positivo."); RETURN; END;
+  IF h <= 0 THEN MSGBOX("Error: h debe ser positiva."); RETURN; END;
+  IF yTop < 0 THEN MSGBOX("Error: y_top debe ser no negativa."); RETURN; END;
+  A := b * h;
+  yc := yTop + h / 2;
+  Ixc := b * h ^ 3 / 12;
+  F := rho * g * yc * A;
+  yp := yc + Ixc / (yc * A);
+  MSGBOX("COMPUERTA RECTANGULAR" + CHAR(10) +
+    "A   = " + fmt_(A) + " m2" + CHAR(10) +
+    "yc  = " + fmt_(yc) + " m  (centroide)" + CHAR(10) +
+    "F   = " + fmt_(F) + " N" + CHAR(10) +
+    "F   = " + fmt_(F / 1000) + " kN" + CHAR(10) +
+    "yp  = " + fmt_(yp) + " m  (centro de presion)" + CHAR(10) +
+    "e   = " + fmt_(yp - yc) + " m  (excentricidad)");
+END;
+
 MF_HYDRO_FH()
 BEGIN
-  LOCAL rho, g, h, A, F, P, res;
-
+  LOCAL rho, g, h, A, P, F;
+  rho := 0; g := 0; h := 0; A := 0; P := 0; F := 0;
   IF NOT INPUT({rho, g, h, A},
-      "Fuerza - Superficie Horizontal",
-      {"rho (kg/m3)=", "g (m/s2)=", "h (m)=", "A (m2)="},
-      {"Densidad del fluido", "Aceleracion gravitacional", "Profundidad de la superficie", "Area de la superficie"},
-      {1000.0, 9.81, 3.0, 2.0}) THEN RETURN; END;
-
+    "Superficie Horizontal",
+    {"rho (kg/m3)=", "g (m/s2)=", "h (m)=", "A (m2)="},
+    {"Densidad del fluido", "Aceleracion gravitacional", "Profundidad de la superficie", "Area de la superficie"},
+    {1000.0, 9.81, 3.0, 2.0}) THEN RETURN; END;
   IF rho <= 0 THEN MSGBOX("Error: rho debe ser positiva."); RETURN; END;
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
   IF h < 0 THEN MSGBOX("Error: h debe ser no negativa."); RETURN; END;
   IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
-
   P := rho * g * h;
   F := P * A;
-
-  res := "=== FUERZA EN SUPERFICIE HORIZONTAL ===" + CHAR(10);
-  res := res + "F = P*A = rho*g*h*A" + CHAR(10);
-  res := res + "P  = " + fmt_(P) + " Pa  (presion uniforme)" + CHAR(10);
-  res := res + "F  = " + fmt_(F) + " N" + CHAR(10);
-  res := res + "F  = " + fmt_(F / 1000) + " kN" + CHAR(10);
-  res := res + "h  = " + fmt_(h) + " m" + CHAR(10);
-  res := res + "A  = " + fmt_(A) + " m2" + CHAR(10);
-  res := res + CHAR(10) + "NOTA: El centro de presion coincide con el centroide";
-  res := res + CHAR(10) + "porque la presion es uniforme en la superficie.";
-
-  MSGBOX(res);
+  MSGBOX("SUPERFICIE HORIZONTAL" + CHAR(10) +
+    "P = rho*g*h,  F = P*A" + CHAR(10) +
+    "P = " + fmt_(P) + " Pa" + CHAR(10) +
+    "F = " + fmt_(F) + " N" + CHAR(10) +
+    "F = " + fmt_(F / 1000) + " kN" + CHAR(10) +
+    "Presion uniforme (cp = centroide)");
 END;
 
-// ---- Menu principal del modulo ----
+MF_HYDRO_HELP()
+BEGIN
+  MSGBOX("AYUDA: HIDROSTATICA" + CHAR(10) +
+    "F = rho*g*yc*A  (fuerza resultante)" + CHAR(10) +
+    "yc = profundidad vertical del centroide." + CHAR(10) +
+    "Centro de presion esta bajo el centroide." + CHAR(10) +
+    "yp = yc + Ixc/(yc*A)  (placa vertical)" + CHAR(10) +
+    "Rectangular: Ixc = b*h^3/12");
+END;
+
 EXPORT MF_HYDRO()
 BEGIN
   LOCAL c;
   WHILE 1 DO
     CHOOSE(c,
       "HIDROSTATICA",
-      "1. Presion Hidrostatica",
-      "2. Fuerza en Placa Vertical",
-      "3. Fuerza en Placa Inclinada",
-      "4. Fuerza en Superficie Horizontal",
-      "0. Volver al menu principal");
-
-    IF c == 0 OR c == 5 THEN RETURN; END;
-    IF c == 1 THEN MF_HYDRO_P(); END;
-    IF c == 2 THEN MF_HYDRO_FV(); END;
-    IF c == 3 THEN MF_HYDRO_FI(); END;
-    IF c == 4 THEN MF_HYDRO_FH(); END;
+      "1. Fuerza placa vertical",
+      "2. Fuerza placa inclinada",
+      "3. Centro presion vertical",
+      "4. Centro presion inclinada",
+      "5. Compuerta rectangular",
+      "6. Superficie horizontal",
+      "7. Ayuda hidrostatica",
+      "8. Volver");
+    IF c == 0 OR c == 8 THEN RETURN; END;
+    IF c == 1 THEN MF_HYDRO_FV(); END;
+    IF c == 2 THEN MF_HYDRO_FI(); END;
+    IF c == 3 THEN MF_HYDRO_CPV(); END;
+    IF c == 4 THEN MF_HYDRO_CPI(); END;
+    IF c == 5 THEN MF_HYDRO_RECT(); END;
+    IF c == 6 THEN MF_HYDRO_FH(); END;
+    IF c == 7 THEN MF_HYDRO_HELP(); END;
   END;
 END;

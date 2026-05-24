@@ -851,6 +851,156 @@ Valor orientativo
 
 ---
 
+---
+
+## TEST 39: Presion hidrostatica (MF_MANO opcion 1)
+
+**Menu:** Manometros → Presion hidrostatica
+
+**Entrada:**
+- rho = 1000 kg/m3
+- g = 9.81 m/s2
+- h = 2 m
+- P0 = 0 Pa
+
+**Calculo:**
+```
+P = 0 + 1000*9.81*2 = 19620 Pa
+```
+
+**Esperado en pantalla:**
+```
+P = 19620 Pa
+P = 19.62 kPa
+rho*g*h = 19620 Pa
+```
+
+---
+
+## TEST 40: Manometro U simple (MF_MANO opcion 2)
+
+**Menu:** Manometros → Manometro U simple
+
+**Entrada:**
+- rho_mano = 13600 kg/m3 (mercurio)
+- rho_fluid = 1000 kg/m3 (agua)
+- g = 9.81 m/s2
+- dh = 0.1 m
+
+**Calculo:**
+```
+DeltaP = (13600 - 1000)*9.81*0.1 = 12600*0.981 = 12360.6 Pa
+```
+
+**Esperado en pantalla:**
+```
+DeltaP = 12360.6 Pa  ~  12361 Pa
+DeltaP = 12.361 kPa
+```
+
+---
+
+## TEST 41: Fuerza placa vertical (MF_HYDRO opcion 1)
+
+**Menu:** Hidrostatica → Fuerza placa vertical
+
+**Entrada:**
+- rho = 1000 kg/m3
+- g = 9.81 m/s2
+- A = 2 m2
+- yc = 3 m
+
+**Calculo:**
+```
+F = 1000*9.81*3*2 = 58860 N
+```
+
+**Esperado en pantalla:**
+```
+F  = 58860 N
+F  = 58.86 kN
+yc = 3 m
+A  = 2 m2
+```
+
+---
+
+## TEST 42: Compuerta rectangular (MF_HYDRO opcion 5)
+
+**Menu:** Hidrostatica → Compuerta rectangular
+
+**Entrada:**
+- rho = 1000 kg/m3
+- g = 9.81 m/s2
+- b = 2 m
+- h = 3 m
+- y_top = 1 m
+
+**Calculo:**
+```
+A   = 2*3 = 6 m2
+yc  = 1 + 3/2 = 2.5 m
+Ixc = 2*3^3/12 = 54/12 = 4.5 m4
+F   = 1000*9.81*2.5*6 = 147150 N
+yp  = 2.5 + 4.5/(2.5*6) = 2.5 + 0.3 = 2.8 m
+```
+
+**Esperado en pantalla:**
+```
+A   = 6 m2
+yc  = 2.5 m
+F   = 147150 N  ~  147.15 kN
+yp  = 2.8 m
+e   = 0.3 m
+```
+
+---
+
+## TEST 43: Empuje Arquimedes (MF_BUOY opcion 1)
+
+**Menu:** Flotabilidad → Empuje Arquimedes
+
+**Entrada:**
+- rho_fluid = 1000 kg/m3
+- g = 9.81 m/s2
+- Vdisp = 0.1 m3
+
+**Calculo:**
+```
+Fb = 1000*9.81*0.1 = 981 N
+```
+
+**Esperado en pantalla:**
+```
+Fb = 981 N
+Fb = 0.981 kN
+```
+
+---
+
+## TEST 44: Fraccion sumergida (MF_BUOY opcion 3)
+
+**Menu:** Flotabilidad → Fraccion sumergida
+
+**Entrada:**
+- rho_obj = 600 kg/m3
+- rho_fluid = 1000 kg/m3
+
+**Calculo:**
+```
+frac = 600/1000 = 0.6
+Sumergido: 60%, Fuera: 40%
+```
+
+**Esperado en pantalla:**
+```
+frac     = 0.6
+Sumergido: 60 %
+Fuera:     40 %
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.

@@ -99,25 +99,32 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 - Clasificación automática: laminar / transicional / turbulento
 - Aviso de compresibilidad si Ma > 0.3
 
-### 2. Manómetros y Presiones (`MF_MANO`)
-- Conversión presión absoluta ↔ manométrica ↔ vacío
-- Manómetro de tubo en U simple: ΔP = ρ·g·h·(ρ_m − ρ_f)
-- Manómetro diferencial con fluido manométrico
-- Manómetro inclinado: h = L·sin(θ)
-- ΔP por columna de fluido: ΔP = ρgh
-- Conversión de unidades de presión integrada (Pa, kPa, bar, atm, mmHg, psi)
+### 2. Manómetros y Presiones (`MF_MANO`) — mejorado v2.0
+- Presión hidrostática directa: P = P0 + rho*g*h
+- Manómetro de tubo en U simple: DeltaP = (rho_m − rho_f)*g*dh
+- Manómetro diferencial con dos fluidos
+- Manómetro inclinado con dos fluidos: dh = L*sin(theta)
+- Presión absoluta/manométrica/vacío con submenú
+- Altura equivalente de columna de fluido: h = DeltaP/(rho*g)
+- Ayuda integrada
 
-### 3. Hidrostática (`MF_HYDRO`)
-- Presión hidrostática: P = P₀ + ρgh
-- Fuerza sobre placa vertical rectangular: F = ρg·h_c·A, centro de presión
-- Fuerza sobre placa inclinada rectangular (ángulo θ con horizontal)
-- Fuerza sobre superficie horizontal
-- Excentricidad: e = I_G / (y_c·A)
+### 3. Hidrostática (`MF_HYDRO`) — mejorado v2.0
+- Fuerza sobre placa vertical: F = rho*g*yc*A (inputs: rho, g, A, yc)
+- Fuerza sobre placa inclinada: F = rho*g*yc*A (inputs: rho, g, A, yc)
+- Centro de presión placa vertical: yp = yc + Ixc/(yc*A)
+- Centro de presión placa inclinada: yp = yc + Ixc*sin²(theta)/(yc*A)
+- Compuerta rectangular: A, yc, F, yp desde b, h, y_top
+- Fuerza sobre superficie horizontal: F = rho*g*h*A
+- Ayuda integrada
 
-### 4. Flotabilidad y Empuje (`MF_BUOY`)
-- Fuerza de empuje: E = ρ_f·g·V_desplazado
-- Análisis completo: flota / se hunde / neutro
-- Fracción sumergida de cuerpo flotante: V_sub/V = ρ_cuerpo/ρ_fluido
+### 4. Flotabilidad y Empuje (`MF_BUOY`) — mejorado v2.0
+- Empuje Arquímedes: Fb = rho_fluid*g*Vdisp
+- Análisis flota/hunde/neutro por comparación de densidades
+- Fracción sumergida: frac = rho_obj/rho_fluid, con porcentajes
+- Volumen sumergido desde masa: Vsub = m/rho_fluid
+- Densidad del objeto desde masa y volumen: rho = m/V
+- Carga máxima de flotación: m_payload = rho_fluid*Vmax − m_body
+- Ayuda integrada
 
 ### 5. Ecuación de Bernoulli Generalizada (`MF_BERN`)
 - Hallar P₂ dado todo lo demás
