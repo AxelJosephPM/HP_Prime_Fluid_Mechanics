@@ -11,7 +11,8 @@ END;
 
 MF_BERN_BAL()
 BEGIN
-  LOCAL P1, V1, z1, P2, V2, z2, rho, g, hPump, hTurb, hL, E1, E2, res;
+  LOCAL P1, V1, z1, P2, V2, z2, rho;
+  LOCAL g, hPump, hTurb, hL, E1, E2, res;
   P1 := 0; V1 := 0; z1 := 0; P2 := 0; V2 := 0; z2 := 0;
   rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
   IF NOT INPUT({P1, V1, z1, P2, V2, z2},
@@ -40,7 +41,8 @@ END;
 
 MF_BERN_P2()
 BEGIN
-  LOCAL P1, V1, z1, V2, z2, rho, g, hPump, hTurb, hL, rhs, P2;
+  LOCAL P1, V1, z1, V2, z2, rho;
+  LOCAL g, hPump, hTurb, hL, rhs, P2;
   P1 := 0; V1 := 0; z1 := 0; V2 := 0; z2 := 0;
   rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
   IF NOT INPUT({P1, V1, z1, V2, z2},
@@ -66,7 +68,8 @@ END;
 
 MF_BERN_V2G()
 BEGIN
-  LOCAL P1, P2, V1, z1, z2, rho, g, hPump, hTurb, hL, term, V2;
+  LOCAL P1, P2, V1, z1, z2, rho;
+  LOCAL g, hPump, hTurb, hL, term, V2;
   P1 := 0; P2 := 0; V1 := 0; z1 := 0; z2 := 0;
   rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
   IF NOT INPUT({P1, P2, V1, z1, z2},
@@ -96,7 +99,8 @@ END;
 
 MF_BERN_Z2()
 BEGIN
-  LOCAL P1, P2, V1, V2, z1, rho, g, hPump, hTurb, hL, z2;
+  LOCAL P1, P2, V1, V2, z1, rho;
+  LOCAL g, hPump, hTurb, hL, z2;
   P1 := 0; P2 := 0; V1 := 0; V2 := 0; z1 := 0;
   rho := 0; g := 0; hPump := 0; hTurb := 0; hL := 0;
   IF NOT INPUT({P1, P2, V1, V2, z1},
@@ -163,7 +167,8 @@ END;
 
 MF_BERN_VENT()
 BEGIN
-  LOCAL D1, D2, DeltaP, rho, A1, A2, Q, V1, V2;
+  LOCAL D1, D2, DeltaP, rho, A1, A2, Q;
+  LOCAL V1, V2;
   D1 := 0; D2 := 0; DeltaP := 0; rho := 0;
   IF NOT INPUT({D1, D2, DeltaP, rho},
     "Venturi Ideal",

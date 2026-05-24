@@ -99,7 +99,8 @@ END;
 
 MF_HYDRO_RECT()
 BEGIN
-  LOCAL rho, g, b, h, yTop, A, yc, Ixc, F, yp;
+  LOCAL rho, g, b, h, yTop;
+  LOCAL A, yc, Ixc, F, yp;
   rho := 0; g := 0; b := 0; h := 0; yTop := 0;
   IF NOT INPUT({rho, g, b, h, yTop},
     "Compuerta Rectangular",

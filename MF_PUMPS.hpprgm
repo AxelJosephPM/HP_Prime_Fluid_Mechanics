@@ -105,7 +105,8 @@ MF_PUMPS_NPSHA()
 BEGIN
   LOCAL Patm, Pv, rho, zsuc;
   LOCAL Q, D, Lsuc, Ktot, eps, mu;
-  LOCAL g, A, V, reyn, f, hf, hm, hLs, NPSHa, res;
+  LOCAL g, A, V, reyn, f, hf, hm, hLs;
+  LOCAL NPSHa, res;
   g := 9.81;
   IF NOT INPUT({Patm, Pv, rho, zsuc},
       "NPSHa - Condiciones (1/2)",

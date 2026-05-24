@@ -95,7 +95,8 @@ END;
 MF_PIPES_TRAMO()
 BEGIN
   LOCAL Q, D, L, rho, mu, eps;
-  LOCAL g, A, V, reyn, f, hf, dP, aviso, res;
+  LOCAL g, A, V, reyn, f, hf, dP;
+  LOCAL aviso, res;
   g := 9.81;
   aviso := "";
   IF NOT INPUT({Q, D, L, rho, mu, eps},
@@ -157,7 +158,8 @@ END;
 MF_PIPES_SIM()
 BEGIN
   LOCAL Q, D, L, Ktot, rho, mu, eps;
-  LOCAL g, A, V, reyn, f, hf, hm, hL, dP, aviso, res;
+  LOCAL g, A, V, reyn, f, hf, hm, hL;
+  LOCAL dP, aviso, res;
   g := 9.81;
   aviso := "";
   IF NOT INPUT({Q, D, L, Ktot, rho, mu, eps},
@@ -197,8 +199,10 @@ END;
 // ---- Option 5: Sistema 2 tramos serie ----
 MF_PIPES_2T()
 BEGIN
-  LOCAL Q, D1, L1, eps1, D2, L2, eps2, Ktot, rho, mu;
-  LOCAL g, A1, A2, V1, V2, Re1, Re2, f1, f2, h1, h2, hm, hL, dP, aviso, res;
+  LOCAL Q, D1, L1, eps1, D2, L2, eps2, Ktot;
+  LOCAL rho, mu;
+  LOCAL g, A1, A2, V1, V2, reyn1, reyn2, f1;
+  LOCAL f2, h1, h2, hm, hL, dP, aviso, res;
   g := 9.81;
   aviso := "";
   IF NOT INPUT({Q, D1, L1, eps1, D2, L2, eps2, Ktot, rho, mu},
@@ -217,23 +221,23 @@ BEGIN
   A2 := PI * D2 ^ 2 / 4;
   V1 := Q / A1;
   V2 := Q / A2;
-  Re1 := rho * V1 * D1 / mu;
-  Re2 := rho * V2 * D2 / mu;
-  f1 := calcFF(Re1, eps1, D1);
-  f2 := calcFF(Re2, eps2, D2);
+  reyn1 := rho * V1 * D1 / mu;
+  reyn2 := rho * V2 * D2 / mu;
+  f1 := calcFF(reyn1, eps1, D1);
+  f2 := calcFF(reyn2, eps2, D2);
   h1 := f1 * (L1 / D1) * V1 ^ 2 / (2 * g);
   h2 := f2 * (L2 / D2) * V2 ^ 2 / (2 * g);
   hm := Ktot * V1 ^ 2 / (2 * g);
   hL := h1 + h2 + hm;
   dP := rho * g * hL;
-  IF (Re1 >= 2300 AND Re1 <= 4000) OR (Re2 >= 2300 AND Re2 <= 4000) THEN
+  IF (reyn1 >= 2300 AND reyn1 <= 4000) OR (reyn2 >= 2300 AND reyn2 <= 4000) THEN
     aviso := CHAR(10) + "AVISO: Zona transicion en algun tramo";
   END;
   res := "=== 2 TRAMOS SERIE ===" + CHAR(10);
   res := res + "V1  = " + fmt_(V1) + " m/s" + CHAR(10);
   res := res + "V2  = " + fmt_(V2) + " m/s" + CHAR(10);
-  res := res + "Re1 = " + fmt_(Re1) + CHAR(10);
-  res := res + "Re2 = " + fmt_(Re2) + CHAR(10);
+  res := res + "Re1 = " + fmt_(reyn1) + CHAR(10);
+  res := res + "Re2 = " + fmt_(reyn2) + CHAR(10);
   res := res + "f1  = " + fmt_(f1) + CHAR(10);
   res := res + "f2  = " + fmt_(f2) + CHAR(10);
   res := res + "h1  = " + fmt_(h1) + " m" + CHAR(10);
@@ -248,8 +252,10 @@ END;
 // Solve DeltaZ + hL(D) = Hav
 MF_PIPES_DIAM()
 BEGIN
-  LOCAL Q, rho, mu, eps, L, Ktot, DeltaZ, Hav, Dmin, Dmax;
-  LOCAL g, Dlo, Dhi, Dmid, Flo, Fhi, Fmid, i, hLv, V, reyn, f, A, Hreq, res;
+  LOCAL Q, rho, mu, eps, L, Ktot, DeltaZ, Hav;
+  LOCAL Dmin, Dmax;
+  LOCAL g, Dlo, Dhi, Dmid, Flo, Fhi, Fmid, i;
+  LOCAL hLv, V, reyn, f, A, Hreq, res;
   g := 9.81;
   IF NOT INPUT({Q, rho, mu, eps, L, Ktot, DeltaZ, Hav, Dmin, Dmax},
       "Diseno de diametro",
@@ -309,7 +315,8 @@ END;
 MF_PIPES_KVAL()
 BEGIN
   LOCAL Q, D, L, rho, mu, eps, DeltaZ, Hpump;
-  LOCAL g, A, V, reyn, f, hf, hvalve, Kvalve, res;
+  LOCAL g, A, V, reyn, f, hf, hvalve, Kvalve;
+  LOCAL res;
   g := 9.81;
   IF NOT INPUT({Q, D, L, rho, mu, eps, DeltaZ, Hpump},
       "K valvula regulacion",

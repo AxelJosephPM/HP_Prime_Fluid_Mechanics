@@ -27,7 +27,8 @@ END;
 // ---- Option 1: Esfuerzo cortante Newton ----
 MF_DIFF_TAU()
 BEGIN
-  LOCAL mode, mu, dudy, tau, u1, u2, y1, y2, res;
+  LOCAL mode, mu, dudy, tau, u1, u2, y1, y2;
+  LOCAL res;
   mode := 0;
   CHOOSE(mode, "Esfuerzo cortante Newton",
     "1. Dado du/dy directamente",
@@ -71,7 +72,8 @@ END;
 MF_DIFF_PUIS()
 BEGIN
   LOCAL D, L, deltaP, mu, rho;
-  LOCAL R, Q, A, Vavg, umax, tauw, Re, f, res;
+  LOCAL R, Q, A, Vavg, umax, tauw, reyn, f;
+  LOCAL res;
   IF NOT INPUT({D, L, deltaP, mu, rho},
       "Poiseuille - Tubo circular",
       {"D (m)=", "L (m)=", "deltaP (Pa)=", "mu (Pa*s)=", "rho (kg/m3)="},
@@ -88,17 +90,17 @@ BEGIN
   Vavg := Q / A;
   umax := 2 * Vavg;
   tauw := deltaP * R / (2 * L);
-  Re := rho * Vavg * D / mu;
-  f := 64 / Re;
+  reyn := rho * Vavg * D / mu;
+  f := 64 / reyn;
   res := "=== POISEUILLE TUBO ===" + CHAR(10);
   res := res + "Q=PI*R^4*dP/(8*mu*L)" + CHAR(10);
   res := res + "Q     = " + fmt_(Q) + " m3/s" + CHAR(10);
   res := res + "Vavg  = " + fmt_(Vavg) + " m/s" + CHAR(10);
   res := res + "umax  = " + fmt_(umax) + " m/s" + CHAR(10);
   res := res + "tauw  = " + fmt_(tauw) + " Pa" + CHAR(10);
-  res := res + "Re    = " + fmt_(Re) + CHAR(10);
+  res := res + "Re    = " + fmt_(reyn) + CHAR(10);
   res := res + "f     = " + fmt_(f);
-  IF Re > 2300 THEN
+  IF reyn > 2300 THEN
     res := res + CHAR(10) + "AVISO: No laminar: revisar Poiseuille";
   END;
   MSGBOX(res);
@@ -133,7 +135,7 @@ END;
 MF_DIFF_PUIS2()
 BEGIN
   LOCAL h, L, deltaP, mu, rho, y;
-  LOCAL u, umax, qwidth, Uavg, tauwall, Re, res;
+  LOCAL u, umax, qwidth, Uavg, tauwall, reyn, res;
   IF NOT INPUT({h, L, deltaP, mu, rho, y},
       "Poiseuille placas (semigap h)",
       {"h (m)=", "L (m)=", "deltaP (Pa)=", "mu (Pa*s)=", "rho (kg/m3)=", "y (m)="},
@@ -150,7 +152,7 @@ BEGIN
   qwidth := 2 * deltaP * h ^ 3 / (3 * mu * L);
   Uavg := qwidth / (2 * h);
   tauwall := deltaP * h / L;
-  Re := rho * Uavg * (2 * h) / mu;
+  reyn := rho * Uavg * (2 * h) / mu;
   res := "=== POISEUILLE PLACAS ===" + CHAR(10);
   res := res + "u(y)=dP*(h^2-y^2)/(2*mu*L)" + CHAR(10);
   res := res + "u(y)    = " + fmt_(u) + " m/s" + CHAR(10);
@@ -158,7 +160,7 @@ BEGIN
   res := res + "qwidth  = " + fmt_(qwidth) + " m2/s" + CHAR(10);
   res := res + "Uavg    = " + fmt_(Uavg) + " m/s" + CHAR(10);
   res := res + "tauwall = " + fmt_(tauwall) + " Pa" + CHAR(10);
-  res := res + "Re(2h)  = " + fmt_(Re);
+  res := res + "Re(2h)  = " + fmt_(reyn);
   MSGBOX(res);
 END;
 
