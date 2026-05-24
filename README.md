@@ -85,6 +85,11 @@ calculadora avanzada y asistente de examen para cursos universitarios de
 3. Presionar **ESC** para retroceder al menú anterior.
 4. Seleccionar **"0. SALIR"** para salir del programa.
 
+Nota sobre angulos: las entradas de angulo del usuario estan en grados salvo
+que una pantalla indique otra cosa. La app protege internamente los calculos
+trigonometricos del modo global de angulo de HP Prime: cambia temporalmente a
+radianes cuando hace falta y restaura el modo anterior.
+
 ---
 
 ## Módulos implementados (Fase 1–3 + Fase 2 completas)

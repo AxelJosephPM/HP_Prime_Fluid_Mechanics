@@ -33,11 +33,14 @@ END;
 // Devuelve angulo en grados [-180, 180]
 angulo_(Fx, Fy)
 BEGIN
-  LOCAL ang;
+  LOCAL ang, oldAng;
   IF Fx == 0 THEN
     IF Fy >= 0 THEN RETURN 90.0; ELSE RETURN -90.0; END;
   END;
+  oldAng := HAngle;
+  HAngle := 0;
   ang := ATAN(Fy / Fx) * 180 / 3.14159265358979;
+  HAngle := oldAng;
   IF Fx < 0 THEN
     IF Fy >= 0 THEN ang := ang + 180; ELSE ang := ang - 180; END;
   END;
@@ -375,7 +378,7 @@ END;
 MF_MOM_DEF()
 BEGIN
   LOCAL rho, V, A, theta, Q, mdot, Fx;
-  LOCAL Fy, Ftot, ang, res;
+  LOCAL Fy, Ftot, ang, res, oldAng;
 
   IF NOT INPUT({rho, V, A, theta},
       "Chorro Desviado por Angulo",
@@ -391,8 +394,11 @@ BEGIN
   Q := A * V;
   mdot := rho * Q;
 
+  oldAng := HAngle;
+  HAngle := 0;
   Fx := mdot * V * (1 - COS(theta * 3.14159265358979 / 180));
   Fy := mdot * V * SIN(theta * 3.14159265358979 / 180);
+  HAngle := oldAng;
   Ftot := SQRT(Fx ^ 2 + Fy ^ 2);
   ang := angulo_(Fx, Fy);
 

@@ -73,6 +73,7 @@ END;
 MF_MANO_INC()
 BEGIN
   LOCAL rhoMano, rhoFluid, g, L, thetaDeg, thetaRad, dh, DP;
+  LOCAL oldAng;
   rhoMano := 0; rhoFluid := 0; g := 0; L := 0; thetaDeg := 0;
   IF NOT INPUT({rhoMano, rhoFluid, g, L, thetaDeg},
     "Manometro Inclinado",
@@ -84,8 +85,11 @@ BEGIN
   IF g <= 0 THEN MSGBOX("Error: g debe ser positiva."); RETURN; END;
   IF L < 0 THEN MSGBOX("Error: L debe ser no negativa."); RETURN; END;
   IF thetaDeg <= 0 OR thetaDeg > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
+  oldAng := HAngle;
+  HAngle := 0;
   thetaRad := thetaDeg * PI / 180;
   dh := L * SIN(thetaRad);
+  HAngle := oldAng;
   DP := (rhoMano - rhoFluid) * g * dh;
   MSGBOX("MANOMETRO INCLINADO" + CHAR(10) +
     "dh = L*sin(theta)" + CHAR(10) +

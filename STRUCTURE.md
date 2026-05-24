@@ -28,6 +28,10 @@ HP_PRIME_FLUID_MECHANICS/
 
 ## Arquitectura general
 
+Regla de angulos: las funciones que usan SIN, COS o ATAN protegen sus
+calculos del modo global `HAngle`; guardan el modo anterior, usan radianes
+internamente y restauran el modo original.
+
 ```
 FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 ├── MF_PROPS()    ← Módulo independiente

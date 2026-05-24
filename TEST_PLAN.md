@@ -1152,6 +1152,123 @@ H  = 13.204 m
 
 ---
 
+## Angle mode robustness tests
+
+These tests verify that trig results do not depend on the current HP Prime
+global angle mode.
+
+### Test AM1: Manometro inclinado, HP angle mode degrees
+
+**Menu:** Manometros y Presiones -> Manometro inclinado
+
+**Setup:** Set HP Prime angle mode to degrees.
+
+**Entrada:**
+- L = 1
+- theta = 30 deg
+
+**Esperado:**
+```
+dh = 0.5 m
+```
+
+### Test AM2: Manometro inclinado, HP angle mode radians
+
+**Menu:** Manometros y Presiones -> Manometro inclinado
+
+**Setup:** Set HP Prime angle mode to radians.
+
+**Entrada:**
+- L = 1
+- theta = 30 deg
+
+**Esperado:**
+```
+dh = 0.5 m
+```
+
+### Test AM3: Capillarity reference, HP angle mode degrees
+
+**Note:** The current `MF_PROPS.hpprgm` file does not include a capillarity
+calculator. These values are reference expectations for that formula if the
+tool is added later.
+
+**Setup:** Set HP Prime angle mode to degrees.
+
+**Entrada:**
+- sigma = 0.072
+- theta = 60 deg
+- rho = 1000
+- D = 0.001
+- g = 9.81
+
+**Esperado:**
+```
+h = 4*sigma*cos(theta)/(rho*g*D)
+h about 0.01468 m
+```
+
+### Test AM4: Capillarity reference, HP angle mode radians
+
+**Note:** Same reference case as AM3; no runnable capillarity menu exists in
+the current `MF_PROPS.hpprgm`.
+
+**Setup:** Set HP Prime angle mode to radians.
+
+**Entrada:**
+- sigma = 0.072
+- theta = 60 deg
+- rho = 1000
+- D = 0.001
+- g = 9.81
+
+**Esperado:**
+```
+h about 0.01468 m
+```
+
+### Test AM5: Tema 4 elbow, HP angle mode degrees
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Areas + P1 Bern
+
+**Setup:** Set HP Prime angle mode to degrees.
+
+**Entrada:**
+- rho = 1000
+- mdot = 30
+- A1 = 0.0150
+- A2 = 0.0025
+- theta1 = 0
+- theta2 = 110
+- dz = 0.40
+- masa total = 50
+
+**Esperado:**
+```
+Mx about -183.1 N
+My about 338.3 N
+Rx about -1292 N
+Ry about 828.8 N
+```
+
+### Test AM6: Tema 4 elbow, HP angle mode radians
+
+**Menu:** Cant. Movimiento -> Reaccion en codo 2D -> Areas + P1 Bern
+
+**Setup:** Set HP Prime angle mode to radians.
+
+**Entrada:** Same as AM5.
+
+**Esperado:**
+```
+Mx about -183.1 N
+My about 338.3 N
+Rx about -1292 N
+Ry about 828.8 N
+```
+
+---
+
 ## Notas sobre las pruebas
 
 - Todos los calculos fueron verificados manualmente antes de la implementacion.

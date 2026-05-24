@@ -76,6 +76,7 @@ END;
 MF_HYDRO_CPI()
 BEGIN
   LOCAL yc, A, Ixc, thetaDeg, thetaRad, sinT, yp;
+  LOCAL oldAng;
   yc := 0; A := 0; Ixc := 0; thetaDeg := 0;
   IF NOT INPUT({yc, A, Ixc, thetaDeg},
     "Centro Presion Inclinada",
@@ -86,8 +87,11 @@ BEGIN
   IF A <= 0 THEN MSGBOX("Error: A debe ser positiva."); RETURN; END;
   IF Ixc < 0 THEN MSGBOX("Error: Ixc debe ser no negativo."); RETURN; END;
   IF thetaDeg <= 0 OR thetaDeg > 90 THEN MSGBOX("Error: theta debe estar entre 0 y 90 grados."); RETURN; END;
+  oldAng := HAngle;
+  HAngle := 0;
   thetaRad := thetaDeg * PI / 180;
   sinT := SIN(thetaRad);
+  HAngle := oldAng;
   yp := yc + Ixc * sinT * sinT / (yc * A);
   MSGBOX("CENTRO PRESION INCLINADA" + CHAR(10) +
     "yp = yc + Ixc*sin2(t)/(yc*A)" + CHAR(10) +
