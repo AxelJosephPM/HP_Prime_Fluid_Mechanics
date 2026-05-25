@@ -120,9 +120,9 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_PIPES_KVAL() Opcion 7: K válvula de regulación
 │   ├── MF_PIPES_FD()   Opcion 8: Factor f Darcy y Colebrook
 │   ├── MF_PIPES_LOSSES() Opcion 9: Perdidas tuberia
-│   ├── MF_PIPES_LOSS_FG() Con f Darcy dado
-│   ├── MF_PIPES_LOSS_COLE() Con f calculado por Colebrook
-│   ├── MF_PIPES_LOSS_MIN() Solo perdidas menores
+│   ├── MF_PL_FG()      Con f Darcy dado
+│   ├── MF_PL_COLE()    Con f calculado por Colebrook
+│   ├── MF_PL_MIN()     Solo perdidas menores
 │   └── MF_PIPES_HELP() Opcion 10: Ayuda fórmulas
 │
 ├── MF_PUMPS()    ← Módulo independiente (v2.0)

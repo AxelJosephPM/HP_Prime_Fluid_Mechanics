@@ -445,22 +445,7 @@ BEGIN
     "err = " + fmt_(err));
 END;
 
-MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss)
-BEGIN
-  MSGBOX("FLUJO" + CHAR(10) +
-    "A = " + fmt_(A) + " m2" + CHAR(10) +
-    "V = " + fmt_(V) + " m/s" + CHAR(10) +
-    "Re = " + fmt_(reyn));
-  MSGBOX("PERDIDAS" + CHAR(10) +
-    "hMaj = " + fmt_(hMajor) + " m" + CHAR(10) +
-    "hMin = " + fmt_(hMinor) + " m" + CHAR(10) +
-    "hTot = " + fmt_(hTotal) + " m");
-  MSGBOX("PRESION/POTENCIA" + CHAR(10) +
-    "dP = " + fmt_(dP) + " Pa" + CHAR(10) +
-    "P = " + fmt_(Ploss) + " W");
-END;
-
-MF_PIPES_LOSS_FG()
+MF_PL_FG()
 BEGIN
   LOCAL rho, mu, Q, D, L, f, Ksum;
   LOCAL g, A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss;
@@ -501,10 +486,20 @@ BEGIN
   hTotal := hMajor + hMinor;
   dP := rho * g * hTotal;
   Ploss := dP * Q;
-  MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss);
+  MSGBOX("FLUJO" + CHAR(10) +
+    "A = " + fmt_(A) + " m2" + CHAR(10) +
+    "V = " + fmt_(V) + " m/s" + CHAR(10) +
+    "Re = " + fmt_(reyn));
+  MSGBOX("PERDIDAS" + CHAR(10) +
+    "hMaj = " + fmt_(hMajor) + " m" + CHAR(10) +
+    "hMin = " + fmt_(hMinor) + " m" + CHAR(10) +
+    "hTot = " + fmt_(hTotal) + " m");
+  MSGBOX("PRESION/POTENCIA" + CHAR(10) +
+    "dP = " + fmt_(dP) + " Pa" + CHAR(10) +
+    "P = " + fmt_(Ploss) + " W");
 END;
 
-MF_PIPES_LOSS_COLE()
+MF_PL_COLE()
 BEGIN
   LOCAL rho, mu, Q, D, L, eps, Ksum;
   LOCAL g, A, V, reyn, rr, f, regime, hMajor, hMinor;
@@ -599,10 +594,16 @@ BEGIN
   MSGBOX("REGIMEN" + CHAR(10) +
     regime + CHAR(10) +
     "f = " + fmt_(f));
-  MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss);
+  MSGBOX("PERDIDAS" + CHAR(10) +
+    "hMaj = " + fmt_(hMajor) + " m" + CHAR(10) +
+    "hMin = " + fmt_(hMinor) + " m" + CHAR(10) +
+    "hTot = " + fmt_(hTotal) + " m");
+  MSGBOX("PRESION/POTENCIA" + CHAR(10) +
+    "dP = " + fmt_(dP) + " Pa" + CHAR(10) +
+    "P = " + fmt_(Ploss) + " W");
 END;
 
-MF_PIPES_LOSS_MIN()
+MF_PL_MIN()
 BEGIN
   LOCAL rho, Q, D, Ksum;
   LOCAL g, A, V, hMinor, dP, Ploss;
@@ -647,9 +648,9 @@ BEGIN
     "4. Ayuda perdidas",
     "5. Volver");
   IF op == 0 OR op == 5 THEN RETURN; END;
-  IF op == 1 THEN MF_PIPES_LOSS_FG(); END;
-  IF op == 2 THEN MF_PIPES_LOSS_COLE(); END;
-  IF op == 3 THEN MF_PIPES_LOSS_MIN(); END;
+  IF op == 1 THEN MF_PL_FG(); END;
+  IF op == 2 THEN MF_PL_COLE(); END;
+  IF op == 3 THEN MF_PL_MIN(); END;
   IF op == 4 THEN
     MSGBOX("hL=f*(L/D)*V^2/(2g)" + CHAR(10) +
       "+ Ksum*V^2/(2g)");
