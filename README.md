@@ -168,8 +168,9 @@ radianes cuando hace falta y restaura el modo anterior.
 
 ### 8. Flujo en Tuberías (`MF_PIPES`) — mejorado v2.0
 - V, Re, f: velocidad, Reynolds y factor de fricción en un paso
-- Factor f Darcy: desde Re/rr o datos de tuberia, con Blasius, Haaland, Swamee-Jain y Colebrook iterativo
-- Comparacion de formulas de friccion y errores relativos contra Colebrook
+- Factor f Darcy: desde Re/rr, con Haaland, Swamee-Jain y Colebrook iterativo
+- Perdidas tuberia: perdidas mayores, menores, hL total, dP y potencia perdida
+- Modo automatico Colebrook para calcular f Darcy desde rho, mu, Q, D y eps
 - Pérdida de tramo: hf y ΔP para una tubería directa
 - Pérdidas menores K: hm = Ktot·V²/2g
 - Sistema simple: hf + hm + hL + ΔP completo
@@ -270,8 +271,9 @@ radianes cuando hace falta y restaura el modo anterior.
 - **Unidades**: Todo en SI (Pa, kg, m, s, K). Usar el convertidor si es necesario.
 - **Presiones**: Salvo indicación contraria, se acepta tanto manométrica como absoluta.
   La Bernoulli funciona con cualquiera siempre que se sea consistente.
-- **Factor de friccion**: MF_PIPES incluye calculo Darcy con laminar, Blasius,
-  Haaland, Swamee-Jain, Colebrook-White iterativo y comparacion de formulas.
+- **Factor de friccion**: MF_PIPES incluye calculo Darcy con laminar,
+  Haaland, Swamee-Jain y Colebrook-White iterativo. Tambien calcula perdidas
+  de tuberia con f dado o f por Colebrook.
 - **CAS**: El módulo CAS requiere que las variables estén definidas como texto.
   Los resultados son simbólicos; para evaluación numérica ingresar valores en las
   expresiones antes de llamar al CAS.

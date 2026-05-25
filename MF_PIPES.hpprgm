@@ -12,8 +12,9 @@
 //   6. Diseno diametro
 //   7. K valvula regulacion
 //   8. Factor f Darcy
-//   9. Ayuda formulas
-//   10. Volver
+//   9. Perdidas tuberia
+//   10. Ayuda formulas
+//   11. Volver
 // ============================================================
 
 fmt_(x)
@@ -444,7 +445,227 @@ BEGIN
     "err = " + fmt_(err));
 END;
 
-// ---- Option 9: Ayuda formulas ----
+MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss)
+BEGIN
+  MSGBOX("FLUJO" + CHAR(10) +
+    "A = " + fmt_(A) + " m2" + CHAR(10) +
+    "V = " + fmt_(V) + " m/s" + CHAR(10) +
+    "Re = " + fmt_(reyn));
+  MSGBOX("PERDIDAS" + CHAR(10) +
+    "hMaj = " + fmt_(hMajor) + " m" + CHAR(10) +
+    "hMin = " + fmt_(hMinor) + " m" + CHAR(10) +
+    "hTot = " + fmt_(hTotal) + " m");
+  MSGBOX("PRESION/POTENCIA" + CHAR(10) +
+    "dP = " + fmt_(dP) + " Pa" + CHAR(10) +
+    "P = " + fmt_(Ploss) + " W");
+END;
+
+MF_PIPES_LOSS_FG()
+BEGIN
+  LOCAL rho, mu, Q, D, L, f, Ksum;
+  LOCAL g, A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss;
+  g := 9.81;
+  IF NOT INPUT({rho, mu},
+      "Fluido",
+      {"rho (kg/m3)=", "mu (Pa*s)="},
+      {"Densidad", "Viscosidad"},
+      {1000.0, 0.001}) THEN RETURN; END;
+  IF NOT INPUT({Q, D},
+      "Caudal y diametro",
+      {"Q (m3/s)=", "D (m)="},
+      {"Caudal", "Diametro interno"},
+      {0.01, 0.1}) THEN RETURN; END;
+  IF NOT INPUT({L, f},
+      "Tramo y f",
+      {"L (m)=", "f Darcy="},
+      {"Longitud", "Factor de Darcy"},
+      {50.0, 0.02}) THEN RETURN; END;
+  IF NOT INPUT(Ksum,
+      "Perdidas menores",
+      "Ksum=",
+      "Suma de coeficientes K",
+      2.0) THEN RETURN; END;
+  IF rho <= 0 OR mu <= 0 OR Q < 0 OR D <= 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  IF L < 0 OR f < 0 OR Ksum < 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  hMajor := f * (L / D) * V ^ 2 / (2 * g);
+  hMinor := Ksum * V ^ 2 / (2 * g);
+  hTotal := hMajor + hMinor;
+  dP := rho * g * hTotal;
+  Ploss := dP * Q;
+  MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss);
+END;
+
+MF_PIPES_LOSS_COLE()
+BEGIN
+  LOCAL rho, mu, Q, D, L, eps, Ksum;
+  LOCAL g, A, V, reyn, rr, f, regime, hMajor, hMinor;
+  LOCAL hTotal, dP, Ploss, fOld, fNew, iter, iterMax;
+  LOCAL tol, err, arg, den;
+  g := 9.81;
+  IF NOT INPUT({rho, mu},
+      "Fluido",
+      {"rho (kg/m3)=", "mu (Pa*s)="},
+      {"Densidad", "Viscosidad"},
+      {1000.0, 0.001}) THEN RETURN; END;
+  IF NOT INPUT({Q, D},
+      "Caudal y diametro",
+      {"Q (m3/s)=", "D (m)="},
+      {"Caudal", "Diametro interno"},
+      {0.01, 0.1}) THEN RETURN; END;
+  IF NOT INPUT({L, eps},
+      "Tramo y rugosidad",
+      {"L (m)=", "eps (m)="},
+      {"Longitud", "Rugosidad absoluta"},
+      {50.0, 0.000045}) THEN RETURN; END;
+  IF NOT INPUT(Ksum,
+      "Perdidas menores",
+      "Ksum=",
+      "Suma de coeficientes K",
+      2.0) THEN RETURN; END;
+  IF rho <= 0 OR mu <= 0 OR Q < 0 OR D <= 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  IF L < 0 OR eps < 0 OR Ksum < 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  reyn := rho * V * D / mu;
+  rr := eps / D;
+  IF Q == 0 THEN
+    f := 0;
+    regime := "Sin flujo";
+  ELSE
+    IF reyn < 2300 THEN
+      f := 64 / reyn;
+      regime := "Laminar";
+    ELSE
+      IF reyn < 4000 THEN
+        regime := "Transicion";
+      ELSE
+        regime := "Turbulento";
+      END;
+      arg := (rr / 3.7) ^ 1.11 + 6.9 / reyn;
+      IF arg <= 0 THEN
+        MSGBOX("Datos invalidos");
+        RETURN;
+      END;
+      den := -1.8 * LOG(arg);
+      fOld := 1 / (den ^ 2);
+      IF fOld <= 0 THEN fOld := 0.02; END;
+      iter := 0;
+      err := 1;
+      tol := 1E-7;
+      iterMax := 50;
+      WHILE iter < iterMax DO
+        arg := rr / 3.7 + 2.51 / (reyn * SQRT(fOld));
+        IF arg <= 0 THEN
+          MSGBOX("Datos invalidos");
+          RETURN;
+        END;
+        den := -2 * LOG(arg);
+        fNew := 1 / (den ^ 2);
+        err := ABS(fNew - fOld);
+        fOld := fNew;
+        iter := iter + 1;
+        IF err < tol THEN
+          iter := iterMax;
+        END;
+      END;
+      f := fOld;
+    END;
+  END;
+  hMajor := f * (L / D) * V ^ 2 / (2 * g);
+  hMinor := Ksum * V ^ 2 / (2 * g);
+  hTotal := hMajor + hMinor;
+  dP := rho * g * hTotal;
+  Ploss := dP * Q;
+  MSGBOX("FLUJO" + CHAR(10) +
+    "A = " + fmt_(A) + " m2" + CHAR(10) +
+    "V = " + fmt_(V) + " m/s" + CHAR(10) +
+    "Re = " + fmt_(reyn) + CHAR(10) +
+    "rr = " + fmt_(rr));
+  MSGBOX("REGIMEN" + CHAR(10) +
+    regime + CHAR(10) +
+    "f = " + fmt_(f));
+  MF_PIPES_LOSS_OUT(A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss);
+END;
+
+MF_PIPES_LOSS_MIN()
+BEGIN
+  LOCAL rho, Q, D, Ksum;
+  LOCAL g, A, V, hMinor, dP, Ploss;
+  g := 9.81;
+  IF NOT INPUT({rho, Q},
+      "Fluido y caudal",
+      {"rho (kg/m3)=", "Q (m3/s)="},
+      {"Densidad", "Caudal"},
+      {1000.0, 0.01}) THEN RETURN; END;
+  IF NOT INPUT({D, Ksum},
+      "Diametro y K",
+      {"D (m)=", "Ksum="},
+      {"Diametro interno", "Suma de coeficientes K"},
+      {0.1, 2.0}) THEN RETURN; END;
+  IF rho <= 0 OR Q < 0 OR D <= 0 OR Ksum < 0 THEN
+    MSGBOX("Datos invalidos");
+    RETURN;
+  END;
+  A := PI * D ^ 2 / 4;
+  V := Q / A;
+  hMinor := Ksum * V ^ 2 / (2 * g);
+  dP := rho * g * hMinor;
+  Ploss := dP * Q;
+  MSGBOX("SOLO MENORES" + CHAR(10) +
+    "A = " + fmt_(A) + " m2" + CHAR(10) +
+    "V = " + fmt_(V) + " m/s" + CHAR(10) +
+    "hMin = " + fmt_(hMinor) + " m");
+  MSGBOX("PRESION/POTENCIA" + CHAR(10) +
+    "dP = " + fmt_(dP) + " Pa" + CHAR(10) +
+    "P = " + fmt_(Ploss) + " W");
+END;
+
+// ---- Option 9: Perdidas tuberia ----
+MF_PIPES_LOSSES()
+BEGIN
+  LOCAL op;
+  CHOOSE(op,
+    "Perdidas tuberia",
+    "1. Con f dado",
+    "2. Calcular f Colebrook",
+    "3. Solo perdidas menores",
+    "4. Ayuda perdidas",
+    "5. Volver");
+  IF op == 0 OR op == 5 THEN RETURN; END;
+  IF op == 1 THEN MF_PIPES_LOSS_FG(); END;
+  IF op == 2 THEN MF_PIPES_LOSS_COLE(); END;
+  IF op == 3 THEN MF_PIPES_LOSS_MIN(); END;
+  IF op == 4 THEN
+    MSGBOX("hL=f*(L/D)*V^2/(2g)" + CHAR(10) +
+      "+ Ksum*V^2/(2g)");
+    MSGBOX("f es Darcy." + CHAR(10) +
+      "Ksum suma perdidas menores." + CHAR(10) +
+      "dP=rho*g*hL.");
+    MSGBOX("Usar dP manometrica." + CHAR(10) +
+      "Q m3/s, D m, L m." + CHAR(10) +
+      "eps en m.");
+    MSGBOX("Re define regimen." + CHAR(10) +
+      "Laminar: f=64/Re." + CHAR(10) +
+      "Turbulento: Colebrook.");
+  END;
+END;
+
+// ---- Option 10: Ayuda formulas ----
 MF_PIPES_HELP()
 BEGIN
   LOCAL res;
@@ -477,9 +698,10 @@ BEGIN
       "6. Diseno diametro",
       "7. K valvula regulacion",
       "8. Factor f Darcy",
-      "9. Ayuda formulas",
-      "10. Volver");
-    IF c == 0 OR c == 10 THEN RETURN; END;
+      "9. Perdidas tuberia",
+      "10. Ayuda formulas",
+      "11. Volver");
+    IF c == 0 OR c == 11 THEN RETURN; END;
     IF c == 1 THEN MF_PIPES_VRF(); END;
     IF c == 2 THEN MF_PIPES_TRAMO(); END;
     IF c == 3 THEN MF_PIPES_K(); END;
@@ -488,6 +710,7 @@ BEGIN
     IF c == 6 THEN MF_PIPES_DIAM(); END;
     IF c == 7 THEN MF_PIPES_KVAL(); END;
     IF c == 8 THEN MF_PIPES_FD(); END;
-    IF c == 9 THEN MF_PIPES_HELP(); END;
+    IF c == 9 THEN MF_PIPES_LOSSES(); END;
+    IF c == 10 THEN MF_PIPES_HELP(); END;
   END;
 END;

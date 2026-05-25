@@ -521,7 +521,7 @@ dP  = 2000 Pa
 
 ## TEST 21A: Factor f Darcy laminar (MF_PIPES opcion 8)
 
-**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rugosidad
+**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rr
 
 **Entrada:**
 - Re = 1000
@@ -529,16 +529,14 @@ dP  = 2000 Pa
 
 **Esperado:**
 ```
-Reg = Laminar
 f_lam = 0.064
-f recomendado = 0.064
 ```
 
 ---
 
 ## TEST 21B: Factor f Darcy turbulento liso
 
-**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rr
 
 **Entrada:**
 - Re = 100000
@@ -546,17 +544,16 @@ f recomendado = 0.064
 
 **Esperado aprox:**
 ```
-f_blasius = 0.01779
-f_haaland = 0.01782
-f_swamee  = 0.01786
-f_colebrook = 0.01799
+fH = 0.01782
+fS = 0.01786
+fC = 0.01799
 ```
 
 ---
 
 ## TEST 21C: Factor f Darcy rugosidad tipo acero comercial
 
-**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rr
 
 **Entrada:**
 - Re = 100000
@@ -564,16 +561,16 @@ f_colebrook = 0.01799
 
 **Esperado aprox:**
 ```
-f_colebrook = 0.02012
-f_haaland   = 0.01986
-f_swamee    = 0.02020
+fC = 0.02012
+fH = 0.01986
+fS = 0.02020
 ```
 
 ---
 
 ## TEST 21D: Factor f Darcy turbulento rugoso
 
-**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rr
 
 **Entrada:**
 - Re = 1000000
@@ -581,23 +578,53 @@ f_swamee    = 0.02020
 
 **Esperado aprox:**
 ```
-f_colebrook = 0.01994
-f_haaland   = 0.01994
-f_swamee    = 0.02003
+fC = 0.01994
+fH = 0.01994
+fS = 0.02003
 ```
 
 ---
 
-## TEST 21E: Factor f Darcy desde datos de tuberia
+## TEST 21E: Perdidas tuberia con f dado
 
-**Menu:** Tuberias -> Factor f Darcy -> Desde datos de tuberia
+**Menu:** Tuberias -> Perdidas tuberia -> Con f dado
 
 **Entrada:**
 - rho = 1000
 - mu = 0.001
 - Q = 0.01
 - D = 0.1
+- L = 50
+- f = 0.02
+- Ksum = 2
+
+**Esperado aprox:**
+```
+A = 0.007854 m2
+V = 1.273 m/s
+Re = 127324
+V2/(2g) = 0.0826 m
+hMaj = 0.826 m
+hMin = 0.165 m
+hTot = 0.991 m
+dP = 9720 Pa
+P = 97.2 W
+```
+
+---
+
+## TEST 21F: Perdidas tuberia con f Colebrook
+
+**Menu:** Tuberias -> Perdidas tuberia -> Calcular f Colebrook
+
+**Entrada:**
+- rho = 1000
+- mu = 0.001
+- Q = 0.01
+- D = 0.1
+- L = 50
 - eps = 0.000045
+- Ksum = 2
 
 **Esperado aprox:**
 ```
@@ -605,7 +632,30 @@ A = 0.007854 m2
 V = 1.273 m/s
 Re = 127324
 rr = 0.00045
-f_colebrook entre 0.0195 y 0.0200
+f entre 0.0195 y 0.0200
+hTot entre 0.97 y 1.00 m
+dP entre 9500 y 9800 Pa
+```
+
+---
+
+## TEST 21G: Solo perdidas menores
+
+**Menu:** Tuberias -> Perdidas tuberia -> Solo perdidas menores
+
+**Entrada:**
+- rho = 1000
+- Q = 0.01
+- D = 0.1
+- Ksum = 2
+
+**Esperado aprox:**
+```
+A = 0.007854 m2
+V = 1.273 m/s
+hMin = 0.165 m
+dP = 1619 Pa
+P = 16.2 W
 ```
 
 ---
