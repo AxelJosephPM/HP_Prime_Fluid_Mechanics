@@ -445,10 +445,11 @@ BEGIN
     "err = " + fmt_(err));
 END;
 
-MF_PL_FG()
+EXPORT MF_PL_FG()
 BEGIN
   LOCAL rho, mu, Q, D, L, f, Ksum;
-  LOCAL g, A, V, reyn, hMajor, hMinor, hTotal, dP, Ploss;
+  LOCAL g, A, V, reyn, hMajor;
+  LOCAL hMinor, hTotal, dP, Ploss;
   g := 9.81;
   IF NOT INPUT({rho, mu},
       "Fluido",
@@ -499,11 +500,12 @@ BEGIN
     "P = " + fmt_(Ploss) + " W");
 END;
 
-MF_PL_COLE()
+EXPORT MF_PL_COLE()
 BEGIN
   LOCAL rho, mu, Q, D, L, eps, Ksum;
-  LOCAL g, A, V, reyn, rr, f, regime, hMajor, hMinor;
-  LOCAL hTotal, dP, Ploss, fOld, fNew, iter, iterMax;
+  LOCAL g, A, V, reyn, rr, f, regime;
+  LOCAL hMajor, hMinor, hTotal, dP, Ploss;
+  LOCAL fOld, fNew, iter, iterMax;
   LOCAL tol, err, arg, den;
   g := 9.81;
   IF NOT INPUT({rho, mu},
@@ -603,7 +605,7 @@ BEGIN
     "P = " + fmt_(Ploss) + " W");
 END;
 
-MF_PL_MIN()
+EXPORT MF_PL_MIN()
 BEGIN
   LOCAL rho, Q, D, Ksum;
   LOCAL g, A, V, hMinor, dP, Ploss;
@@ -637,7 +639,7 @@ BEGIN
 END;
 
 // ---- Option 9: Perdidas tuberia ----
-MF_PIPES_LOSSES()
+EXPORT MF_PIPES_LOSSES()
 BEGIN
   LOCAL op;
   CHOOSE(op,
