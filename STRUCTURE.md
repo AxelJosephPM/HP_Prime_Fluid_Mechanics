@@ -118,7 +118,8 @@ FLUIDOS()         ← Menú principal (FLUIDOS.hpprgm)
 │   ├── MF_PIPES_2T()   Opcion 5: Sistema 2 tramos en serie
 │   ├── MF_PIPES_DIAM() Opcion 6: Diseño de diámetro (bisección)
 │   ├── MF_PIPES_KVAL() Opcion 7: K válvula de regulación
-│   └── MF_PIPES_HELP() Opcion 8: Ayuda fórmulas
+│   ├── MF_PIPES_FD()   Opcion 8: Factor f Darcy y Colebrook
+│   └── MF_PIPES_HELP() Opcion 9: Ayuda fórmulas
 │
 ├── MF_PUMPS()    ← Módulo independiente (v2.0)
 │   ├── fmt_()          Helper formato numérico

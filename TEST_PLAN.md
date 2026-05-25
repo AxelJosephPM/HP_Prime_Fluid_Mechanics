@@ -519,6 +519,97 @@ dP  = 2000 Pa
 
 ---
 
+## TEST 21A: Factor f Darcy laminar (MF_PIPES opcion 8)
+
+**Menu:** Tuberias -> Factor f Darcy -> Desde Re y rugosidad
+
+**Entrada:**
+- Re = 1000
+- rr = 0
+
+**Esperado:**
+```
+Reg = Laminar
+f_lam = 0.064
+f recomendado = 0.064
+```
+
+---
+
+## TEST 21B: Factor f Darcy turbulento liso
+
+**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+
+**Entrada:**
+- Re = 100000
+- rr = 0
+
+**Esperado aprox:**
+```
+f_blasius = 0.01779
+f_haaland = 0.01782
+f_swamee  = 0.01786
+f_colebrook = 0.01799
+```
+
+---
+
+## TEST 21C: Factor f Darcy rugosidad tipo acero comercial
+
+**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+
+**Entrada:**
+- Re = 100000
+- rr = 0.00045
+
+**Esperado aprox:**
+```
+f_colebrook = 0.02012
+f_haaland   = 0.01986
+f_swamee    = 0.02020
+```
+
+---
+
+## TEST 21D: Factor f Darcy turbulento rugoso
+
+**Menu:** Tuberias -> Factor f Darcy -> Comparar formulas
+
+**Entrada:**
+- Re = 1000000
+- rr = 0.001
+
+**Esperado aprox:**
+```
+f_colebrook = 0.01994
+f_haaland   = 0.01994
+f_swamee    = 0.02003
+```
+
+---
+
+## TEST 21E: Factor f Darcy desde datos de tuberia
+
+**Menu:** Tuberias -> Factor f Darcy -> Desde datos de tuberia
+
+**Entrada:**
+- rho = 1000
+- mu = 0.001
+- Q = 0.01
+- D = 0.1
+- eps = 0.000045
+
+**Esperado aprox:**
+```
+A = 0.007854 m2
+V = 1.273 m/s
+Re = 127324
+rr = 0.00045
+f_colebrook entre 0.0195 y 0.0200
+```
+
+---
+
 ## TEST 22: Check cavitacion - sin riesgo (MF_PUMPS opcion 4)
 
 **Menu:** Bombas → Check cavitacion
