@@ -416,7 +416,7 @@ END;
 // ---- Option 8: Factor f Darcy ----
 MF_PIPES_FD()
 BEGIN
-  LOCAL op, Re, rr, rho, mu, Q, D, eps, A, V;
+  LOCAL op, reyn, rr, rho, mu, Q, D, eps, A, V;
   LOCAL fLam, fBlas, fHaal, fSwam, fCole, fRec;
   LOCAL f0, tol, iterMax, iter, err, residual, arg;
   LOCAL fOld, fNew, reg, recText, warn, res;
@@ -450,7 +450,7 @@ BEGIN
   END;
 
   IF op == 1 OR op == 4 THEN
-    IF NOT INPUT({Re, rr}, "Re y rugosidad", {"Re=", "rr=eps/D="}, {"Numero de Reynolds", "Rugosidad relativa"}, {100000.0, 0.00045}) THEN RETURN; END;
+    IF NOT INPUT({reyn, rr}, "Re y rugosidad", {"Re=", "rr=eps/D="}, {"Numero de Reynolds", "Rugosidad relativa"}, {100000.0, 0.00045}) THEN RETURN; END;
   END;
 
   IF op == 2 THEN
@@ -463,19 +463,19 @@ BEGIN
     END;
     A := PI * D ^ 2 / 4;
     V := Q / A;
-    Re := rho * V * D / mu;
+    reyn := rho * V * D / mu;
     rr := eps / D;
     MSGBOX("DATOS CALCULADOS" + CHAR(10) +
       "A  = " + fmt_(A) + " m2" + CHAR(10) +
       "V  = " + fmt_(V) + " m/s" + CHAR(10) +
-      "Re = " + fmt_(Re) + CHAR(10) +
+      "Re = " + fmt_(reyn) + CHAR(10) +
       "rr = " + fmt_(rr));
   END;
 
   IF op == 3 THEN
-    IF NOT INPUT({Re, rr}, "Colebrook", {"Re=", "rr=eps/D="}, {"Numero de Reynolds", "Rugosidad relativa"}, {100000.0, 0.00045}) THEN RETURN; END;
+    IF NOT INPUT({reyn, rr}, "Colebrook", {"Re=", "rr=eps/D="}, {"Numero de Reynolds", "Rugosidad relativa"}, {100000.0, 0.00045}) THEN RETURN; END;
     IF NOT INPUT({f0, tol, iterMax}, "Iteracion", {"f0=", "tol=", "iterMax="}, {"Inicial, <=0 automatico", "Tolerancia", "Iteraciones max"}, {0.02, 1E-7, 50}) THEN RETURN; END;
-    IF Re <= 0 OR rr < 0 THEN
+    IF reyn <= 0 OR rr < 0 THEN
       MSGBOX("Datos invalidos");
       RETURN;
     END;
@@ -483,23 +483,23 @@ BEGIN
     IF iterMax <= 0 THEN iterMax := 50; END;
     fOld := f0;
     IF fOld <= 0 THEN
-      fOld := ffHaal_(Re, rr);
+      fOld := ffHaal_(reyn, rr);
       IF fOld <= 0 THEN fOld := 0.02; END;
     END;
-    IF Re < 2300 THEN
-      fCole := 64 / Re;
+    IF reyn < 2300 THEN
+      fCole := 64 / reyn;
       iter := 0;
       err := 0;
       residual := 0;
       MSGBOX("Regimen laminar: no usar Colebrook");
     ELSE
-      IF Re < 4000 THEN
+      IF reyn < 4000 THEN
         MSGBOX("Colebrook es para turbulento" + CHAR(10) + "Zona transicion: orientativo");
       END;
       iter := 0;
       err := 1;
       WHILE iter < iterMax DO
-        arg := rr / 3.7 + 2.51 / (Re * SQRT(fOld));
+        arg := rr / 3.7 + 2.51 / (reyn * SQRT(fOld));
         IF arg <= 0 THEN
           MSGBOX("Datos invalidos");
           RETURN;
@@ -513,7 +513,7 @@ BEGIN
         END;
       END;
       fCole := fOld;
-      residual := 1 / SQRT(fCole) + 2 * LOG(rr / 3.7 + 2.51 / (Re * SQRT(fCole)));
+      residual := 1 / SQRT(fCole) + 2 * LOG(rr / 3.7 + 2.51 / (reyn * SQRT(fCole)));
     END;
     MSGBOX("COLEBROOK ITERATIVO" + CHAR(10) +
       "f = " + fmt_(fCole) + CHAR(10) +
@@ -525,37 +525,37 @@ BEGIN
     RETURN;
   END;
 
-  IF Re <= 0 OR rr < 0 THEN
+  IF reyn <= 0 OR rr < 0 THEN
     MSGBOX("Datos invalidos");
     RETURN;
   END;
 
-  reg := ffReg_(Re);
+  reg := ffReg_(reyn);
   warn := "";
-  IF Re < 2300 THEN
+  IF reyn < 2300 THEN
     warn := "Regimen laminar: no usar Colebrook";
   ELSE
-    IF Re < 4000 THEN
+    IF reyn < 4000 THEN
       warn := "Zona transicion: resultado orientativo";
     END;
   END;
 
-  fLam := 64 / Re;
-  fBlas := ffBlas_(Re);
-  fHaal := ffHaal_(Re, rr);
-  fSwam := ffSwam_(Re, rr);
+  fLam := 64 / reyn;
+  fBlas := ffBlas_(reyn);
+  fHaal := ffHaal_(reyn, rr);
+  fSwam := ffSwam_(reyn, rr);
   tol := 1E-7;
   iterMax := 50;
   iter := 0;
   err := 0;
-  IF Re < 2300 THEN
+  IF reyn < 2300 THEN
     fCole := fLam;
   ELSE
     fOld := fHaal;
     IF fOld <= 0 THEN fOld := 0.02; END;
     err := 1;
     WHILE iter < iterMax DO
-      arg := rr / 3.7 + 2.51 / (Re * SQRT(fOld));
+      arg := rr / 3.7 + 2.51 / (reyn * SQRT(fOld));
       IF arg <= 0 THEN
         MSGBOX("Datos invalidos");
         RETURN;
@@ -571,12 +571,12 @@ BEGIN
     fCole := fOld;
   END;
 
-  IF Re < 2300 THEN
+  IF reyn < 2300 THEN
     fRec := fLam;
     recText := "Usar laminar";
     fCole := fLam;
   ELSE
-    IF Re < 4000 THEN
+    IF reyn < 4000 THEN
       fRec := fCole;
       recText := "Transicion: orientativo";
     ELSE
@@ -587,7 +587,7 @@ BEGIN
 
   IF op == 1 THEN
     MSGBOX("REGIMEN" + CHAR(10) +
-      "Re = " + fmt_(Re) + CHAR(10) +
+      "Re = " + fmt_(reyn) + CHAR(10) +
       "rr = " + fmt_(rr) + CHAR(10) +
       "Reg = " + reg);
     MSGBOX("FACTORES DARCY" + CHAR(10) +
