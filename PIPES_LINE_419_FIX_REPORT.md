@@ -1,30 +1,39 @@
-# MF_PIPES line 419 syntax fix
+# Persistent MF_PIPES line 419 fix
 
-## 1. What was at line 419
+## 1. Exact cause
 
-Line 419 was the first LOCAL declaration in the new Darcy friction factor submenu:
+The persistent syntax error was caused by the large Darcy friction block added to `MF_PIPES_FD()`. After the previous rename from `Re` to `reyn`, the parser still stopped at the first LOCAL line of that helper, which means the previous diagnosis was incomplete.
 
-`LOCAL op, Re, rr, rho, mu, Q, D, eps, A, V;`
+The safest conclusion is that the new block was too fragile for HP Prime import because it combined a large menu, many LOCAL variables, repeated Colebrook loops, long INPUT calls, long MSGBOX concatenations, and percentage comparison output.
 
-## 2. Cause of the HP Prime syntax error
+## 2. Was line 419 the real error?
 
-The identifier `Re` in the LOCAL declaration is risky on HP Prime because it can be parsed as a reserved or built-in token instead of a user variable name. The Connectivity Kit reported the error at that LOCAL line before any Darcy calculations were reached.
+Line 419 was where parsing failed, not necessarily the exact bad token. The structure above it was balanced: `MF_PIPES_KVAL()` closed with `END;`, and no unclosed IF, WHILE, CHOOSE, or INPUT block was found before the Darcy helper.
 
-## 3. What was changed
+## 3. Controlled reduction
 
-Only the local program variable was renamed from `Re` to `reyn` inside `MF_PIPES_FD()`. User-facing labels still show `Re`.
+Yes. The Darcy option was reduced to a compact syntax-safe version instead of continuing to patch individual tokens.
 
-## 4. LOG10 replacement
+## 4. Darcy functionality status
 
-No LOG10 replacement was needed. The module already used `LOG` for base-10 logarithms, and the Darcy formulas continue to use `LOG`.
+The Darcy factor calculator remains active, but temporarily simplified. It currently supports:
 
-## 5. Colebrook availability
+- input from `Re` and `rr`
+- laminar `f = 64/Re`
+- Haaland
+- Swamee-Jain
+- Colebrook fixed-point iteration
 
-Colebrook iteration remains available in the Darcy submenu. The fixed-point calculation and residual output were preserved.
+The broader submenu modes from the previous upgrade were removed for now to make the file import safely.
+
+## 5. LOG or LOG10
+
+The module uses `LOG`, not `LOG10`. No `LOG10` calls are present.
 
 ## 6. Files modified
 
 - `MF_PIPES.hpprgm`
+- `PIPES_LINE_419_DEEP_DIAGNOSIS.md`
 - `PIPES_LINE_419_FIX_REPORT.md`
 
 ## 7. MF_CAS status
